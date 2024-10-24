@@ -67,3 +67,16 @@ export function isRelationalKey(arg: unknown): arg is number {
 export function isEmail(val: unknown): val is string {
   return isString(val) && EMAIL_RGX.test(val);
 }
+
+/**
+ * Allow param to be undefined
+ */
+export function nonNullable<T>(cb: ((arg: unknown) => arg is T)) {
+  return (arg: unknown): arg is NonNullable<T> => {
+    if (arg === null || arg === undefined) {
+      return false;
+    } else {
+      return cb(arg);
+    }
+  };
+}

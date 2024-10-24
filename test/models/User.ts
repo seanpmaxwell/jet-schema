@@ -1,6 +1,14 @@
+import { transform } from '../../src';
 
-import schema, { transform } from '../util/schema'
-import { isEmail, isNumber, isRelationalKey, isString, isOptionalString } from '../util/validators';
+import schema from '../util/schema'
+
+import {
+  isEmail,
+  isNumber,
+  isRelationalKey,
+  isString,
+  isOptionalString,
+} from '../util/validators';
 
 
 // **** Types ***** //
@@ -37,6 +45,7 @@ const User = schema<IUser>({
     url: isOptionalString,
   }, true, true),
 });
+
 
 
 // **** Export default **** //

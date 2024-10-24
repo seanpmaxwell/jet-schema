@@ -1,7 +1,7 @@
 import { getEnumVals, isArr, isDate, isFn, isObj, isUndef, TFunc } from './util';
 
 
-// **** Types **** //
+// **** Shared Types **** //
 
 // Check if an object is a "named" static object
 // This roots out Record<string,...> and makes sure we use a named type
@@ -11,7 +11,7 @@ type _TStaticObj<Prop> = string extends keyof Prop ? never : {
 type _TConvertInterfaceToType<Prop> = {
   [K in keyof Prop]: Prop[K];
 };
-type IsStaticObj<Prop> = (
+type IsStaticObj<P, Prop = NonNullable<P>> = (
   _TConvertInterfaceToType<Prop> extends _TStaticObj<Prop> ? true : false
 );
 
@@ -24,100 +24,130 @@ interface TVldrFn {
 
 // Utility types
 type NotUndef<T> = Exclude<T, undefined>;
-type Flatten<T> = (T extends unknown[] ? T[number] : NonNullable<T>);
-type TBaseType<T> = Flatten<NonNullable<T>>;
+// type Flatten<T> = (T extends unknown[] ? T[number] : NonNullable<T>);
 type TModel = Record<string | number | symbol, unknown>;
 type CheckNull<T> = null extends T ? NonNullable<T> | null : NonNullable<T>;
-type TRefine<T> = (arg: unknown) => arg is undefined extends T ? CheckNull<NotUndef<T>> | undefined : CheckNull<NotUndef<T>>;
+type CheckNullables<T> = (undefined extends T ? CheckNull<NotUndef<T>> | undefined : CheckNull<NotUndef<T>>);
+type CheckNullAlt<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
+type CheckNullablesAlt<T, isU, isN> = (isU extends true ? CheckNullAlt<NotUndef<T>, isN> | undefined : CheckNullAlt<NotUndef<T>, isN>);
+type TRefine<T> = (arg: unknown) => arg is CheckNullables<T>;
 type TEnum = Record<string, string | number>;
 type TDefaultVals = Record<string | number | symbol, TFunc>;
 type TValidators = Record<string | number | symbol, TVldrFn>;
+type GetTypePredicate<T> = T extends (x: any) => x is infer U ? U : never;
 
-// Return value for the pick function
-type TPickRetVal<T> = ({
-  test: (arg: unknown) => arg is NotUndef<T>,
-  default: () => NotUndef<T>,
-}) & (IsStaticObj<Flatten<T>> extends true ? null extends T ? {
-  pick?: <K extends keyof NonNullable<T>>(key: K) => TPickRetVal<NonNullable<T>[K]>,
-} : undefined extends T ? {
-  pick?: <K extends keyof NotUndef<T>>(key: K) => TPickRetVal<NotUndef<T>[K]>,
-} : {
-  pick: <K extends keyof T>(key: K) => TPickRetVal<T[K]>,
-} : object);
 
-interface ISchema<T> {
-  new: (arg?: Partial<T>) => T;
-  test: (arg: unknown) => arg is T;
-  pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
-  _schemaSettings: {
-    isOptional: boolean;
-    isNullable: boolean;
-    instantiateWithParent: boolean;
-  };
-}
-
-type TTypeArr<Type> = ([Type, TRefine<Type>] | TRefine<Type>);
-
-export type TSchemaObj<T> = {
-  [K in keyof T]:
-  TBaseType<T[K]> extends boolean
-  ? TTypeArr<T[K]>
-  : TBaseType<T[K]> extends (string | number)
-  ? (TTypeArr<T[K]> | TEnum)
-  : TBaseType<T[K]> extends Date 
-  ? DateConstructor | [(string | number | Date | null), TRefine<T[K]>] | TRefine<T[K]>
-  : IsStaticObj<Flatten<T[K]>> extends true
-  ? ISchema<T[K]>
-  : TBaseType<T[K]> extends Record<string, unknown>
-  ? [T[K], TRefine<T[K]>]
-  : never;
-};
-
-// Need to restrict parameters based on if "T" is null or undefined.
-type Args<T> =
-  // Undefined and null
-  (undefined extends T ? (null extends T ? [
-    isOptional: true,
-    isNullable: true,
-    instantiateWithParent?: boolean,
-  // Undefined not null
-  ] : [
-    isOptional: true,
-    isNullable?: false,
-    instantiateWithParent?: boolean,
-  // Not undefined and null
-  ]) : (null extends T ? [
-    isOptional: true,
-    isNullable?: false,
-    instantiateWithParent?: boolean,
-  // Not undefined and not null
-  ] : [
-    isOptional?: false,
-    isNullable?: false,
-    instantiateWithParent?: true,
-  ]));
-
-type TGetSchemaFn = <T, U extends TSchemaObj<T> = TSchemaObj<T>>(_: U, ...__: Args<T>) => ISchema<T>;
+// **** Schema Types **** //
 
 // Set the Default values arrays
-type GetTypePredicate<T> = T extends (x: any) => x is infer U ? U : never;
-type TDefaultValArrItem<T> = {
+type TDefaultValsMap<T> = {
   [K in keyof T]: {
     0: ((arg: unknown) => arg is unknown),
     1: 0 extends keyof T[K] ? GetTypePredicate<T[K][0]> : never,
   }
 }
 
+// Return value for the pick function
+type TPickRetVal<T> = {
+  test: (arg: unknown) => arg is T,
+  default: () => T,
+} & (IsStaticObj<T> extends true ? {
+  pick: <K extends keyof NonNullable<T>>(key: K) => TPickRetVal<NonNullable<T>[K]>,
+  new: (arg?: Partial<T>) => NonNullable<T>;
+} : {});
+
+// Value returned by the "schema" function
+interface ISchema<T> {
+  new: (arg?: Partial<T>) => NonNullable<T>;
+  test: (arg: unknown) => arg is T;
+  pick: <K extends keyof T>(prop: K) => (null extends T[K] ? Partial<TPickRetVal<T[K]>> : undefined extends T[K] ? Partial<TPickRetVal<T[K]>> : never);
+  _schemaSettings: {
+    isOptional: boolean;
+    isNullable: boolean;
+    defaultVal: boolean | null;
+  };
+}
+
+type TTypeArr<Type> = ([Type, TRefine<Type>] | TRefine<Type>);
+
+// Main argument passed to the schema functions
+export type TSchemaFnObjArg<T> = {
+  [K in keyof T]:
+  T[K] extends (string | number)
+  ? (TTypeArr<T[K]> | TEnum)
+  : T[K] extends Date 
+  ? (DateConstructor | [(string | number | Date | null), TRefine<T[K]>] | TRefine<T[K]>)
+  : IsStaticObj<T[K]> extends true
+  ? ISchema<T[K]>
+  : TTypeArr<T[K]>;
+};
+
+// Need to restrict parameters based on if "T" is null or undefined.
+type TSchemaFnArgs<T> = 
+  // If T is unknown (inferring types)
+  unknown extends T ? [
+    isOptional?: boolean,
+    isNullable?: boolean,
+    defaultVal?: boolean | null,
+  ] : 
+  // Undefined and null
+  (undefined extends T ? (null extends T ? [
+    isOptional: true,
+    isNullable: true,
+    defaultVal?: boolean | null,
+  // Undefined not null
+  ] : [
+    isOptional: true,
+    isNullable?: false,
+    defaultVal?: boolean,
+  // Not undefined and null
+  ]) : (null extends T ? [
+    isOptional: true,
+    isNullable?: false,
+    defaultVal?: true | null,
+  // Not undefined and not null
+  ] : [
+    isOptional?: false,
+    isNullable?: false,
+    defaultVal?: true,
+  ]));
+
+// The function that creates schemas "schema()"
+// type TSchemaFn = <T, U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>>(_: U, ...__: TSchemaFnArgs<T>) => ISchema<T>;
+
+
+// **** Infer Types **** //
+
+export type PublicInferType<S> = S extends ISchema<unknown> ? GetTypePredicate<S['test']> : never;
+
+type InferTypes<U extends TSchemaFnObjArg<unknown>, isOpt, isNul> = CheckNullablesAlt<InferTypesHelper<U>, isOpt, isNul>;
+
+type InferTypesHelper<U> = {
+  [K in keyof U]: (
+    U[K] extends unknown[]
+      ? U[K][0]
+      : U[K] extends DateConstructor
+      ? Date
+      : U[K] extends TFunc 
+      ? GetTypePredicate<U[K]>
+      : U[K] extends ISchema<unknown>
+      ? GetTypePredicate<U[K]['test']>
+      : U[K] extends (string | number) 
+      ? U[K]
+      : never
+    );
+}
+ 
 
 // **** Functions **** //
 
 /**
  * Core jetSchema functions
  */
-function jetSchema<T extends TDefaultValArrItem<T>>(
-  defaultValuesArr?: T extends [TFunc, unknown][] ? T : never,
+function jetSchema<M extends TDefaultValsMap<M>>(
+  defaultValuesArr?: M extends [TFunc, unknown][] ? M : never,
   cloneFnArg?: TFunc,
-): TGetSchemaFn {
+) {
 
   // Setup default values map
   const defaultValsMap = new Map(defaultValuesArr);
@@ -128,23 +158,19 @@ function jetSchema<T extends TDefaultValArrItem<T>>(
   } else {
     cloneFn = (arg: unknown) => _clone(arg);
   }
-  // Setup the schema function. If T required then "intantiateWithParent"
-  // cannot be false, required must be instantiated with the parent.
-  return <T, U extends TSchemaObj<T> = TSchemaObj<T>>(
-    schemaObj: U,
-    ...rest: Args<T>
-  ): ISchema<T> => {
+
+  // Return the "schema" function
+  return <T, U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>, R extends TSchemaFnArgs<T> = TSchemaFnArgs<T>>(
+    schemaFnObjArg: U,
+    ...rest: R
+  ) => {
     // Setup
-    const [ isOptional = false, isNullable = false, instantiateWithParent ] = rest,
-      ret = _setupDefaultsAndValidators(schemaObj, cloneFn, defaultValsMap),
+    const [ isOptional = false, isNullable = false, defaultVal = true ] = rest,
+      ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap),
       newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn),
       testFn = _setupTestFn(ret.validators, isOptional, isNullable);
     // "instantiateWithParent"
-    let instantiateWithParentf = !!instantiateWithParent;
-    if (isUndef(instantiateWithParent)) {
-      instantiateWithParentf = true;
-    }
-    if (!isOptional && !isNullable && !instantiateWithParentf) {
+    if (!isOptional && !isNullable && !defaultVal) {
       throw new Error('Must insantiate with parent if schema is neither optional or nullable');
     }
     // Return
@@ -152,25 +178,24 @@ function jetSchema<T extends TDefaultValArrItem<T>>(
       new: newFn,
       test: testFn,
       pick: <K extends keyof T>(p: K) => {
-        const prop = schemaObj[p];
-        return {
-          default: (
-            _isSchemaObj(prop) 
-              ? ret.schemaDefaults[p] 
-              : ret.defaults[p]
-          ),
-          test: ret.validators[p],
-          ...(_isSchemaObj(prop) ? {
-            pick: prop.pick,
-          } : {}),
-        };
+        const prop = schemaFnObjArg[p];
+        if (!!prop) {
+          return {
+            default: ret.defaults[p],
+            test: ret.validators[p],
+            ...(_isSchemaObj(prop) ? {
+              pick: prop.pick,
+              new: ret.childSchemaNewFns[p],
+            } : {}),
+          };
+        }
       },
       _schemaSettings: {
         isOptional,
         isNullable,
-        instantiateWithParent: instantiateWithParentf,
+        defaultVal,
       },
-    } as ISchema<T>;
+    } as ISchema<unknown extends T ? InferTypes<U, R[0], R[1]> : T>;
   }
 }
 
@@ -178,16 +203,16 @@ function jetSchema<T extends TDefaultValArrItem<T>>(
  * Setup the new() function
  */
 function _setupDefaultsAndValidators<T>(
-  setupObj: TSchemaObj<T>,
+  setupObj: TSchemaFnObjArg<T>,
   cloneFn: TFunc,
   defaultValsMap: Map<TFunc, unknown>,
 ): {
-  schemaDefaults: TDefaultVals
+  childSchemaNewFns: TDefaultVals
   defaults: TDefaultVals,
   validators: TValidators,
 } {
   const defaults: TDefaultVals = {},
-    schemaDefaults: TDefaultVals = {},
+    childSchemaNewFns: TDefaultVals = {},
     validators: TValidators = {};
   for (const key in setupObj) {
     const setupVal = setupObj[key];
@@ -201,11 +226,14 @@ function _setupDefaultsAndValidators<T>(
       validators[key] = setupVal[1];
     // Schema
     } else if (_isSchemaObj(setupVal)) {
-      const childSchema = setupVal;
-      if (childSchema._schemaSettings.instantiateWithParent) {
+      const childSchema = setupVal,
+        dflt = childSchema._schemaSettings.defaultVal;
+      if (dflt === true) {
         defaults[key] = () => childSchema.new();
+      } else {
+        defaults[key] = () => dflt;
       }
-      schemaDefaults[key] = () => childSchema.new();
+      childSchemaNewFns[key] = () => childSchema.new();
       validators[key] = childSchema.test;
     // Enum
     } else if (isObj(setupVal)) {
@@ -226,10 +254,14 @@ function _setupDefaultsAndValidators<T>(
     } else if (setupVal === null) {
       defaults[key] = () => null;
     }
+    // Make sure the default is a valid value
+    if (validators[key](defaults[key])) {
+      throw new Error('Default value was missing or invalid');
+    }
   }
   // Return
   return {
-    schemaDefaults,
+    childSchemaNewFns,
     defaults,
     validators,
   };

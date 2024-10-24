@@ -3,7 +3,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
 
-interface ITransformAndVldt<T> {
+export interface ITransformAndVldt<T> {
   (arg: unknown): arg is T;
   transformedFlag?: boolean;
   transformedVal?: T;
@@ -125,3 +125,4 @@ export function transform<T>(
   };
   return transformAndVldt;
 }
+

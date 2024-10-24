@@ -1,6 +1,7 @@
-import { transform } from './util/schema';
+import { ITransformAndVldt, transform } from '../src';
+
 import User from './models/User';
-import { isNumberArray } from './util/validators';
+import { isNumberArray, nonNullable } from './util/validators';
 
 
 // Test schema new
@@ -9,8 +10,14 @@ console.log(User.new({
   age: '123' as unknown as number,
 }));
 
+console.log(User.pick('avatar').default?.())
+console.log(User.pick('avatar').new?.())
+console.log(User.pick('avatar').pick?.('data'))
+
+const avatar = User.pick('avatar').new?.();
+// console.log(nonNullable(User.pick('avatar').test)())
+// console.log(nonNullable(User.pick('avatar').test)(avatar))
 
 // Test trans function
-const customTest: ReturnType<typeof transform> = transform(JSON.parse,
-  isNumberArray);
+const customTest: ITransformAndVldt<number[]> = transform(JSON.parse, isNumberArray);
 console.log(customTest('[1,2,3,5]'));
