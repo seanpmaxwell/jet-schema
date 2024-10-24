@@ -9,6 +9,8 @@ import {
 } from '../util/validators';
 
 
+// **** Setup ***** //
+
 const Post = schema({
   id: isRelationalKey,
   mesage: isString,
@@ -17,32 +19,30 @@ const Post = schema({
   image: schema({
     fileName: isString,
     data: isString,
+  }),
+  imageOpt: schema({
+    fileName: isString,
+    data: isString,
+  }, true),
+  imageOptNull: schema({
+    fileName: isString,
+    data: isString,
   }, true, true),
+  imageNull: schema({
+    fileName: isString,
+    data: isString,
+  }, false, true),
 });
 
-export type TPost = inferType<typeof Post>
-
-const customPost: TPost = {
-  id: -1,
-  mesage: '123',
-  index: 0,
-  created: new Date(),
-  // image: {
-  //   data: '',
-  //   fileName: '',
-  // }
-  // image: null,
-  image: undefined,
-}
+export type IPost = inferType<typeof Post>
 
 
+// const other = schema({
+//   fileName: isString,
+//   data: isString,
+// }, true, true);
 
-const other = schema({
-  fileName: isString,
-  data: isString,
-}, true, true);
-
-let val: unknown = 'asdf'
-if (other.test(val)) {
-  console.log(val?.data)
-}
+// let val: unknown = 'asdf'
+// if (other.test(val)) {
+//   console.log(val?.data)
+// }

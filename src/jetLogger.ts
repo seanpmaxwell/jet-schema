@@ -1,7 +1,7 @@
 import { getEnumVals, isArr, isDate, isFn, isObj, isUndef, TFunc } from './util';
 
 
-// **** Shared Types **** //
+// **** Fancy Composite Types **** //
 
 // Check if an object is a "named" static object
 // This roots out Record<string,...> and makes sure we use a named type
@@ -22,15 +22,20 @@ interface TVldrFn {
   transformedVal?: unknown;
 }
 
-// Utility types
+// If a mapped type property can be undefined, make it optional
+type MakeOptIfUndef<T> = {
+  [K in keyof T as undefined extends T[K] ? K : never]?: T[K]
+} & {
+  [K in keyof T as undefined extends T[K] ? never : K]: T[K]
+};
+
+
+// **** Utility types **** //
+
 type NotUndef<T> = Exclude<T, undefined>;
-// type Flatten<T> = (T extends unknown[] ? T[number] : NonNullable<T>);
 type TModel = Record<string | number | symbol, unknown>;
-type CheckNull<T> = null extends T ? NonNullable<T> | null : NonNullable<T>;
-type CheckNullables<T> = (undefined extends T ? CheckNull<NotUndef<T>> | undefined : CheckNull<NotUndef<T>>);
-type CheckNullAlt<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
-type CheckNullablesAlt<T, isU, isN> = (isU extends true ? CheckNullAlt<NotUndef<T>, isN> | undefined : CheckNullAlt<NotUndef<T>, isN>);
-type TRefine<T> = (arg: unknown) => arg is CheckNullables<T>;
+type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
+type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
 type TEnum = Record<string, string | number>;
 type TDefaultVals = Record<string | number | symbol, TFunc>;
 type TValidators = Record<string | number | symbol, TVldrFn>;
@@ -68,6 +73,7 @@ interface ISchema<T> {
   };
 }
 
+type TRefine<T> = (arg: unknown) => arg is T;
 type TTypeArr<Type> = ([Type, TRefine<Type>] | TRefine<Type>);
 
 // Main argument passed to the schema functions
@@ -112,15 +118,17 @@ type TSchemaFnArgs<T> =
     defaultVal?: true,
   ]));
 
-// The function that creates schemas "schema()"
-// type TSchemaFn = <T, U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>>(_: U, ...__: TSchemaFnArgs<T>) => ISchema<T>;
-
 
 // **** Infer Types **** //
 
 export type PublicInferType<S> = S extends ISchema<unknown> ? GetTypePredicate<S['test']> : never;
 
-type InferTypes<U extends TSchemaFnObjArg<unknown>, isOpt, isNul> = CheckNullablesAlt<InferTypesHelper<U>, isOpt, isNul>;
+type InferTypes<U, isOpt, isNul> =
+  AddNullables<
+    MakeOptIfUndef<InferTypesHelper<U>>,
+    isOpt,
+    isNul
+  >;
 
 type InferTypesHelper<U> = {
   [K in keyof U]: (

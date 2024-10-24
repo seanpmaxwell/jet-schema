@@ -21,12 +21,23 @@ interface IUser {
   created: Date;
   lastLogin: Date;
   avatar?: IAvatar | null;
+  address: IAddress;
 }
 
-export interface IAvatar {
+interface IAvatar {
   fileName: string;
   data: string;
   url?: string;
+}
+
+interface IAddress {
+  street: string;
+  city: string;
+  zip: number;
+  country: {
+    name: string;
+    code: number;
+  };
 }
 
 
@@ -44,6 +55,15 @@ const User = schema<IUser>({
     data: isString,
     url: isOptionalString,
   }, true, true),
+  address: schema({
+    street: isString,
+    city: isString,
+    zip: isNumber,
+    country: schema({
+      name: isString,
+      code: isNumber,
+    }),
+  }),
 });
 
 

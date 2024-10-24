@@ -1,8 +1,11 @@
 import { ITransformAndVldt, transform } from '../src';
 
 import User from './models/User';
+import { IPost } from './models/Post';
 import { isNumberArray, nonNullable } from './util/validators';
 
+
+// **** User Test Stuff (User has an explicit type) **** //
 
 // Test schema new
 console.log(User.new({
@@ -15,9 +18,33 @@ console.log(User.pick('avatar').new?.())
 console.log(User.pick('avatar').pick?.('data'))
 
 const avatar = User.pick('avatar').new?.();
-// console.log(nonNullable(User.pick('avatar').test)())
-// console.log(nonNullable(User.pick('avatar').test)(avatar))
+const testAvatar = nonNullable(User.pick('avatar').test!);
+console.log(testAvatar('asdf'))
+console.log(testAvatar(avatar))
 
 // Test trans function
 const customTest: ITransformAndVldt<number[]> = transform(JSON.parse, isNumberArray);
 console.log(customTest('[1,2,3,5]'));
+
+
+// **** Post test stuff (Post has an inferred type) **** //
+
+const customPost: IPost = {
+  id: -1,
+  mesage: '123',
+  index: 0,
+  created: new Date(),
+  image: {
+    data: '',
+    fileName: '',
+  },
+  // image: null,
+  // imageOpt: undefined,
+  imageNull: null,
+  // imageOptNull: null,
+  // imageNull: {
+  //   fileName: '',
+  //   data: '',
+  // },
+}
+
