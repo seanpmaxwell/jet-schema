@@ -1,8 +1,8 @@
-import jetLogger, { trans as transLib } from '../../src';
+import jetLogger, { transform as transformLib } from '../../src';
 import { isBoolean, isEmail, isNumber, isRelationalKey, isString } from './validators';
 
 
-export const trans = transLib;
+export const transform = transformLib;
 
 const customClone = (arg: unknown) => {
   const val = JSON.stringify(arg);

@@ -93,7 +93,7 @@ export function isFn(arg: unknown): arg is TFunc {
 /**
  * Not necessarily a Date object but makes sure it is a valid date.
  */
-export const isDate = trans((arg: string | number | Date) => {
+export const isDate = transform((arg: string | number | Date) => {
   return new Date(arg)
 }, isValidDate);
 
@@ -111,13 +111,13 @@ export function isValidDate(val: unknown): val is Date {
 /**
  * Transform a value before checking it.
  */
-export function trans<T>(
-  transformFn: TFunc,
+export function transform<T>(
+  transFn: TFunc,
   cb: ((arg: unknown) => arg is T),
 ): ITransformAndVldt<T> {
   const transformAndVldt: ITransformAndVldt<T> = (arg: unknown): arg is T => {
     if (arg !== undefined) {
-      arg = transformFn(arg);
+      arg = transFn(arg);
     }
     transformAndVldt.transformedFlag = true;
     transformAndVldt.transformedVal = arg as T;

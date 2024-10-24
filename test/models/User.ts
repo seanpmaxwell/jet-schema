@@ -1,5 +1,5 @@
 
-import schema, { trans } from '../util/schema'
+import schema, { transform } from '../util/schema'
 import { isEmail, isNumber, isRelationalKey, isString, isOptionalString } from '../util/validators';
 
 
@@ -28,7 +28,7 @@ const User = schema<IUser>({
   id: isRelationalKey,
   name: isString,
   email: isEmail,
-  age: trans(Number, isNumber),
+  age: transform(Number, isNumber),
   created: Date,
   lastLogin: Date,
   avatar: schema({
