@@ -28,7 +28,7 @@ const User = schema<IUser>({
   id: isRelKey,
   name: isStr,
   email: isEmail,
-  age: isNum,
+  age: trans(Number, isNum),
   created: Date,
   lastLogin: Date,
   avatar: schema({
@@ -37,5 +37,8 @@ const User = schema<IUser>({
     url: optIsStr,
   }, true, true),
 });
+
+
+// **** Export default **** //
 
 export default User;
