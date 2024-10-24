@@ -10,4 +10,7 @@ export default jetLogger([
   [isStr, ''],
   [isRelKey, -1],
   [isEmail, 'a@a.com'],
-]);
+], (arg: unknown) => {
+  const val = JSON.stringify(arg);
+  return JSON.parse(val);
+});
