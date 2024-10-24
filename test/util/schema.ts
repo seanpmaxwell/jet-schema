@@ -1,6 +1,8 @@
-import jetLogger from '../../src';
+import jetLogger, { trans as transLib } from '../../src';
 import { isBool, isEmail, isNum, isRelKey, isStr } from './validators';
 
+
+export const trans = transLib;
 
 export default jetLogger([
   [isBool, false],

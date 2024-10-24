@@ -93,9 +93,9 @@ export function isFn(arg: unknown): arg is TFunc {
 /**
  * Not necessarily a Date object but makes sure it is a valid date.
  */
-export function isDate(arg: unknown): arg is Date {
-  return trans(Date, isValidDate)(arg) ;
-} 
+export const isDate = trans((arg: string | number | Date) => {
+  return new Date(arg)
+}, isValidDate);
 
 /**
  * HACK: isn't necessarily a date object but says its one if it is a valid 
@@ -104,7 +104,7 @@ export function isDate(arg: unknown): arg is Date {
 export function isValidDate(val: unknown): val is Date {
   return (
     (isStr(val) || isNum(val) || (val instanceof Date)) && 
-    isNaN(new Date(val as any).getTime())
+    !isNaN(new Date(val as any).getTime())
   )
 }
 

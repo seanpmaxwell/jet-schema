@@ -194,7 +194,7 @@ function _setupDefaultsAndValidators<T>(
     // Date
     if (setupVal === Date) {
       defaults[key] = () => new Date();
-      validators[key] = (arg: unknown) => isDate(arg);
+      validators[key] = isDate;
     // An array
     } else if (isArr(setupVal)) {
       defaults[key] = () => cloneFn(setupVal[0]);

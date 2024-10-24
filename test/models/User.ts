@@ -1,5 +1,6 @@
-import schema from '../util/schema'
-import { isEmail, isRelKey, isStr, optIsStr } from '../util/validators';
+
+import schema, { trans } from '../util/schema'
+import { isEmail, isNum, isRelKey, isStr, optIsStr } from '../util/validators';
 
 
 // **** Types ***** //
@@ -7,8 +8,10 @@ import { isEmail, isRelKey, isStr, optIsStr } from '../util/validators';
 interface IUser {
   id: number; // pk
   name: string;
+  age: number;
   email: string;
   created: Date;
+  lastLogin: Date;
   avatar?: IAvatar | null;
 }
 
@@ -25,7 +28,9 @@ const User = schema<IUser>({
   id: isRelKey,
   name: isStr,
   email: isEmail,
+  age: isNum,
   created: Date,
+  lastLogin: Date,
   avatar: schema({
     fileName: isStr,
     data: isStr,
@@ -33,4 +38,4 @@ const User = schema<IUser>({
   }, true, true),
 });
 
-console.log(User.new());
+export default User;
