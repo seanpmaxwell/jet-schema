@@ -1,6 +1,6 @@
 
 import schema, { trans } from '../util/schema'
-import { isEmail, isNum, isRelKey, isStr, optIsStr } from '../util/validators';
+import { isEmail, isNumber, isRelationalKey, isString, isOptionalString } from '../util/validators';
 
 
 // **** Types ***** //
@@ -25,16 +25,16 @@ export interface IAvatar {
 // **** Setup **** //
 
 const User = schema<IUser>({
-  id: isRelKey,
-  name: isStr,
+  id: isRelationalKey,
+  name: isString,
   email: isEmail,
-  age: trans(Number, isNum),
+  age: trans(Number, isNumber),
   created: Date,
   lastLogin: Date,
   avatar: schema({
-    fileName: isStr,
-    data: isStr,
-    url: optIsStr,
+    fileName: isString,
+    data: isString,
+    url: isOptionalString,
   }, true, true),
 });
 

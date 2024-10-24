@@ -1,5 +1,5 @@
 import jetLogger, { trans as transLib } from '../../src';
-import { isBool, isEmail, isNum, isRelKey, isStr } from './validators';
+import { isBoolean, isEmail, isNumber, isRelationalKey, isString } from './validators';
 
 
 export const trans = transLib;
@@ -10,9 +10,9 @@ const customClone = (arg: unknown) => {
 }
 
 export default jetLogger([
-  [isBool, false],
-  [isNum, 0],
-  [isStr, ''],
-  [isRelKey, -1],
+  [isBoolean, false],
+  [isNumber, 0],
+  [isString, ''],
+  [isRelationalKey, -1],
   [isEmail, 'a@a.com'],
 ], customClone);

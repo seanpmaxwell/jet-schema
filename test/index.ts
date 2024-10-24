@@ -1,6 +1,6 @@
 import { trans } from './util/schema';
 import User from './models/User';
-import { isNumArr } from './util/validators';
+import { isNumberArray } from './util/validators';
 
 
 // Test schema new
@@ -11,5 +11,5 @@ console.log(User.new({
 
 
 // Test trans function
-const customTest: ReturnType<typeof trans> = trans(JSON.parse, isNumArr);
+const customTest: ReturnType<typeof trans> = trans(JSON.parse, isNumberArray);
 console.log(customTest('[1,2,3,5]'));
