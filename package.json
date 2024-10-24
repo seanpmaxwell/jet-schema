@@ -1,0 +1,39 @@
+{
+  "name": "jet-schema",
+  "version": "1.0.0",
+  "description": "Simple, typescript-first schema validation tool",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "test": "ts-node ./test",
+    "build": "rm -rf ./dist && tsc -p tsconfig.build.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seanpmaxwell/jet-schema.git"
+  },
+  "keywords": [
+    "jet",
+    "jet-schema",
+    "zod",
+    "typia",
+    "typebox",
+    "joi",
+    "atv",
+    "schema",
+    "validation",
+    "validator",
+    "json"
+  ],
+  "author": "sean maxwell",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/seanpmaxwell/jet-schema/issues"
+  },
+  "homepage": "https://github.com/seanpmaxwell/jet-schema#readme",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.3",
+    "typescript": "^5.5.4"
+  }
+}
