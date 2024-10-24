@@ -1,4 +1,4 @@
-import { ITransformAndVldt, transform } from '../src';
+import { transform, ITransformAndTest } from '../src';
 
 import User from './models/User';
 import { IPost } from './models/Post';
@@ -23,7 +23,7 @@ console.log(testAvatar('asdf'))
 console.log(testAvatar(avatar))
 
 // Test trans function
-const customTest: ITransformAndVldt<number[]> = transform(JSON.parse, isNumberArray);
+const customTest: ITransformAndTest<number[]> = transform(JSON.parse, isNumberArray);
 console.log(customTest('[1,2,3,5]'));
 
 
