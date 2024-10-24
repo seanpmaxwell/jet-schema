@@ -1,6 +1,5 @@
 # Jet-Schema ✈️
 > Simple, zero-dependency, typescript-first schema validation tool, that lets you use your own validation functions (inferring types included!).
-<br/>
 
 
 ## Introduction
