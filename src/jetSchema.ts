@@ -258,8 +258,8 @@ function _setupDefaultsAndValidators<T>(
     }
     // Make sure the default is a valid value
     const vldr = validators[key],
-      dflt = defaults[key];
-    if (!!dflt && !vldr(dflt())) {
+      dfltVal = defaults[key]?.();
+    if (!vldr(dfltVal)) {
       throw new Error(`Default value for key "${key}" was missing or invalid`);
     }
   }

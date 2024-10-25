@@ -47,7 +47,7 @@ const User = schema<IUser>({
   id: isRelationalKey,
   name: isString,
   email: ['', isEmail],
-  age: transform(Number, isNumber),
+  age: [0, transform(Number, isNumber)],
   created: Date,
   lastLogin: Date,
   avatar: schema({

@@ -1,8 +1,17 @@
-import { transform } from '../src';
+import { TJetSchema, transform } from '../src';
 
 import User from './models/User';
 import { IPost } from './models/Post';
-import { isNumberArray, nonNullable } from './util/validators';
+import schema from './util/schema';
+
+import {
+  isBoolean,
+  isNumberArray,
+  nonNullable,
+  isNumber,
+  isString,
+} from './util/validators';
+import { isNum } from '../src/util';
 
 
 // **** User Test Stuff (User has an explicit type) **** //
@@ -49,3 +58,18 @@ const customPost: IPost = {
   // },
 }
 
+
+// **** Test Partial Schema **** //
+
+const PartialSchema: TJetSchema<{ id: number, name: string }> = {
+  // id: isNum, // should throw error
+  id: isNumber,
+  name: isString,
+} as const;
+
+const FullSchema = schema<{ id: number, name: string, e: boolean }>({
+  ...PartialSchema,
+  e: isBoolean,
+});
+
+console.log(FullSchema.new());

@@ -144,15 +144,36 @@ Once you have you schema setup, you can call the `new`, `test`, and `pick` funct
 
 
 ### Make schemas optional/nullable ❔
-- In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<...Your Type...>()`, so you must supply the correct parameters. So for example, if the schema-type is nullable or optional, then you must enter `true` for the second and third parameters.
-- The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` or `undefined` the value will not be initialized with the parent, if `null` (schema must be nullable) value will be `null`, and if `true` then a full schema object will be created. 
+In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<...Your Type...>()`, so you must supply the correct parameters. So for example, if the schema-type is nullable or optional, then you must enter `true` for the second and third parameters.<br/>
+
+The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` or `undefined` the value will not be initialized with the parent, if `null` (schema must be nullable) value will be `null`, and if `true` then a full schema object will be created. 
 
 
 ### Transforming values with `transform()` 🤖
-- If you want to modify a value before it passes through a validator function, you can import the `transform` function and wrap your validator function with it. `transform` calls the validator function and fires a callback with the modified value if the callback was provided. When calling `new` or `test`, `transform` will modify the object being used as an argument in. I've found `transform` can be useful for other parts of my application where I need to modify a value before validating it and returning the transformed value. The function firing the callback still returns a type-predicate.
+If you want to modify a value before it passes through a validator function, you can import the `transform` function and wrap your validator function with it. `transform` calls the validator function and fires a callback with the modified value if the callback was provided. When calling `new` or `test`, `transform` will modify the object being used as an argument in. I've found `transform` can be useful for other parts of my application where I need to modify a value before validating it and returning the transformed value. The function firing the callback still returns a type-predicate.
 ```typescript
 import { transform } from 'jet-schema';
 
 const customTest = transform(JSON.parse, isNumberArray);
 console.log(customTest('[1,2,3,5]', transVal => console.log(transVal)));
+```
+
+
+### Using Partial Schemas
+For whatever reason, your schema may end up existing in multiple places. If you want to declare a partial schema, you can import the `TJetSchema` type and use it to setup a partial type, the merge that type with your full schema later.
+
+```typescript
+import schema, { TJetSchema } from 'jet-schema';
+
+const PartialSchema: TJetSchema<{ id: number, name: string }> = {
+  id: isNumber,
+  name: isString,
+} as const;
+
+const FullSchema = schema<{ id: number, name: string, e: boolean }>({
+  ...PartialSchema,
+  e: isBoolean,
+});
+
+console.log(FullSchema.new());
 ```
