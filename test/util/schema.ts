@@ -1,5 +1,5 @@
 import jetLogger from '../../src';
-import { isBoolean, isEmail, isNumber, isRelationalKey, isString } from './validators';
+import { isBoolean, isNumber, isRelationalKey, isString } from './validators';
 
 
 const customClone = (arg: unknown) => {
@@ -12,5 +12,4 @@ export default jetLogger([
   [isNumber, 0],
   [isString, ''],
   [isRelationalKey, -1],
-  [isEmail, 'a@a.com'],
 ], customClone);

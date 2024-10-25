@@ -1,4 +1,4 @@
-import { transform, ITransformAndTest } from '../src';
+import { transform } from '../src';
 
 import User from './models/User';
 import { IPost } from './models/Post';
@@ -16,15 +16,16 @@ console.log(User.new({
 console.log(User.pick('avatar').default?.())
 console.log(User.pick('avatar').new?.())
 console.log(User.pick('avatar').pick?.('data'))
+console.log(User.pick('avatar').pick?.('data').default())
 
 const avatar = User.pick('avatar').new?.();
 const testAvatar = nonNullable(User.pick('avatar').test!);
-console.log(testAvatar('asdf'))
+// console.log(testAvatar('asdf')) // Should throw error
 console.log(testAvatar(avatar))
 
 // Test trans function
-const customTest: ITransformAndTest<number[]> = transform(JSON.parse, isNumberArray);
-console.log(customTest('[1,2,3,5]'));
+const customTest = transform(JSON.parse, isNumberArray);
+console.log(customTest('[1,2,3,5]', transVal => console.log(transVal)));
 
 
 // **** Post test stuff (Post has an inferred type) **** //

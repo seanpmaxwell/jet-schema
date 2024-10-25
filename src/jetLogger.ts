@@ -1,12 +1,7 @@
-import { getEnumVals, isArr, isDate, isFn, isObj, isUndef, TFunc } from './util';
+import { getEnumVals, isArr, isDate, isFn, isObj, isUndef, TFunc, TValidatorFn } from './util';
 
 
 // **** Fancy Composite Types **** //
-
-// Show the full 
-type ExpandRecursively<T> = T extends object
-  ? T extends infer O ? { [K in keyof O]: ExpandRecursively<O[K]> } : never
-  : T;
 
 // Check if an object is a "named" static object
 // This roots out Record<string,...> and makes sure we use a named type
@@ -19,13 +14,6 @@ type _TConvertInterfaceToType<Prop> = {
 type IsStaticObj<P, Prop = NonNullable<P>> = (
   _TConvertInterfaceToType<Prop> extends _TStaticObj<Prop> ? true : false
 );
-
-// Validator function type
-interface TVldrFn {
-  (arg: unknown): boolean;
-  transformedFlag?: boolean;
-  transformedVal?: unknown;
-}
 
 // If a mapped type property can be undefined, make it optional
 type MakeOptIfUndef<T> = {
@@ -43,7 +31,7 @@ type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : Non
 type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
 type TEnum = Record<string, string | number>;
 type TDefaultVals = Record<string | number | symbol, TFunc>;
-type TValidators = Record<string | number | symbol, TVldrFn>;
+type TValidators = Record<string | number | symbol, TValidatorFn<unknown>>;
 type GetTypePredicate<T> = T extends (x: any) => x is infer U ? U : never;
 
 
@@ -87,7 +75,7 @@ export type TSchemaFnObjArg<T> = {
   T[K] extends (string | number)
   ? (TTypeArr<T[K]> | TEnum)
   : T[K] extends Date 
-  ? (DateConstructor | [(string | number | Date | null), TRefine<T[K]>] | TRefine<T[K]>)
+  ? (DateConstructor | TTypeArr<T[K]>)
   : IsStaticObj<T[K]> extends true
   ? ISchema<T[K]>
   : TTypeArr<T[K]>;
@@ -174,18 +162,18 @@ function jetSchema<M extends TDefaultValsMap<M>>(
   }
 
   // Return the "schema" function
-  return <T, U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>, R extends TSchemaFnArgs<T> = TSchemaFnArgs<T>>(
-    schemaFnObjArg: U,
-    ...rest: R
-  ) => {
+  return <T,
+    U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
+    R extends TSchemaFnArgs<T> = TSchemaFnArgs<T>,
+  >(schemaFnObjArg: U, ...rest: R) => {
     // Setup
     const [ isOptional = false, isNullable = false, defaultVal = true ] = rest,
       ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap),
       newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn),
       testFn = _setupTestFn(ret.validators, isOptional, isNullable);
-    // "instantiateWithParent"
+    // "defaultVal"
     if (!isOptional && !isNullable && !defaultVal) {
-      throw new Error('Must insantiate with parent if schema is neither optional or nullable');
+      throw new Error('Default value must be the full schema-object if type is neither optional or nullable');
     }
     // Return
     return {
@@ -244,8 +232,8 @@ function _setupDefaultsAndValidators<T>(
         dflt = childSchema._schemaSettings.defaultVal;
       if (dflt === true) {
         defaults[key] = () => childSchema.new();
-      } else {
-        defaults[key] = () => dflt;
+      } else if (dflt === null) {
+        defaults[key] = () => null;
       }
       childSchemaNewFns[key] = () => childSchema.new();
       validators[key] = childSchema.test;
@@ -253,7 +241,7 @@ function _setupDefaultsAndValidators<T>(
     } else if (isObj(setupVal)) {
       const vals = getEnumVals(setupVal);
       defaults[key] = () => cloneFn(vals[0]);
-      validators[key] = (arg: unknown) => vals.some(item => item === arg);
+      validators[key] = (arg: unknown): arg is T[keyof T] => vals.some(item => item === arg);
     // Just a validator function
     } else if (isFn(setupVal)) {
       validators[key] = setupVal;
@@ -269,8 +257,10 @@ function _setupDefaultsAndValidators<T>(
       defaults[key] = () => null;
     }
     // Make sure the default is a valid value
-    if (validators[key](defaults[key])) {
-      throw new Error('Default value was missing or invalid');
+    const vldr = validators[key],
+      dflt = defaults[key];
+    if (!!dflt && !vldr(dflt())) {
+      throw new Error(`Default value for key "${key}" was missing or invalid`);
     }
   }
   // Return
@@ -305,12 +295,9 @@ function _setupNewFn(
     // Get values from partial
     for (const key in partial) {
       const testFn = validators[key];
-      if (testFn(partial[key])) {
-        if (testFn.transformedFlag) {
-          retVal[key] = testFn.transformedVal;
-        } else {
-          retVal[key] = cloneFn(partial[key]);
-        }
+      let val = partial[key];
+      if (testFn(val, ((transVal) => val = transVal))) {
+        retVal[key] = cloneFn(partial[key]);
       } else {
         throw new Error(`Property "${key}" was invalid.`);
       }
@@ -340,14 +327,12 @@ function _setupTestFn(
       throw new Error('test() failed: Parameter was not an object');
     }
     for (const key in validators) {
-      const testFn = validators[key],
-        val = (arg as TModel)[key];
-      if (!testFn(val)) {
+      const testFn = validators[key];
+      let val = (arg as TModel)[key];
+      if (!testFn(val, ((transVal) => val = transVal))) {
         throw new Error(`Property "${key}" was missing or invalid.`);
       }
-      if (testFn.transformedFlag) {
-        (arg as TModel)[key] = testFn.transformedVal;
-      }
+      (arg as TModel)[key] = val;
     }
     return true;
   };

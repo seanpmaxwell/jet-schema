@@ -46,13 +46,13 @@ interface IAddress {
 const User = schema<IUser>({
   id: isRelationalKey,
   name: isString,
-  email: isEmail,
+  email: ['', isEmail],
   age: transform(Number, isNumber),
   created: Date,
   lastLogin: Date,
   avatar: schema({
     fileName: isString,
-    data: isString,
+    data: [ 'asdfa;sdlfkj', isString ],
     url: isOptionalString,
   }, true, true),
   address: schema({

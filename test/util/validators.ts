@@ -65,7 +65,7 @@ export function isRelationalKey(arg: unknown): arg is number {
  * Is param a valid color.
  */
 export function isEmail(val: unknown): val is string {
-  return isString(val) && EMAIL_RGX.test(val);
+  return isString(val) && (val === '' || EMAIL_RGX.test(val));
 }
 
 /**

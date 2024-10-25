@@ -62,7 +62,10 @@ const User = schema<IUser>({
 ## Guide
 
 ### Getting Started 🚦
-First you need to initialize the `schema` function by importing the `jet-logger` function. `jetLogger` accepts two optional arguments, an array-map of which default value should be used for which validator-function: you should use this if you don't want to have to declare a default value every time. And the second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
+First you need to initialize the `schema` function by importing the `jet-logger` function. 
+- `jetLogger` accepts two optional arguments:
+  - an array-map of which default value should be used for which validator-function: you should use this for frequently used validator-functions where you don't want to declare a default value every time.
+  - The second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
 
 Usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function and import the apply defaults to any custom validators I've made. If you don't want to go through this step you can import the `schema` function directly from `jet-schema`.
@@ -89,9 +92,9 @@ import { isNum, isStr } from './type-checks';
 // import { schema } from 'jet-schema'; // No options
 
 export default jetSchema([
-  [isNumber, 0],
+  [isNum, 0],
   [isStr, ''],
-], 'pass a custom clone function here if you want to');
+], '...pass a custom clone function here if you want to...');
 ```
 <br/>
 
@@ -114,7 +117,7 @@ interface IUser {
 const User = schema<IUser>({
   id: isNum,
   name: isStr,
-  // You can pass your default/validator in an array instead.
+  // You can pass your defaults/validators in an array instead.
   email: ['', ((arg: str) => EMAIL_RGX.test(arg))]
   // NOTE: we don't have to pass this option since its optional
   nickName: isOptionalStr,
@@ -130,22 +133,26 @@ const TUser = inferType<typeof User>;
 ```
 <br/>
 
-**IMPORTANT:** Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply default value, the an error will end up getting thrown when `schema` is called.
+**IMPORTANT:** Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply default value, then an error will be thrown when `schema` is called.
 <br/>
 
 Once you have you schema setup, you can call the `new`, `test`, and `pick` functions. Here is an overview of what each one does:
 - `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will using the default supplied. If no default is supplied then the value will be skipped.
 - `test` accepts any unknown value, returns a type-predicate and will test it against the `schema`.
 - `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is nullable, then you need to use optional guard when calling it: `pick?.()`
+- If an object property is a mapped-type then it must be initialized with the schema function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default 
 
 
 ### Make schemas optional/nullable ❔
-- In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<Your-Generic>()`, so you must supply the correct parameters.
-- The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. // pick up here
-
-
-### Nested schemas 🧒
+- In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<...Your Type...>()`, so you must supply the correct parameters. So for example, if the schema-type is nullable or optional, then you must enter `true` for the second and third parameters.
+- The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` or `undefined` the value will not be initialized with the parent, if `null` (schema must be nullable) value will be `null`, and if `true` then a full schema object will be created. 
 
 
 ### Transforming values with `transform()` 🤖
+- If you want to modify a value before it passes through a validator function, you can import the `transform` function and wrap your validator function with it. `transform` calls the validator function and fires a callback with the modified value if the callback was provided. When calling `new` or `test`, `transform` will modify the object being used as an argument in. I've found `transform` can be useful for other parts of my application where I need to modify a value before validating it and returning the transformed value. The function firing the callback still returns a type-predicate.
+```typescript
+import { transform } from 'jet-schema';
 
+const customTest = transform(JSON.parse, isNumberArray);
+console.log(customTest('[1,2,3,5]', transVal => console.log(transVal)));
+```

@@ -3,11 +3,11 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
 
-export interface ITransformAndTest<T> {
-  (arg: unknown): arg is T;
-  transformedFlag?: boolean;
-  transformedVal?: T;
-}
+// The the type return from the transform function
+export type TValidatorFn<T> = (
+  arg: unknown,
+  cb?: ((transformedVal: T) => void),
+) => arg is T;
 
 
 // **** Functions **** //
@@ -113,16 +113,14 @@ export function isValidDate(val: unknown): val is Date {
  */
 export function transform<T>(
   transFn: TFunc,
-  cb: ((arg: unknown) => arg is T),
-): ITransformAndTest<T> {
-  const transformAndVldt: ITransformAndTest<T> = (arg: unknown): arg is T => {
+  vldt: ((arg: unknown) => arg is T),
+): TValidatorFn<T> {
+  return (arg: unknown, cb?: (arg: T) => void): arg is T => {
     if (arg !== undefined) {
       arg = transFn(arg);
     }
-    transformAndVldt.transformedFlag = true;
-    transformAndVldt.transformedVal = arg as T;
-    return cb(arg);
+    cb?.(arg as T);
+    return vldt(arg);
   };
-  return transformAndVldt;
 }
 
