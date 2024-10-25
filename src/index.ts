@@ -1,18 +1,13 @@
-import jetLogger from './jetLogger';
-import { transform as transformFn } from './util';
-
-
-// Setup
-const notOptionsSchema = jetLogger();
+import jetSchema from './jetSchema';
 
 
 // Export types
 export type {
   TSchemaFnObjArg as TJetSchema,
   PublicInferType as inferType,
-} from './jetLogger';
+} from './jetSchema';
 
 // Export functions
-export const transform = transformFn;
-export const schema = notOptionsSchema;
-export default jetLogger;
+export { transform } from './util';
+export const schema = jetSchema();
+export default jetSchema;

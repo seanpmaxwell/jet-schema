@@ -55,7 +55,7 @@ type TPickRetVal<T> = {
 } : {});
 
 // Value returned by the "schema" function
-interface ISchema<T> {
+export interface ISchema<T> {
   new: (arg?: Partial<T>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof T>(prop: K) => (null extends T[K] ? Partial<TPickRetVal<T[K]>> : undefined extends T[K] ? Partial<TPickRetVal<T[K]>> : never);

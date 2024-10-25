@@ -63,7 +63,7 @@ const User = schema<IUser>({
 
 ### Getting Started 🚦
 First you need to initialize the `schema` function by importing the `jet-logger` function. 
-- `jetLogger` accepts two optional arguments:
+- `jetSchema` accepts two optional arguments:
   - an array-map of which default-value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time.
   - The second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
