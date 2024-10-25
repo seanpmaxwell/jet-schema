@@ -104,7 +104,7 @@ import schema from 'util/schema.ts';
 import { isNum, isStr, isOptionalStr } from 'util/type-checks';
 
 
-// OPTION 1: Create schema using type
+// **OPTION 1**: Create schema using type
 interface IUser {
   id: number;
   name: string;
@@ -120,7 +120,7 @@ const User = schema<IUser>({
   nickName: isOptionalStr,
 })
 
-// OPTION 2: Create type using schema
+// **OPTION 2**: Create type using schema
 const User = schema({
   id: isNum,
   name: isStr,
