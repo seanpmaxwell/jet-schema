@@ -79,8 +79,8 @@ After installation, you need to configure the `schema` function by importing and
 <br/>
 
 `jetSchema()` accepts two optional arguments:
-  - An array-map of which default-value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator function in `schema`.
-  - The second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
+  - An array-map of which default-value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator function in `schema` (the next 3 snippets below contain examples).
+  - The second is a custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
 
 > When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
@@ -156,9 +156,9 @@ const TUser = inferType<typeof User>;
 Once you have your schema setup, you can call the `new`, `test`, and `pick` functions. Here is an overview of what each one does:
 - `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will using the default supplied. If no default is supplied then the value will be skipped.
 - `test` accepts any unknown value, returns a type-predicate and will test it against the `schema`.
-- `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is nullable, then you need to use an optional-guard when calling it: (i.e. `pick("some optional property").test?.("")`
+- `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is optional, then you need to use an optional-chaining when calling it (i.e. `pick("some optional property")?.test("")` because typescript won't know if you've set that property in the schema.
 
-> If an object property is a mapped-type then it must be initialized with the schema function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
+> If an object property is a mapped-type, then it must be initialized with the schema function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
@@ -230,7 +230,7 @@ console.log(FullSchema.new());
 ## Misc Notes <a name="misc-notes"></a>
 
 ### Validating properties which may be undefined <a name="validating-properties-which-may-be-undefined"></a>
-As mentioned in the guide, if a property can be null or undefined, then the functions chained onto `pick()` might be undefined as well. If you know based on context (because you set a validator in the `schema` function), and you don't want to have to do optional calling everytime (i.e. `pick("some optional property").test?.(...)`), then I recommend adding a wrapper function to your schema:
+As mentioned in the guide, if a property is optional, then the value returned from `pick()` might be undefined. If you know based on context (because you set a property in the `schema` function), and you don't want to have to do optional calling everytime (i.e. `pick("some optional property")?.test(...)`), then I recommend adding a wrapper function to your schema:
 ```typescript
 // models/User.ts
 
@@ -246,13 +246,13 @@ const User = schema<IUser>({
   }, true, true)
 })
 
-// Wrapper function: this is also handy for when we want to validate an 
-// address object without allowing null as a possible value.
+// Wrapper function: this is also handy for when we want to validate a 
+// child object without allowing null as a possible value.
 function checkAddr(arg: unknown): arg is NonNullable<IUser['address']> {
   if (arg === null || arg === undefined) {
     return false;
   }
-  return User.pick('address').test!(arg);
+  return User.pick('address')!.test(arg);
 }
 
 export default {
