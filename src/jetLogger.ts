@@ -297,7 +297,7 @@ function _setupNewFn(
       const testFn = validators[key];
       let val = partial[key];
       if (testFn(val, ((transVal) => val = transVal))) {
-        retVal[key] = cloneFn(partial[key]);
+        retVal[key] = cloneFn(val);
       } else {
         throw new Error(`Property "${key}" was invalid.`);
       }

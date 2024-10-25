@@ -7,7 +7,10 @@ const notOptionsSchema = jetLogger();
 
 
 // Export types
-export type { TSchemaFnObjArg as TJetSchema, PublicInferType as inferType } from './jetLogger';
+export type {
+  TSchemaFnObjArg as TJetSchema,
+  PublicInferType as inferType,
+} from './jetLogger';
 
 // Export functions
 export const transform = transformFn;

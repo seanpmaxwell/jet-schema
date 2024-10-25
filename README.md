@@ -4,23 +4,23 @@
 
 
 ## Introduction
-Most schema validation libraries have fancy functions for validating object properties (i.e. `zod.string().email()`) but problem is I already had a lot of my own custom validation logic unique to my application (i.e. functions to check primitive-types, regexes for validating primtives etc). The only thing that was making me use schema-validation libraries was trying to validate object properties. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that!
+Most schema validation libraries have fancy functions for validating object properties (i.e. `zod.string().email()`) but problem is I already had a lot of my own custom validation logic specific to my application (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate object properties. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
 <br/>
 
-If you want a library that includes all kinds of special functions for validating things other than objects **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type checking functions specific to the needs of that project. For example, maybe the email format maybe that's built into the library is different that the one your client needs. Instead of of have to write your own and dig into the library's feature to validate using your custom method, with jet-schema you can just pass your method.
+If you want a library that includes all kinds of special functions for validating things other than objects **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different that the one your application needs. Instead of of having to dig into the library's features to validate using your custom method, with **jet-schema** you can just pass your method.
 <br/>
 
 Reasons to use Jet-Schema
-- TypeScript first
-- Quick, terse, simple, easy-to-use (there are only 3 function exports and 3 type exports).
-- Much smaller and less complex than most schema-validation types.
+- TypeScript first!
+- Quick, terse, simple, easy-to-use (there are only 3 function exports and 2 type exports).
+- Much smaller and less complex than most schema-validation libraries.
 - Typesafety works both ways, you can either force a schema-type when the `schema` function is called OR you can infer a type from a schema.
-- Provides a `transform` wrapper function for custom validators you may have.
-- When passing the `Date` constructor, automatically converts all valid date values in a `Date` object.
-- Set a default value for any validation function you may wanna reuse.
-- `new` and `test` functions provided automatically by default.
-- Works client-side or server-side
-- Doesn't require a compilation step (so still works with `ts-node`, unline `typia`).
+- Set a default value for any validation-function you may wanna reuse.
+- Provides a `transform` wrapper function to modify values after before validating them.
+- When passing the `Date` constructor, automatically converts all valid date values to a `Date` object.
+- `new` and `test` functions provided automatically on every new `schema`.
+- Works client-side or server-side.
+- Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 <br/>
 
 
@@ -46,13 +46,13 @@ const User: z.ZodType<IUser> = z.object({
 const User = schema<IUser>({
   id: isRelKey,
   name: isString,
-  email: ['a@a.com', isEmail],
+  email: ['x@example.com', isEmail],
   age: transform(Number, isNumber),
   created: Date,
   address: schema({
     street: isString,
     zip: isNumber,
-    country: isOptString,
+    country: isOptionalStr,
   }, true),
 });
 ```
@@ -64,11 +64,11 @@ const User = schema<IUser>({
 ### Getting Started 🚦
 First you need to initialize the `schema` function by importing the `jet-logger` function. 
 - `jetLogger` accepts two optional arguments:
-  - an array-map of which default value should be used for which validator-function: you should use this for frequently used validator-functions where you don't want to declare a default value every time.
+  - an array-map of which default-value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time.
   - The second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
 
-Usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function and import the apply defaults to any custom validators I've made. If you don't want to go through this step you can import the `schema` function directly from `jet-schema`.
+When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function and apply any frequently used validator-function/default-value I have. If you don't want to go through this step you can import the `schema` function directly from `jet-schema`.
 ```typescript
 // "util/type-checks.ts"
 // IMPORTANT: you should use type-predicates when writing validator functions.
