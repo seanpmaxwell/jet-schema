@@ -1,6 +1,6 @@
 import { TJetSchema, transform } from '../src';
 
-import User from './models/User';
+import User, { AdminStatus } from './models/User';
 import { IPost } from './models/Post';
 import schema from './util/schema';
 
@@ -17,11 +17,15 @@ import {
 // **** User Test Stuff (User has an explicit type) **** //
 
 // Test schema new
-console.log(User.new({
+const user1 = User.new({
   lastLogin: '2023-12-25' as unknown as Date,
   age: '123' as unknown as number,
-}));
+});
 
+// console.log(user1);
+console.log(User.test(user1));
+console.log(User.pick('age').test(AdminStatus.Basic))
+console.log(User.pick('adminStatus').test)
 console.log(User.pick('avatar').default?.())
 console.log(User.pick('avatar').new?.())
 console.log(User.pick('avatar').pick?.('data'))

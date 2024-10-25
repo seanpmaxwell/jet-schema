@@ -58,7 +58,7 @@ type TPickRetVal<T> = {
 export interface ISchema<T> {
   new: (arg?: Partial<T>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
-  pick: <K extends keyof T>(prop: K) => (null extends T[K] ? Partial<TPickRetVal<T[K]>> : undefined extends T[K] ? Partial<TPickRetVal<T[K]>> : never);
+  pick: <K extends keyof T>(prop: K) => (null extends T[K] ? Partial<TPickRetVal<T[K]>> : undefined extends T[K] ? Partial<TPickRetVal<T[K]>> : TPickRetVal<T[K]>);
   _schemaSettings: {
     isOptional: boolean;
     isNullable: boolean;
@@ -135,7 +135,7 @@ type InferTypesHelper<U> = {
       : U[K] extends ISchema<unknown>
       ? GetTypePredicate<U[K]['test']>
       : U[K] extends (string | number) 
-      ? U[K]
+      ? (TTypeArr<U[K]> | TEnum)
       : never
     );
 }
@@ -241,6 +241,7 @@ function _setupDefaultsAndValidators<T>(
     } else if (isObj(setupVal)) {
       const vals = getEnumVals(setupVal);
       defaults[key] = () => cloneFn(vals[0]);
+      console.log(vals)
       validators[key] = (arg: unknown): arg is T[keyof T] => vals.some(item => item === arg);
     // Just a validator function
     } else if (isFn(setupVal)) {

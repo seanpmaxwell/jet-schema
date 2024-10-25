@@ -13,7 +13,7 @@ import {
 
 // **** Variables **** //
 
-enum AdminStatus {
+export enum AdminStatus {
   Basic,
   Mid,
   High,
