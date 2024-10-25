@@ -2,8 +2,7 @@
 > Simple, zero-dependency, typescript-first schema validation tool, that lets you use your own validation functions (inferring types included!).
 
 
-## Table of contents <a name="table-of-contents"></a>
-- [Table of contents](#table-of-contents)
+## Table of contents
 - [Introduction](#introduction)
 - [Preview](#preview)
 - [Guide](#guide)
