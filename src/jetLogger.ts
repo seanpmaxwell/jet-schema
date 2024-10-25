@@ -3,6 +3,11 @@ import { getEnumVals, isArr, isDate, isFn, isObj, isUndef, TFunc } from './util'
 
 // **** Fancy Composite Types **** //
 
+// Show the full 
+type ExpandRecursively<T> = T extends object
+  ? T extends infer O ? { [K in keyof O]: ExpandRecursively<O[K]> } : never
+  : T;
+
 // Check if an object is a "named" static object
 // This roots out Record<string,...> and makes sure we use a named type
 type _TStaticObj<Prop> = string extends keyof Prop ? never : {
@@ -121,7 +126,8 @@ type TSchemaFnArgs<T> =
 
 // **** Infer Types **** //
 
-export type PublicInferType<S> = S extends ISchema<unknown> ? GetTypePredicate<S['test']> : never;
+export type PublicInferType<S> = PublicInferTypeHelper<S>
+type PublicInferTypeHelper<S> = S extends ISchema<unknown> ? GetTypePredicate<S['test']> : never;
 
 type InferTypes<U, isOpt, isNul> =
   AddNullables<

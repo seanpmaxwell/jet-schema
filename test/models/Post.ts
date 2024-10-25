@@ -46,3 +46,6 @@ export type IPost = inferType<typeof Post>
 // if (other.test(val)) {
 //   console.log(val?.data)
 // }
+
+// const post = Post.new();
+// post.created
