@@ -1,9 +1,9 @@
-# Jet-Schema ✈️
+# Jet-Schema ✈️ 📝
 > Simple, zero-dependency, typescript-first schema validation tool, that lets you use your own validation functions (inferring types included!).
 <br/>
 
 
-## Introduction
+## Introduction 🚀
 Most schema validation libraries have fancy functions for validating object properties (i.e. `zod.string().email()`) but problem is I already had a lot of my own custom validation logic specific to my application (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate object properties. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
 <br/>
 
@@ -24,7 +24,7 @@ Reasons to use Jet-Schema
 <br/>
 
 
-## Preview
+## Preview 👀
 ```typescript
 
 // An example using "zod", a popular schema validation library
@@ -59,7 +59,7 @@ const User = schema<IUser>({
 <br/>
 
 
-## Guide
+## Guide 📜
 
 ### Getting Started 🚦
 First you need to initialize the `schema` function by importing the `jet-logger` function. 
@@ -98,7 +98,7 @@ export default jetSchema([
 ```
 <br/>
 
-Now that we have our schema function let's made a schema: there are two ways to go about this. I usually like to create an interface first cause I feel like they are great way to document your data types BUT some people would rather setup their schemas first and infer their types from that. I'll show you some examples doing both.
+Now that we have our schema function let's make a schema: there are two ways to go about this. I usually like to create an interface first cause I feel like they are great way to document your data types BUT some people would rather setup their schemas first and infer their types from that. I'll show you some examples doing both.
 ```typescript
 // "models/User.ts"
 import { inferType } from 'jet-schema';
