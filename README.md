@@ -1,5 +1,6 @@
 # Jet-Schema ✈️
 > Simple, zero-dependency, typescript-first schema validation tool, that lets you use your own validation functions (inferring types included!).
+<br/>
 
 
 ## Introduction
@@ -20,6 +21,7 @@ Reasons to use Jet-Schema
 - `new` and `test` functions provided automatically by default.
 - Works client-side or server-side
 - Doesn't require a compilation step (so still works with `ts-node`, unline `typia`).
+<br/>
 
 
 ## Preview
@@ -54,6 +56,7 @@ const User = schema<IUser>({
   }, true),
 });
 ```
+<br/>
 
 
 ## Guide
