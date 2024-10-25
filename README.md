@@ -101,7 +101,7 @@ import schema from 'util/schema.ts';
 import { isNum, isStr, isOptionalStr } from 'util/type-checks';
 
 
-// Create schema using type
+// OPTION 1: Create schema using type
 interface IUser {
   id: number;
   name: string;
@@ -117,8 +117,7 @@ const User = schema<IUser>({
   nickName: isOptionalStr,
 })
 
-
-// Create type using schema
+// OPTION 2: Create type using schema
 const User = schema({
   id: isNum,
   name: isStr,
@@ -139,7 +138,7 @@ Once you have you schema setup, you can call the `new`, `test`, and `pick` funct
 
 ### Make schemas optional/nullable
 - In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<Your-Generic>()`, so you must supply the correct parameters.
-- The third option `default` can be a `boolean` or `null`.
+- The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. // pick up here
 
 
 ### Nested schemas
