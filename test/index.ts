@@ -26,13 +26,16 @@ const user1 = User.new({
 console.log(User.test(user1));
 console.log(User.pick('age').test(AdminStatus.Basic))
 console.log(User.pick('adminStatus').test)
-console.log(User.pick('avatar').default?.())
-console.log(User.pick('avatar').new?.())
-console.log(User.pick('avatar').pick?.('data'))
-console.log(User.pick('avatar').pick?.('data').default())
+console.log(User.pick('avatar')?.default())
+console.log(User.pick('avatar')?.new())
+console.log(User.pick('avatar')?.pick('data'))
+console.log(User.pick('avatar')?.pick('data').default())
+console.log(User.pick('avatar')?.pick('url')?.default())
+console.log(User.pick('avatar2').default())
+console.log(User.pick('avatar2').new())
 
-const avatar = User.pick('avatar').new?.();
-const testAvatar = nonNullable(User.pick('avatar').test!);
+const avatar = User.pick('avatar')?.new();
+const testAvatar = nonNullable(User.pick('avatar')!.test);
 // console.log(testAvatar('asdf')) // Should throw error
 console.log(testAvatar(avatar))
 
@@ -48,19 +51,22 @@ const customPost: IPost = {
   mesage: '123',
   index: 0,
   created: new Date(),
-  image: {
-    data: '',
-    fileName: '',
-  },
+  // image: {
+  //   data: '',
+  //   fileName: '',
+  // },
   // image: null,
   // imageOpt: undefined,
-  imageNull: null,
+  // imageOpt: { data: '', fileName: '' },
+  // imageNull: null,
   // imageOptNull: null,
   // imageNull: {
   //   fileName: '',
   //   data: '',
   // },
 }
+
+console.log(customPost)
 
 
 // **** Test Partial Schema **** //

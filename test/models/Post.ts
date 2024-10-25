@@ -16,22 +16,22 @@ const Post = schema({
   mesage: isString,
   index: isNumber,
   created: Date,
-  image: schema({
-    fileName: isString,
-    data: isString,
-  }),
+  // image: schema({
+  //   fileName: isString,
+  //   data: isString,
+  // }),
   imageOpt: schema({
     fileName: isString,
     data: isString,
   }, true),
-  imageOptNull: schema({
-    fileName: isString,
-    data: isString,
-  }, true, true),
-  imageNull: schema({
-    fileName: isString,
-    data: isString,
-  }, false, true),
+  // imageOptNull: schema({
+  //   fileName: isString,
+  //   data: isString,
+  // }, true, true),
+  // imageNull: schema({
+  //   fileName: isString,
+  //   data: isString,
+  // }, false, true),
 });
 
 export type IPost = inferType<typeof Post>

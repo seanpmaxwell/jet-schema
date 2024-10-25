@@ -16,9 +16,9 @@ type IsStaticObj<P, Prop = NonNullable<P>> = (
 );
 
 // If a mapped type property can be undefined, make it optional
-type MakeOptIfUndef<T> = {
+type MakeOptIfUndef<T> = ({
   [K in keyof T as undefined extends T[K] ? K : never]?: T[K]
-} & {
+}) & {
   [K in keyof T as undefined extends T[K] ? never : K]: T[K]
 };
 
@@ -46,19 +46,19 @@ type TDefaultValsMap<T> = {
 }
 
 // Return value for the pick function
-type TPickRetVal<T> = {
+type TPickRetVal<T, NT = NonNullable<T>> = {
   test: (arg: unknown) => arg is T,
   default: () => T,
 } & (IsStaticObj<T> extends true ? {
-  pick: <K extends keyof NonNullable<T>>(key: K) => TPickRetVal<NonNullable<T>[K]>,
+  pick: <K extends keyof NT>(prop: K) => (undefined extends NT[K] ? TPickRetVal<NT[K]> | undefined : TPickRetVal<NT[K]>);
   new: (arg?: Partial<T>) => NonNullable<T>;
 } : {});
 
 // Value returned by the "schema" function
-export interface ISchema<T> {
+export interface ISchema<T, NT = NonNullable<T>> {
   new: (arg?: Partial<T>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
-  pick: <K extends keyof T>(prop: K) => (null extends T[K] ? Partial<TPickRetVal<T[K]>> : undefined extends T[K] ? Partial<TPickRetVal<T[K]>> : TPickRetVal<T[K]>);
+  pick: <K extends keyof NT>(prop: K) => (undefined extends NT[K] ? TPickRetVal<NT[K]> | undefined : TPickRetVal<NT[K]>);
   _schemaSettings: {
     isOptional: boolean;
     isNullable: boolean;
@@ -101,8 +101,8 @@ type TSchemaFnArgs<T> =
     defaultVal?: boolean,
   // Not undefined and null
   ]) : (null extends T ? [
-    isOptional: true,
-    isNullable?: false,
+    isOptional: false,
+    isNullable?: true,
     defaultVal?: true | null,
   // Not undefined and not null
   ] : [
@@ -114,8 +114,11 @@ type TSchemaFnArgs<T> =
 
 // **** Infer Types **** //
 
-export type PublicInferType<S> = PublicInferTypeHelper<S>
-type PublicInferTypeHelper<S> = S extends ISchema<unknown> ? GetTypePredicate<S['test']> : never;
+export type PublicInferType<S> = (
+  S extends ISchema<unknown> 
+  ? GetTypePredicate<S['test']> 
+  : never
+);
 
 type InferTypes<U, isOpt, isNul> =
   AddNullables<
@@ -127,17 +130,17 @@ type InferTypes<U, isOpt, isNul> =
 type InferTypesHelper<U> = {
   [K in keyof U]: (
     U[K] extends unknown[]
-      ? U[K][0]
-      : U[K] extends DateConstructor
-      ? Date
-      : U[K] extends TFunc 
-      ? GetTypePredicate<U[K]>
-      : U[K] extends ISchema<unknown>
-      ? GetTypePredicate<U[K]['test']>
-      : U[K] extends (string | number) 
-      ? (TTypeArr<U[K]> | TEnum)
-      : never
-    );
+    ? U[K][0]
+    : U[K] extends DateConstructor
+    ? Date
+    : U[K] extends TFunc 
+    ? GetTypePredicate<U[K]>
+    : U[K] extends ISchema<unknown>
+    ? GetTypePredicate<U[K]['test']>
+    : U[K] extends (string | number) 
+    ? (TTypeArr<U[K]> | TEnum)
+    : never
+  );
 }
  
 
@@ -256,6 +259,10 @@ function _setupDefaultsAndValidators<T>(
     // If something is nullable and you wanna let its default value be null
     } else if (setupVal === null) {
       defaults[key] = () => null;
+    }
+    // Safe guard
+    if (isUndef(defaults[key])) {
+      defaults[key] = () => undefined;
     }
     // Make sure the default is a valid value
     const vldr = validators[key],

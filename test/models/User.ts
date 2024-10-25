@@ -30,6 +30,7 @@ interface IUser {
   created: Date;
   lastLogin: Date;
   avatar?: IAvatar | null;
+  avatar2: IAvatar | null;
   address: IAddress;
   adminStatus: AdminStatus;
 }
@@ -74,6 +75,11 @@ const User = schema<IUser>({
       code: isNumber,
     }),
   }),
+  avatar2: schema({
+    fileName: isString,
+    data: [ 'asdfa;sdlfkj', isString ],
+    url: isOptionalString,
+  }, false, true),
   adminStatus: AdminStatus,
 });
 

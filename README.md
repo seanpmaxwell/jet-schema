@@ -11,6 +11,8 @@
   - [Transforming values with transform()](#transforming-values-with-transform)
   - [Using Partial Schemas](#using-partial-schemas)
   - [Bonus Features](#bonus-features)
+- [Misc Notes](#misc-notes)
+  - [Validating properties which may be undefined](#validating-properties-which-may-be-undefined)
 
 
 ## Introduction <a name="introduction"></a>
@@ -39,7 +41,7 @@ Reasons to use Jet-Schema 😎
 const User: z.ZodType<IUser> = z.object({
   id: z.number().default(-1).min(-1),
   name: z.string().default(''),
-  email: z.string().email().or(z.literal('')).default('a@a.com'),
+  email: z.string().email().or(z.literal('')).default('x@x.x'),
   age: z.preprocess(Number, z.number()),
   created: z.preprocess((arg => arg === undefined ? new Date() : arg), z.coerce.date()),
   address: z.object({ 
@@ -54,7 +56,7 @@ const User: z.ZodType<IUser> = z.object({
 const User = schema<IUser>({
   id: isRelKey,
   name: isString,
-  email: ['x@example.com', isEmail],
+  email: ['x@x.x', isEmail],
   age: transform(Number, isNumber),
   created: Date,
   address: schema({
@@ -77,7 +79,7 @@ After installation, you need to configure the `schema` function by importing and
 <br/>
 
 `jetSchema()` accepts two optional arguments:
-  - An array-map of which default-value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time.
+  - An array-map of which default-value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator function in `schema`.
   - The second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
 
@@ -136,7 +138,7 @@ interface IUser {
 const User = schema<IUser>({
   id: isNum,
   name: isStr,
-  email: ['', EMAIL_RGX.test] // You can pass your defaults/validators in an array instead.
+  email: ['x@x.x', EMAIL_RGX.test] // You can pass your defaults/validators in an array instead.
   nickName: isOptionalStr, // NOTE: we don't have to pass this option since its optional
 })
 
@@ -149,14 +151,12 @@ const User = schema({
 })
 const TUser = inferType<typeof User>;
 ```
-
-> ⚠️ **IMPORTANT:**  &nbsp; Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply default value, then an error will be thrown when `schema()` is called.
 <br/>
 
 Once you have your schema setup, you can call the `new`, `test`, and `pick` functions. Here is an overview of what each one does:
 - `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will using the default supplied. If no default is supplied then the value will be skipped.
 - `test` accepts any unknown value, returns a type-predicate and will test it against the `schema`.
-- `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is nullable, then you need to use optional guard when calling it: `pick?.()`
+- `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is nullable, then you need to use an optional-guard when calling it: (i.e. `pick("some optional property").test?.("")`
 
 > If an object property is a mapped-type then it must be initialized with the schema function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
 
@@ -167,6 +167,8 @@ In addition to a schema-object, the `schema()` function accepts 3 additional par
 The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` the value will not be initialized with the parent, if `null` (the schema must be nullable to do this) value will be `null`, and if `true` or `undefined` then a full schema object will be created when a parent object is created.
 
 ```typescript
+// models/User.ts
+
 interface IUser {
   id: number;
   name: string;
@@ -222,3 +224,39 @@ console.log(FullSchema.new());
 ### Bonus Features <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` automatically converts all valid date values (i.e. string/number ) to a `Date` object. The default value will be a current datetime `Date` object.
 - You can also use an enum as a validator. The default value will be the first value in the enum object and the validation will make sure the value is a value in the enum.
+<br>
+
+
+## Misc Notes <a name="misc-notes"></a>
+
+### Validating properties which may be undefined <a name="validating-properties-which-may-be-undefined"></a>
+As mentioned in the guide, if a property can be null or undefined, then the functions chained onto `pick()` might be undefined as well. If you know based on context (because you set a validator in the `schema` function), and you don't want to have to do optional calling everytime (i.e. `pick("some optional property").test?.(...)`), then I recommend adding a wrapper function to your schema:
+```typescript
+// models/User.ts
+
+interface IUser {
+  id: number;
+  address?: { street: string } | null;
+}
+
+const User = schema<IUser>({
+  id: isNumber,
+  address: schema({
+    street: isString,
+  }, true, true)
+})
+
+// Wrapper function: this is also handy for when we want to validate an 
+// address object without allowing null as a possible value.
+function checkAddr(arg: unknown): arg is NonNullable<IUser['address']> {
+  if (arg === null || arg === undefined) {
+    return false;
+  }
+  return User.pick('address').test!(arg);
+}
+
+export default {
+  checkAddr,
+  ...User,
+}
+```
