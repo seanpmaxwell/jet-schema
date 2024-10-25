@@ -4,7 +4,7 @@
 
 ## Table of contents
 - [Introduction](#introduction)
-- [Preview](#preview)
+- [Quick Glance](#quick-glance)
 - [Guide](#guide)
   - [Getting Started](#getting-started)
   - [Making schemas optional/nullable](#making-schemas-opt-null)
@@ -20,7 +20,7 @@ Most schema validation libraries have fancy functions for validating objects and
 If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different than the one your application needs. Instead of of having to dig into the library's features to validate using your custom method, with **jet-schema** you can just pass your method.
 <br/>
 
-Reasons to use Jet-Schema
+Reasons to use Jet-Schema 😎
 - TypeScript first!
 - Quick, terse, simple, easy-to-use (there are only 3 function exports and 2 type exports).
 - Much smaller and less complex than most schema-validation libraries.
@@ -33,9 +33,8 @@ Reasons to use Jet-Schema
 <br/>
 
 
-## Preview <a name="preview"></a>
+## Quick Glance <a name="quick-glance"></a>
 ```typescript
-
 // An example using "zod", a popular schema validation library
 const User: z.ZodType<IUser> = z.object({
   id: z.number().default(-1).min(-1),
@@ -71,7 +70,10 @@ const User = schema<IUser>({
 ## Guide <a name="guide"></a>
 
 ### Getting Started <a name="getting-started"></a>
-First you need to initialize the `schema` function by importing and calling the `jetLogger()` function.
+
+> npm install -s jet-schema
+
+After installation, you need to configure the `schema` function by importing and calling the `jetSchema()` function.
 <br/>
 
 `jetSchema()` accepts two optional arguments:
@@ -79,7 +81,8 @@ First you need to initialize the `schema` function by importing and calling the 
   - The second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
 
-When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function. If you don't want to go through this step you can import the `schema` function directly from `jet-schema`.
+> When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
+
 ```typescript
 // "util/validators.ts"
 
@@ -159,9 +162,26 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
-In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<...Your Type...>()`, so you must supply the correct parameters. So for example, if the schema-type is nullable and optional, then you must enter `true` for the second and third parameters.<br/>
+In addition to a schema-object, the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<...Your Type...>()`, so you must supply the correct parameters. So for example, if the schema-type is nullable and optional, then you must enter `true` for the second and third parameters.<br/>
 
-The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` the value will not be initialized with the parent, if `null` (the schema must be nullable to do this) value will be `null`, and if `true` or `undefined` then a full schema object will be created when a parent object is created. 
+The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` the value will not be initialized with the parent, if `null` (the schema must be nullable to do this) value will be `null`, and if `true` or `undefined` then a full schema object will be created when a parent object is created.
+
+```typescript
+interface IUser {
+  id: number;
+  name: string;
+  address?: { street: string, zip: number } | null;
+}
+
+const User = schema<IUser>({
+  id: isNumber,
+  name: isString,
+  address: schema({
+    street: isString,
+    zip: isNumber,
+  }, true /*(isOptional)*/, true /*(isNullable)*/, /*default*/) // You MUST pass true for "isOptional" and "isNullable" here.
+})
+```
 
 
 ### Transforming values with `transform()` <a name="transforming-values-with-transform"></a>
