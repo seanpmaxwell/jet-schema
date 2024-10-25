@@ -61,7 +61,7 @@ const User = schema<IUser>({
 
 ## Guide
 
-### Getting Started 🏁
+### Getting Started 🚦
 First you need to initialize the `schema` function by importing the `jet-logger` function. `jetLogger` accepts two optional arguments, an array-map of which default value should be used for which validator-function: you should use this if you don't want to have to declare a default value every time. And the second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
 
@@ -144,7 +144,7 @@ Once you have you schema setup, you can call the `new`, `test`, and `pick` funct
 - The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. // pick up here
 
 
-### Nested schemas 🪹
+### Nested schemas 🧒
 
 
 ### Transforming values with `transform()` 🤖
