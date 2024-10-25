@@ -1,9 +1,20 @@
-# Jet-Schema ✈️ 📝
+# Jet-Schema ✈️
 > Simple, zero-dependency, typescript-first schema validation tool, that lets you use your own validation functions (inferring types included!).
-<br/>
 
 
-## Introduction 🚀
+## Table of contents <a name="table-of-contents"></a>
+- [Table of contents](#table-of-contents)
+- [Introduction](#introduction)
+- [Preview](#preview)
+- [Guide](#guide)
+  - [Getting Started](#getting-started)
+  - [Making schemas optional/nullable](#making-schemas-opt-null)
+  - [Transforming values with transform()](#transforming-values-with-transform)
+  - [Using Partial Schemas](#using-partial-schemas)
+  - [Bonus Features](#bonus-features)
+
+
+## Introduction <a name="introduction"></a>
 Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I usually already have a lot of my own custom validation logic specific for each of my applications (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate object properties. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
 <br/>
 
@@ -23,7 +34,7 @@ Reasons to use Jet-Schema
 <br/>
 
 
-## Preview 👀
+## Preview <a name="preview"></a>
 ```typescript
 
 // An example using "zod", a popular schema validation library
@@ -58,9 +69,9 @@ const User = schema<IUser>({
 <br/>
 
 
-## Guide 📜
+## Guide <a name="guide"></a>
 
-### Getting Started
+### Getting Started <a name="getting-started"></a>
 First you need to initialize the `schema` function by importing and calling the `jetLogger()` function.
 <br/>
 
@@ -148,13 +159,13 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 > If an object property is a mapped-type then it must be initialized with the schema function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
 
 
-### Making schemas optional/nullable
+### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
 In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<...Your Type...>()`, so you must supply the correct parameters. So for example, if the schema-type is nullable and optional, then you must enter `true` for the second and third parameters.<br/>
 
 The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` the value will not be initialized with the parent, if `null` (the schema must be nullable to do this) value will be `null`, and if `true` or `undefined` then a full schema object will be created when a parent object is created. 
 
 
-### Transforming values with `transform()`
+### Transforming values with `transform()` <a name="transforming-values-with-transform"></a>
 If you want to modify a value before it passes through a validator function, you can import the `transform` function and wrap your validator function with it. `transform` calls the validator function and fires a callback with the modified value if the callback was provided. When calling `new` or `test`, `transform` will modify the original object.
 <br/>
 
@@ -169,7 +180,7 @@ console.log(val); // => [1,2,3,5] this is number array not a string
 ```
 
 
-### Using Partial Schemas
+### Using Partial Schemas <a name="using-partial-schemas"></a>
 For whatever reason, your schema may end up existing in multiple places. If you want to declare a partial schema, you can import the `TJetSchema` type and use it to setup one, then merge it with your full schema later.
 
 ```typescript
@@ -189,6 +200,6 @@ console.log(FullSchema.new());
 ```
 
 
-### Bonus Features
+### Bonus Features <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` automatically converts all valid date values (i.e. string/number ) to a `Date` object. The default value will be a current datetime `Date` object.
 - You can also use an enum as a validator. The default value will be the first value in the enum object and the validation will make sure the value is a value in the enum.
