@@ -11,6 +11,15 @@ import {
 } from '../util/validators';
 
 
+// **** Variables **** //
+
+enum AdminStatus {
+  Basic,
+  Mid,
+  High,
+}
+
+
 // **** Types ***** //
 
 interface IUser {
@@ -22,6 +31,7 @@ interface IUser {
   lastLogin: Date;
   avatar?: IAvatar | null;
   address: IAddress;
+  adminStatus: AdminStatus;
 }
 
 interface IAvatar {
@@ -64,8 +74,8 @@ const User = schema<IUser>({
       code: isNumber,
     }),
   }),
+  adminStatus: AdminStatus,
 });
-
 
 
 // **** Export default **** //

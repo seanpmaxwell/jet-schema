@@ -11,7 +11,7 @@ import {
   isNumber,
   isString,
 } from './util/validators';
-import { isNum } from '../src/util';
+// import { isNum } from '../src/util';
 
 
 // **** User Test Stuff (User has an explicit type) **** //

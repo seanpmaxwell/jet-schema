@@ -17,7 +17,6 @@ Reasons to use Jet-Schema
 - Typesafety works both ways, you can either force a schema-type when the `schema` function is called OR you can infer a type from a schema.
 - Set a default value for any validation-function you may wanna reuse.
 - Provides a `transform` wrapper function to modify values after before validating them.
-- When passing the `Date` constructor, automatically converts all valid date values to a `Date` object.
 - `new` and `test` functions provided automatically on every new `schema`.
 - Works client-side or server-side.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
@@ -177,3 +176,8 @@ const FullSchema = schema<{ id: number, name: string, e: boolean }>({
 
 console.log(FullSchema.new());
 ```
+
+
+### Misc
+- When passing the `Date` constructor, automatically converts all valid date values to a `Date` object.
+- You can also use an enum as a validator. The default value will be the first value in the enum object.

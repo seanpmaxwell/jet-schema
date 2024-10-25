@@ -62,12 +62,12 @@ export function isNonArrObj(
 export function getEnumKeys(arg: unknown): string[] {
   if (isNonArrObj(arg)) {
     const retVal: string[] = [];
-    for (const key of Object.keys(arg)) {
-      if (!retVal.includes(key)) {
-        retVal.push(key);
+    return Object.keys(arg).reduce((arr: any[], key) => {
+      if (!arr.includes(key)) {
+        arr.push(arg[key]);
       }
-    }
-    return retVal;
+      return arr;
+    }, []);
   }
   throw Error('"getEnumKeys" be an non-array object');
 }
