@@ -61,7 +61,7 @@ const User = schema<IUser>({
 
 ## Guide
 
-### Getting Started
+### Getting Started 🏁
 First you need to initialize the `schema` function by importing the `jet-logger` function. `jetLogger` accepts two optional arguments, an array-map of which default value should be used for which validator-function: you should use this if you don't want to have to declare a default value every time. And the second is a custom clone function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
 <br/>
 
@@ -139,12 +139,13 @@ Once you have you schema setup, you can call the `new`, `test`, and `pick` funct
 - `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is nullable, then you need to use optional guard when calling it: `pick?.()`
 
 
-### Make schemas optional/nullable
+### Make schemas optional/nullable ❔
 - In additiona to a schema-object the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<Your-Generic>()`, so you must supply the correct parameters.
 - The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. // pick up here
 
 
-### Nested schemas
+### Nested schemas 🪹
 
 
-### Transforming values with `transform()`
+### Transforming values with `transform()` 🤖
+
