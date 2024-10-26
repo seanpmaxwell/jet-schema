@@ -16,11 +16,13 @@
 
 
 ## Introduction <a name="introduction"></a>
-Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I usually already have a lot of my own custom validation logic specific for each of my applications (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate object properties. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
+Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I usually already have a lot of my own custom validation logic specific for each of my applications (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object schema. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
 <br/>
 
 If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different than the one your application needs. Instead of of having to dig into the library's features to validate using your custom method, with **jet-schema** you can just pass your method.
 <br/>
+
+> If you're open to `jet-logger` but think writing your own validator functions could be tedious, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove validators as needed.
 
 Reasons to use Jet-Schema 😎
 - TypeScript first!
@@ -52,7 +54,7 @@ const User: z.ZodType<IUser> = z.object({
 });
 
 // Equivalent using "jet-schema" (other than "schema/transform", the other functions 
-// are defined elsewhere in the application)
+// must be defined elsewhere in your application)
 const User = schema<IUser>({
   id: isRelKey,
   name: isString,
@@ -116,7 +118,6 @@ export default jetSchema([
 <br/>
 
 Now that we have our schema function setup, let's make a schema: there are two ways to go about this, enforcing a schema from a type or infering a type from a schema. I'll show you some examples doing it both ways.
-<br/>
 
 > Personally, I like to create an interface first cause I feel like they are great way to document your data-types, but I know some people prefer to setup their schemas first and infer their types from that.
 
@@ -158,7 +159,7 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 - `test` accepts any unknown value, returns a type-predicate and will test it against the `schema`.
 - `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is optional, then you need to use an optional-chaining when calling it (i.e. `pick("some optional property")?.test("")` because typescript won't know if you've set that property in the schema.
 
-> If an object property is a mapped-type, then it must be initialized with the schema function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
+> **IMPORTANT:** If an object property is a mapped-type, then it must be initialized with the `schema` function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>

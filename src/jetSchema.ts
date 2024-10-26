@@ -244,7 +244,6 @@ function _setupDefaultsAndValidators<T>(
     } else if (isObj(setupVal)) {
       const vals = getEnumVals(setupVal);
       defaults[key] = () => cloneFn(vals[0]);
-      console.log(vals)
       validators[key] = (arg: unknown): arg is T[keyof T] => vals.some(item => item === arg);
     // Just a validator function
     } else if (isFn(setupVal)) {
