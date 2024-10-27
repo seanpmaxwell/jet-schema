@@ -36,7 +36,6 @@ Reasons to use Jet-Schema 😎
 - Enums can be used for validation.
 - Date constructor can be used to automatically transform and validate any valid date value.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
-<br/>
 
 
 ## Quick Glance <a name="quick-glance"></a>
@@ -70,7 +69,6 @@ const User = schema<IUser>({
   }, true),
 });
 ```
-<br/>
 
 
 ## Guide <a name="guide"></a>
@@ -144,7 +142,6 @@ const User = schema({
 })
 const TUser = inferType<typeof User>;
 ```
-<br/>
 
 Once you have your schema setup, you can call the `new`, `test`, and `pick` functions. Here is an overview of what each one does:
 - `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will use the default supplied. If no default is supplied, then the value will be skipped.
