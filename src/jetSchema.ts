@@ -5,14 +5,14 @@ import { getEnumVals, isArr, isDate, isFn, isObj, isUndef, TFunc, TValidatorFn }
 
 // Check if an object is a "named" static object
 // This roots out Record<string,...> and makes sure we use a named type
-type _TStaticObj<Prop> = string extends keyof Prop ? never : {
-  [key: string]: string | number | boolean | _TStaticObj<Prop>;
+type TStaticObj<Prop> = string extends keyof Prop ? never : {
+  [key: string]: string | number | boolean | TStaticObj<Prop>;
 };
-type _TConvertInterfaceToType<Prop> = {
+type TConvertInterfaceToType<Prop> = {
   [K in keyof Prop]: Prop[K];
 };
 type IsStaticObj<P, Prop = NonNullable<P>> = (
-  _TConvertInterfaceToType<Prop> extends _TStaticObj<Prop> ? true : false
+  TConvertInterfaceToType<Prop> extends TStaticObj<Prop> ? true : false
 );
 
 // If a mapped type property can be undefined, make it optional

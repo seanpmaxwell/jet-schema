@@ -1,5 +1,5 @@
 # Jet-Schema ✈️
-> Simple, zero-dependency, typescript-first schema validation tool, that lets you use your own validation functions (inferring types included!).
+> Simple, zero-dependency, typescript-first schema validation tool, that lets you integrate your own validator-functions.
 
 
 ## Table of contents
@@ -9,10 +9,11 @@
   - [Getting Started](#getting-started)
   - [Making schemas optional/nullable](#making-schemas-opt-null)
   - [Transforming values with transform()](#transforming-values-with-transform)
-  - [Using Partial Schemas](#using-partial-schemas)
+  - [Combining Schemas](#combining-schemas)
   - [Bonus Features](#bonus-features)
 - [Misc Notes](#misc-notes)
   - [Validating properties which may be undefined](#validating-properties-which-may-be-undefined)
+  - [Recommended Defaults](#recommended-defaults)
 
 
 ## Introduction <a name="introduction"></a>
@@ -22,7 +23,7 @@ Most schema validation libraries have fancy functions for validating objects and
 If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different than the one your application needs. Instead of of having to dig into the library's features to validate using your custom method, with **jet-schema** you can just pass your method.
 <br/>
 
-> If you're open to `jet-logger` but think writing your own validator functions could be tedious, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove validators as needed.
+> If you're open to `jet-schema` but think writing your own validator functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove validators as needed.
 
 Reasons to use Jet-Schema 😎
 - TypeScript first!
@@ -30,9 +31,10 @@ Reasons to use Jet-Schema 😎
 - Much smaller and less complex than most schema-validation libraries.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new` and `test` functions provided automatically on every new schema.
-- Provides a `transform` wrapper function to modify values after before validating them.
+- Provides a `transform` wrapper function to modify values before validating them.
 - Works client-side or server-side.
 - Enums can be used for validation.
+- Date constructor can be used to automatically transform and validate any valid date value.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 <br/>
 
@@ -81,29 +83,20 @@ After installation, you need to configure the `schema` function by importing and
 <br/>
 
 `jetSchema()` accepts two optional arguments:
-  - An array-map of which default-value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator function in `schema` (the next 3 snippets below contain examples).
+  - An array-map specifying which default value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator-function when `schema` is called (the next 3 snippets below contain examples).
   - The second is a custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
-<br/>
 
 > When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
 
 ```typescript
 // "util/validators.ts"
 
-export function isNum(param: unknown): param is number {
-  return typeof param === 'number';
-}
-
-export function isStr(param: unknown): param is string {
-  return typeof param === 'string';
-}
-
-export function isOptionalStr(param: unknown): param is string | undefined {
-  return param === undefined || typeof param === 'string';
-}
+export const isStr = (arg: unknown): arg is string => typeof param === 'string';
+export const isOptStr = (arg: unknown): arg is string => arg === undefined || typeof param === 'string';
+export const isNum = (arg: unknown): arg is string => typeof param === 'number';
 ```
 
-> ⚠️ **IMPORTANT:**  &nbsp;  You need to use type-predicates when writing validator functions. If a value can be null/undefined, your validator-function's type-predicate needs account for this (`i.e. (arg: unknown): arg is string | undefined => ... `).
+> ⚠️ **IMPORTANT:**  &nbsp;  You need to use type-predicates when writing validator-functions. If a value can be `null`/`undefined`, your validator-function's type-predicate needs account for this (`i.e. (arg: unknown): arg is string | undefined => ... `).
 
 ```typescript
 // "util/schema.ts"
@@ -115,7 +108,6 @@ export default jetSchema([
   [isStr, ''],
 ], '...pass a custom clone-function here if you want to...');
 ```
-<br/>
 
 Now that we have our schema function setup, let's make a schema: there are two ways to go about this, enforcing a schema from a type or infering a type from a schema. I'll show you some examples doing it both ways.
 
@@ -155,17 +147,17 @@ const TUser = inferType<typeof User>;
 <br/>
 
 Once you have your schema setup, you can call the `new`, `test`, and `pick` functions. Here is an overview of what each one does:
-- `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will using the default supplied. If no default is supplied then the value will be skipped.
-- `test` accepts any unknown value, returns a type-predicate and will test it against the `schema`.
-- `pick` allows you to select property and returns an object with the `test` and `default` functions. If a value is optional, then you need to use an optional-chaining when calling it (i.e. `pick("some optional property")?.test("")` because typescript won't know if you've set that property in the schema.
+- `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will use the default supplied. If no default is supplied, then the value will be skipped.
+- `test` accepts any unknown value, tests that it's valid, and returns a type-predicate,.
+- `pick` allows you to select any property and returns an object with the `test` and `default` functions. If a value is optional, then you need to use an optional-chaining when calling it (i.e. `pick("some optional property")?.test("")` because typescript won't know if you've set that property in the schema.
 
 > **IMPORTANT:** If an object property is a mapped-type, then it must be initialized with the `schema` function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
-In addition to a schema-object, the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema `schema<...Your Type...>()`, so you must supply the correct parameters. So for example, if the schema-type is nullable and optional, then you must enter `true` for the second and third parameters.<br/>
+In addition to a schema-object, the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema (`schema<...Your Type...>()`), so you must supply the correct parameters. So for example, if the schema-type is nullable and optional, then you must enter `true` for the second and third parameters.<br/>
 
-The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` the value will not be initialized with the parent, if `null` (the schema must be nullable to do this) value will be `null`, and if `true` or `undefined` then a full schema object will be created when a parent object is created.
+The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` the value will not be initialized with the parent, if `null` (the schema must be nullable to do this) the value will be `null`, and if `true` or `undefined` then a full schema object will be created when a parent object is created. The default value for the `default` parameter is `true`. If a nested schema is neither optional or nullable, then `default` must be true.
 
 ```typescript
 // models/User.ts
@@ -184,37 +176,46 @@ const User = schema<IUser>({
     zip: isNumber,
   }, true /*(isOptional)*/, true /*(isNullable)*/, /*default*/) // You MUST pass true for "isOptional" and "isNullable" here.
 })
+
+const User1 = schema<IUser>({
+  id: isNumber,
+  name: isString,
+  address: schema({
+    street: isString,
+    zip: isNumber,
+  }, false, false, false) // **ERROR** since this nested schema is neither optional or nullable, the default cannot be false.
+})
 ```
 
 
 ### Transforming values with `transform()` <a name="transforming-values-with-transform"></a>
-If you want to modify a value before it passes through a validator function, you can import the `transform` function and wrap your validator function with it. `transform` calls the validator function and fires a callback with the modified value if the callback was provided. When calling `new` or `test`, `transform` will modify the original object.
+If you want to modify a value before it passes through a validator-function, you can import the `transform` function and wrap your validator function with it. `transform` accepts a transforming-function and a validator-function and returns a new validator-function (type-predicate is preserved) which will transform the value before testing it. When calling `new` or `test`, `transform` will modify the original object.
 <br/>
 
-I've found `transform` can be useful for other parts of my application where I need to modify a value before validating it and return the transformed value. The function firing the callback still returns the validator's type-predicate:
+If you want to access the transformed value yourself for whatever reason, you can pass a callback as the second argument to the returned validator-function and `transform` will supply the modified value to it. I've found `transform` can be useful for other parts of my application where I need to modify a value before validating it and then access the transformed value.
 ```typescript
 import { transform } from 'jet-schema';
 
-const customTest = transform(JSON.parse, isNumberArray);
+const modifyAndTest = transform(JSON.parse, isNumberArray);
 let val = '[1,2,3,5]';
-console.log(customTest(val, transVal => val = transVal)); // => true
+console.log(modifyAndTest(val, transVal => val = transVal)); // => true
 console.log(val); // => [1,2,3,5] this is number array not a string
 ```
 
 
-### Using Partial Schemas <a name="using-partial-schemas"></a>
-For whatever reason, your schema may end up existing in multiple places. If you want to declare a partial schema, you can import the `TJetSchema` type and use it to setup one, then merge it with your full schema later.
+### Combining Schemas <a name="combining-schemas"></a>
+For whatever reason, your schema may end up existing in multiple places. If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup one, then merge it with your full schema later.
 
 ```typescript
 import schema, { TJetSchema } from 'jet-schema';
 
-const PartialSchema: TJetSchema<{ id: number, name: string }> = {
+const PartOfASchema: TJetSchema<{ id: number, name: string }> = {
   id: isNumber,
   name: isString,
 } as const;
 
 const FullSchema = schema<{ id: number, name: string, e: boolean }>({
-  ...PartialSchema,
+  ...PartOfASchema,
   e: isBoolean,
 });
 
@@ -223,8 +224,8 @@ console.log(FullSchema.new());
 
 
 ### Bonus Features <a name="bonus-features"></a>
-- When passing the `Date` constructor, `jet-schema` automatically converts all valid date values (i.e. string/number ) to a `Date` object. The default value will be a current datetime `Date` object.
-- You can also use an enum as a validator. The default value will be the first value in the enum object and the validation will make sure the value is a value in the enum.
+- When passing the `Date` constructor, `jet-schema` automatically converts all valid date values (i.e. string/number ) to a `Date` object. The default value will be a `Date` object with the current datetime.
+- You can also use an enum as a validator. The default value will be the first value in the enum object and validation will make sure it is an enum value.
 <br>
 
 
@@ -260,4 +261,18 @@ export default {
   checkAddr,
   ...User,
 }
+```
+
+### Recommended Defaults <a name="recommended-defaults"></a>
+When calling the `jetSchema` function for this first time, at the very least, I highly recommended you set these default values for each of your basic primitive validator functions, unless of course your application has some other specific need.
+```typescript
+// util/schema.ts
+import { isNum, isStr, isBool } from 'util/type-checks';
+
+export default jetSchema([
+  [isBool, false],
+  [isStr, ''],
+  [isNum, 0],
+]);
+
 ```
