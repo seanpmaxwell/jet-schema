@@ -14,6 +14,12 @@ import {
 // **** Variables **** //
 
 export enum AdminStatus {
+  Basic = 'basic',
+  Mid = 'mid',
+  High = 'high',
+}
+
+export enum AdminStatusAlt {
   Basic,
   Mid,
   High,
@@ -33,6 +39,7 @@ interface IUser {
   avatar2: IAvatar | null;
   address: IAddress;
   adminStatus: AdminStatus;
+  adminStatusAlt: AdminStatusAlt;
 }
 
 interface IAvatar {
@@ -81,6 +88,7 @@ const User = schema<IUser>({
     url: isOptionalString,
   }, false, true),
   adminStatus: AdminStatus,
+  adminStatusAlt: AdminStatusAlt,
 });
 
 

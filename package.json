@@ -1,6 +1,6 @@
 {
   "name": "jet-schema",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Simple, typescript-first schema validation tool",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

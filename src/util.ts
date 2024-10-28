@@ -59,28 +59,23 @@ export function isNonArrObj(
 /**
  * Get the keys of an enum object.
  */
-export function getEnumKeys(arg: unknown): string[] {
+export function getEnumVals(arg: unknown): unknown[] {
   if (isNonArrObj(arg)) {
-    const retVal: string[] = [];
-    return Object.keys(arg).reduce((arr: any[], key) => {
+    // Get keys
+    const resp = Object.keys(arg).reduce((arr: any[], key) => {
       if (!arr.includes(key)) {
         arr.push(arg[key]);
       }
       return arr;
     }, []);
+    // Check if string or number enum
+    if (isNum(arg[resp[0]])) {
+      return resp.map(item => arg[item]);
+    } else {
+      return resp;
+    }
   }
   throw Error('"getEnumKeys" be an non-array object');
-}
-
-/**
- * Get the values of an enum object.
- */
-export function getEnumVals(arg: unknown) {
-  if (isNonArrObj(arg)) {
-    const keys = getEnumKeys(arg);
-    return keys.map(key => arg[key]);
-  }
-  throw Error('"getEnumVals" be an non-array object');
 }
 
 /**
