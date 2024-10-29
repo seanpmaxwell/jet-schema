@@ -105,7 +105,10 @@ import { isNum, isStr } from './validators';
 export default jetSchema([
   [isNum, 0],
   [isStr, ''],
-], '...pass a custom clone-function here if you want to...');
+],
+'...pass a custom clone-function here...',
+'...pass a custom error-handler here...',
+);
 ```
 
 Now that we have our schema function setup, let's make a schema: there are two ways to go about this, enforcing a schema from a type or infering a type from a schema. I'll show you some examples doing it both ways.
