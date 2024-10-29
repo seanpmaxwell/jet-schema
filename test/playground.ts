@@ -10,10 +10,8 @@ import {
   isBoolean,
   isNumberArray,
   nonNullable,
-  isNumber,
   isString,
 } from './util/validators';
-// import { isNum } from '../src/util';
 
 
 // **** User Test Stuff (User has an explicit type) **** //
@@ -75,7 +73,6 @@ console.log(customPost);
 
 const PartialSchema: TJetSchema<{ id: number, name: string }> = {
   id: (arg: unknown) => typeof arg === 'number', // should return error,
-  // id: isNumber,
   name: isString,
 } as const;
 

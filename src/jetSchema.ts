@@ -187,7 +187,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(
     // Setup
     const [ isOptional = false, isNullable = false, defaultVal = true ] = rest,
       ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
-      newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn),
+      newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn, onErrorF),
       testFn = _setupTestFn(ret.validators, isOptional, isNullable, onErrorF);
     // "defaultVal"
     if (!isOptional && !isNullable && !defaultVal) {
@@ -308,6 +308,7 @@ function _setupNewFn(
   defaultVals: TDefaultVals,
   validators: TValidators,
   cloneFn: TFunc,
+  onError: TOnError,
 ): (partial?: Partial<TModel>) => TModel {
   return (partial: Partial<TModel> = {}) => {
     // Get default values
@@ -325,7 +326,7 @@ function _setupNewFn(
       if (testFn(val, ((transVal) => val = transVal))) {
         retVal[key] = cloneFn(val);
       } else {
-        throw new Error(`Property "${key}" was invalid.`);
+        onError(key, val);
       }
     }
     // Return
@@ -351,7 +352,8 @@ function _setupTestFn(
     }
     // Must be an object
     if (!isObj(arg)) {
-      throw new Error('test() failed: Parameter was not an object');
+      onError('schema.test function', arg);
+      return false;
     }
     for (const key in validators) {
       const testFn = validators[key];
@@ -382,7 +384,7 @@ function _clone<T>(arg: T): T {
  * Default function to call when a validation fails.
  */
 function _defaultOnErr(property: string) {
-  throw new Error(`Property "${property}" was missing or invalid.`);
+  throw new Error(`The item "${property}" failed to pass validation.`);
 }
 
 

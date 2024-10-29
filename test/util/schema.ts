@@ -16,7 +16,7 @@ const customClone = (arg: unknown): unknown => {
 };
 
 const customError = (property: string, value: unknown) => {
-  console.error(`Validation for "${property}" failed. Value tested: `, value);
+  console.error(`Validation for "${property}" failed. Value tested:`, value);
 };
 
 

@@ -39,6 +39,7 @@ export interface IUser {
   avatar2: IAvatar | null;
   avatar3?: IAvatar | null;
   avatar4?: IAvatar | null;
+  avatar5?: IAvatar;
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
