@@ -1,12 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { inferType } from '../../src';
 
-import schema from '../util/schema'
-
-import {
-  isNumber,
-  isRelationalKey,
-  isString,
-} from '../util/validators';
+import schema from '../util/schema';
+import { isNumber, isRelationalKey, isString } from '../util/validators';
 
 
 // **** Setup ***** //
@@ -34,7 +31,7 @@ const Post = schema({
   // }, false, true),
 });
 
-export type IPost = inferType<typeof Post>
+export type IPost = inferType<typeof Post>;
 
 
 // const other = schema({

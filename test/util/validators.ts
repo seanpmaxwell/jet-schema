@@ -1,8 +1,3 @@
-// **** Variables **** //
-
-const EMAIL_RGX = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9-]*\.)+[A-Z]{2,}$/i;
-
-
 // **** Functions **** //
 
 /**
@@ -65,7 +60,11 @@ export function isRelationalKey(arg: unknown): arg is number {
  * Is param a valid color.
  */
 export function isEmail(val: unknown): val is string {
-  return isString(val) && (val === '' || EMAIL_RGX.test(val));
+  return (
+    isString(val) && 
+    (val.length) < 254 &&
+    (val === '' || val.includes('@'))
+  );
 }
 
 /**

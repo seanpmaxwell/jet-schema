@@ -1,6 +1,6 @@
 import { transform } from '../../src';
 
-import schema from '../util/schema'
+import schema from '../util/schema';
 
 import {
   isEmail,
@@ -13,13 +13,13 @@ import {
 
 // **** Variables **** //
 
-export enum AdminStatus {
+enum AdminStatus {
   Basic = 'basic',
   Mid = 'mid',
   High = 'high',
 }
 
-export enum AdminStatusAlt {
+enum AdminStatusAlt {
   Basic,
   Mid,
   High,
@@ -28,7 +28,7 @@ export enum AdminStatusAlt {
 
 // **** Types ***** //
 
-interface IUser {
+export interface IUser {
   id: number; // pk
   name: string;
   age: number;
@@ -37,6 +37,8 @@ interface IUser {
   lastLogin: Date;
   avatar?: IAvatar | null;
   avatar2: IAvatar | null;
+  avatar3?: IAvatar | null;
+  avatar4?: IAvatar | null;
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
@@ -70,7 +72,7 @@ const User = schema<IUser>({
   lastLogin: Date,
   avatar: schema({
     fileName: isString,
-    data: [ 'asdfa;sdlfkj', isString ],
+    data: [ 'base64:str;', isString ],
     url: isOptionalString,
   }, true, true),
   address: schema({
@@ -84,9 +86,19 @@ const User = schema<IUser>({
   }),
   avatar2: schema({
     fileName: isString,
-    data: [ 'asdfa;sdlfkj', isString ],
+    data: [ 'base64:str;', isString ],
     url: isOptionalString,
   }, false, true),
+  avatar3: schema({
+    fileName: isString,
+    data: [ 'base64:str;', isString ],
+    url: isOptionalString,
+  }, true, true, false),
+  avatar4: schema({
+    fileName: isString,
+    data: [ 'base64:str;', isString ],
+    url: isOptionalString,
+  }, true, true, null),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
 });
@@ -94,4 +106,8 @@ const User = schema<IUser>({
 
 // **** Export default **** //
 
-export default User;
+export default {
+  AdminStatus,
+  AdminStatusAlt,
+  ...User,
+};

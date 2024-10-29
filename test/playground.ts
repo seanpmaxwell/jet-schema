@@ -1,6 +1,8 @@
+/* eslint-disable no-console */
+
 import { TJetSchema, transform } from '../src';
 
-import User, { AdminStatus } from './models/User';
+import User from './models/User';
 import { IPost } from './models/Post';
 import schema from './util/schema';
 
@@ -24,20 +26,20 @@ const user1 = User.new({
 
 // console.log(user1);
 console.log(User.test(user1));
-console.log(User.pick('age').test(AdminStatus.Basic))
-console.log(User.pick('adminStatus').test)
-console.log(User.pick('avatar')?.default())
-console.log(User.pick('avatar')?.new())
-console.log(User.pick('avatar')?.pick('data'))
-console.log(User.pick('avatar')?.pick('data').default())
-console.log(User.pick('avatar')?.pick('url')?.default())
-console.log(User.pick('avatar2').default())
-console.log(User.pick('avatar2').new())
+console.log(User.pick('age').test(User.AdminStatus.Basic));
+console.log(User.pick('adminStatus').test);
+console.log(User.pick('avatar')?.default());
+console.log(User.pick('avatar')?.new());
+console.log(User.pick('avatar')?.pick('data'));
+console.log(User.pick('avatar')?.pick('data').default());
+console.log(User.pick('avatar')?.pick('url')?.default());
+console.log(User.pick('avatar2').default());
+console.log(User.pick('avatar2').new());
 
 const avatar = User.pick('avatar')?.new();
 const testAvatar = nonNullable(User.pick('avatar')!.test);
 // console.log(testAvatar('asdf')) // Should throw error
-console.log(testAvatar(avatar))
+console.log(testAvatar(avatar));
 
 // Test trans function
 const customTest = transform(JSON.parse, isNumberArray);
@@ -64,9 +66,9 @@ const customPost: IPost = {
   //   fileName: '',
   //   data: '',
   // },
-}
+};
 
-console.log(customPost)
+console.log(customPost);
 
 
 // **** Test Partial Schema **** //

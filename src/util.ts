@@ -2,6 +2,7 @@
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
+export type TBasicObj = Record<string, unknown>;
 
 // The the type return from the transform function
 export type TValidatorFn<T> = (
@@ -62,20 +63,27 @@ export function isNonArrObj(
 export function getEnumVals(arg: unknown): unknown[] {
   if (isNonArrObj(arg)) {
     // Get keys
-    const resp = Object.keys(arg).reduce((arr: any[], key) => {
+    const resp = Object.keys(arg).reduce((arr: unknown[], key) => {
       if (!arr.includes(key)) {
         arr.push(arg[key]);
       }
       return arr;
     }, []);
     // Check if string or number enum
-    if (isNum(arg[resp[0]])) {
-      return resp.map(item => arg[item]);
+    if (isNum(arg[resp[0] as string])) {
+      return resp.map(item => arg[item as string]);
     } else {
       return resp;
     }
   }
   throw Error('"getEnumKeys" be an non-array object');
+}
+
+/**
+ * Check if non-array object.
+ */
+export function isBasicObj(arg: unknown): arg is TBasicObj {
+  return isObj(arg) && !Object.keys(arg).some(key => !isStr(key));
 }
 
 /**
@@ -89,7 +97,7 @@ export function isFn(arg: unknown): arg is TFunc {
  * Not necessarily a Date object but makes sure it is a valid date.
  */
 export const isDate = transform((arg: string | number | Date) => {
-  return new Date(arg)
+  return new Date(arg);
 }, isValidDate);
 
 /**
@@ -99,8 +107,8 @@ export const isDate = transform((arg: string | number | Date) => {
 export function isValidDate(val: unknown): val is Date {
   return (
     (isStr(val) || isNum(val) || (val instanceof Date)) && 
-    !isNaN(new Date(val as any).getTime())
-  )
+    !isNaN(new Date(val).getTime())
+  );
 }
 
 /**

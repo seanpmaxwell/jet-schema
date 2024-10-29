@@ -1,4 +1,16 @@
-import { getEnumVals, isArr, isDate, isFn, isObj, isUndef, TFunc, TValidatorFn } from './util';
+/* eslint-disable n/no-unsupported-features/node-builtins */
+/* eslint-disable max-len */
+
+import {
+  getEnumVals,
+  isArr, 
+  isDate,
+  isFn,
+  isObj,
+  isUndef,
+  TFunc,
+  TValidatorFn,
+} from './util';
 
 
 // **** Fancy Composite Types **** //
@@ -32,7 +44,8 @@ type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef
 type TEnum = Record<string, string | number>;
 type TDefaultVals = Record<string | number | symbol, TFunc>;
 type TValidators = Record<string | number | symbol, TValidatorFn<unknown>>;
-type GetTypePredicate<T> = T extends (x: any) => x is infer U ? U : never;
+type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
+type TOnError = (property: string, value?: unknown) => void;
 
 
 // **** Schema Types **** //
@@ -43,7 +56,7 @@ type TDefaultValsMap<T> = {
     0: ((arg: unknown) => arg is unknown),
     1: 0 extends keyof T[K] ? GetTypePredicate<T[K][0]> : never,
   }
-}
+};
 
 // Return value for the pick function
 type TPickRetVal<T, NT = NonNullable<T>> = {
@@ -52,7 +65,7 @@ type TPickRetVal<T, NT = NonNullable<T>> = {
 } & (IsStaticObj<T> extends true ? {
   pick: <K extends keyof NT>(prop: K) => (undefined extends NT[K] ? TPickRetVal<NT[K]> | undefined : TPickRetVal<NT[K]>);
   new: (arg?: Partial<T>) => NonNullable<T>;
-} : {});
+} : unknown);
 
 // Value returned by the "schema" function
 export interface ISchema<T, NT = NonNullable<T>> {
@@ -141,7 +154,7 @@ type InferTypesHelper<U> = {
     ? (TTypeArr<U[K]> | TEnum)
     : never
   );
-}
+};
  
 
 // **** Functions **** //
@@ -152,10 +165,12 @@ type InferTypesHelper<U> = {
 function jetSchema<M extends TDefaultValsMap<M>>(
   defaultValuesArr?: M extends [TFunc, unknown][] ? M : never,
   cloneFnArg?: TFunc,
+  onError?: TOnError,
 ) {
 
   // Setup default values map
-  const defaultValsMap = new Map(defaultValuesArr);
+  const defaultValsMap = new Map(defaultValuesArr),
+    onErrorF = onError ?? _defaultOnErr;
   // Setup clone functions
   let cloneFn;
   if (!!cloneFnArg) {
@@ -171,9 +186,9 @@ function jetSchema<M extends TDefaultValsMap<M>>(
   >(schemaFnObjArg: U, ...rest: R) => {
     // Setup
     const [ isOptional = false, isNullable = false, defaultVal = true ] = rest,
-      ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap),
+      ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
       newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn),
-      testFn = _setupTestFn(ret.validators, isOptional, isNullable);
+      testFn = _setupTestFn(ret.validators, isOptional, isNullable, onErrorF);
     // "defaultVal"
     if (!isOptional && !isNullable && !defaultVal) {
       throw new Error('Default value must be the full schema-object if type is neither optional or nullable');
@@ -201,7 +216,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(
         defaultVal,
       },
     } as ISchema<unknown extends T ? InferTypes<U, R[0], R[1]> : T>;
-  }
+  };
 }
 
 /**
@@ -209,8 +224,9 @@ function jetSchema<M extends TDefaultValsMap<M>>(
  */
 function _setupDefaultsAndValidators<T>(
   setupObj: TSchemaFnObjArg<T>,
-  cloneFn: TFunc,
+  cloneFn: typeof _clone,
   defaultValsMap: Map<TFunc, unknown>,
+  onError: TOnError,
 ): {
   childSchemaNewFns: TDefaultVals
   defaults: TDefaultVals,
@@ -265,9 +281,9 @@ function _setupDefaultsAndValidators<T>(
     }
     // Make sure the default is a valid value
     const vldr = validators[key],
-      dfltVal = defaults[key]?.();
+      dfltVal: unknown = defaults[key]?.();
     if (!vldr(dfltVal)) {
-      throw new Error(`Default value for key "${key}" was missing or invalid`);
+      onError(key, dfltVal);
     }
   }
   // Return
@@ -297,7 +313,10 @@ function _setupNewFn(
     // Get default values
     const retVal: TModel = {};
     for (const dflt in defaultVals) {
-      retVal[dflt] = defaultVals[dflt]();
+      const val: unknown = defaultVals[dflt]();
+      if (val !== undefined) {
+        retVal[dflt] = val;
+      }
     }
     // Get values from partial
     for (const key in partial) {
@@ -321,6 +340,7 @@ function _setupTestFn(
   validators: TValidators,
   isOptional: boolean,
   isNullable: boolean,
+  onError: TOnError,
 ): (arg: unknown) => arg is TModel {
   return (arg: unknown): arg is TModel => {
     // Check null/undefined;
@@ -337,7 +357,7 @@ function _setupTestFn(
       const testFn = validators[key];
       let val = (arg as TModel)[key];
       if (!testFn(val, ((transVal) => val = transVal))) {
-        throw new Error(`Property "${key}" was missing or invalid.`);
+        onError(key, val);
       }
       (arg as TModel)[key] = val;
     }
@@ -348,7 +368,7 @@ function _setupTestFn(
 /**
  * Clone Function
  */
-export function _clone<T>(arg: T): T {
+function _clone<T>(arg: T): T {
   if (arg instanceof Date) {
     return new Date(arg) as T;
   } else if (isObj(arg)) {
@@ -356,6 +376,13 @@ export function _clone<T>(arg: T): T {
   } else {
     return arg;
   }
+}
+
+/**
+ * Default function to call when a validation fails.
+ */
+function _defaultOnErr(property: string) {
+  throw new Error(`Property "${property}" was missing or invalid.`);
 }
 
 
