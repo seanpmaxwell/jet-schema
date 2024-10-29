@@ -38,7 +38,7 @@ console.log(User.pick('avatar2').new());
 
 const avatar = User.pick('avatar')?.new();
 const testAvatar = nonNullable(User.pick('avatar')!.test);
-// console.log(testAvatar('asdf')) // Should throw error
+console.log(testAvatar('asdf'));
 console.log(testAvatar(avatar));
 
 // Test trans function
@@ -74,8 +74,8 @@ console.log(customPost);
 // **** Test Partial Schema **** //
 
 const PartialSchema: TJetSchema<{ id: number, name: string }> = {
-  // id: isNum, // should throw error
-  id: isNumber,
+  id: (arg: unknown) => typeof arg === 'number', // should return error,
+  // id: isNumber,
   name: isString,
 } as const;
 
