@@ -265,7 +265,7 @@ export default {
 ```
 
 ### Recommended Defaults <a name="recommended-defaults"></a>
-When calling the `jetSchema` function for this first time, at the very least, I highly recommended you set these default values for each of your basic primitive validator functions, unless of course your application has some other specific need.
+When calling the `jetSchema` function for this first time, at the very least, I highly recommend you set these default values for each of your basic primitive validator functions, unless of course your application has some other specific need.
 ```typescript
 // util/schema.ts
 import { isNum, isStr, isBool } from 'util/type-checks';
