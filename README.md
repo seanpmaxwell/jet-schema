@@ -155,7 +155,7 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
-In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checkd against the generic (`schema<"The Generic">(...)`) that was passed so you must used the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.<nr/>
+In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must used the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.<nr/>
 
 The third option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.
 
