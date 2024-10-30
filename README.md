@@ -66,7 +66,7 @@ const User = schema<IUser>({
     street: isString,
     zip: isNumber,
     country: isOptionalStr,
-  }, true),
+  }, { optional: true }),
 });
 ```
 
@@ -80,10 +80,10 @@ const User = schema<IUser>({
 After installation, you need to configure the `schema` function by importing and calling the `jetSchema()` function.
 <br/>
 
-`jetSchema()` accepts three optional arguments:
-  - An array-map `[["val", "function"]]` specifying which default value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator-function when `schema` is called (the next 3 snippets below contain examples).
-  - The second is a custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
-  - By default, if a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. Function must have the format: `(property: string, value?: unknown) => void;`
+`jetSchema()` accepts an optional settings object with 3 three options:
+  - `defaultValuesMap`: An `[["val", "function"]]`nested array specifying which default value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator-function when `schema` is called (the next 3 snippets below contain examples).
+  - `cloneFn`: A custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
+  - `onError`: If a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. Function must have the format: `(property: string, value?: unknown) => void;`
 
 > When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
 

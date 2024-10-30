@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 
 import {
-  getEnumVals,
+  processEnum,
   isArr, 
   isDate,
   isFn,
@@ -73,9 +73,9 @@ export interface ISchema<T, NT = NonNullable<T>> {
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof NT>(prop: K) => (undefined extends NT[K] ? TPickRetVal<NT[K]> | undefined : TPickRetVal<NT[K]>);
   _schemaSettings: {
-    isOptional: boolean;
-    isNullable: boolean;
-    defaultVal: boolean | null;
+    optional: boolean;
+    nullable: boolean;
+    initWithParent: boolean | null;
   };
 }
 
@@ -93,36 +93,6 @@ export type TSchemaFnObjArg<T> = {
   ? ISchema<T[K]>
   : TTypeArr<T[K]>;
 };
-
-// Need to restrict parameters based on if "T" is null or undefined.
-type TSchemaFnArgs<T> = 
-  // If T is unknown (inferring types)
-  unknown extends T ? [
-    isOptional?: boolean,
-    isNullable?: boolean,
-    defaultVal?: boolean | null,
-  ] : 
-  // Undefined and null
-  (undefined extends T ? (null extends T ? [
-    isOptional: true,
-    isNullable: true,
-    defaultVal?: boolean | null,
-  // Undefined not null
-  ] : [
-    isOptional: true,
-    isNullable?: false,
-    defaultVal?: boolean,
-  // Not undefined and null
-  ]) : (null extends T ? [
-    isOptional: false,
-    isNullable?: true,
-    defaultVal?: true | null,
-  // Not undefined and not null
-  ] : [
-    isOptional?: false,
-    isNullable?: false,
-    defaultVal?: true,
-  ]));
 
 
 // **** Infer Types **** //
@@ -156,43 +126,82 @@ type InferTypesHelper<U> = {
   );
 };
  
+interface IJetOptions<M> {
+  defaultValuesMap?: M extends [TFunc, unknown][] ? M : never,
+  cloneFn?: (value: unknown) => unknown,
+  onError?: TOnError,
+}
+
+// Need to restrict parameters based on if "T" is null or undefined.
+type TSchemaSettings<T> = (
+  // inferring types
+  unknown extends T ? ({
+    optional: true
+    nullable?: true,
+    initWithParent?: null | boolean,
+  } | {
+    optional?: false,
+    nullable?: true,
+    initWithParent?: null | true,
+  } | {
+    optional?: false,
+    nullable?: false,
+    initWithParent?: true,
+  } | {
+    optional?: true,
+    nullable?: false,
+    initWithParent?: boolean,
+  } | undefined) : 
+  // Not inferring types
+  (undefined extends T ? (null extends T ? {
+    optional: true,
+    nullable: true,
+    initWithParent?: null | boolean,
+  } : {
+    optional: true,
+    nullable?: false,
+    initWithParent?: boolean,
+  }) : (null extends T ? {
+    optional?: false,
+    nullable: true,
+    initWithParent?: null | true,
+  } : ({
+    optional?: false,
+    nullable?: false,
+    initWithParent?: true,
+  } | undefined)))
+);
+
 
 // **** Functions **** //
 
 /**
  * Core jetSchema functions
  */
-function jetSchema<M extends TDefaultValsMap<M>>(
-  defaultValuesArr?: M extends [TFunc, unknown][] ? M : never,
-  cloneFnArg?: TFunc,
-  onError?: TOnError,
-) {
-
+function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
   // Setup default values map
-  const defaultValsMap = new Map(defaultValuesArr),
-    onErrorF = onError ?? _defaultOnErr;
-  // Setup clone functions
-  let cloneFn;
-  if (!!cloneFnArg) {
-    cloneFn = cloneFnArg;
-  } else {
-    cloneFn = (arg: unknown) => _clone(arg);
-  }
-
+  const defaultValsMap = new Map(options?.defaultValuesMap),
+    onErrorF = (options?.onError ? options.onError : _defaultOnErr),
+    cloneFn = (options?.cloneFn ? options.cloneFn : _defaultClone);
   // Return the "schema" function
   return <T,
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
-    R extends TSchemaFnArgs<T> = TSchemaFnArgs<T>,
-  >(schemaFnObjArg: U, ...rest: R) => {
-    // Setup
-    const [ isOptional = false, isNullable = false, defaultVal = true ] = rest,
-      ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
-      newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.validators, isOptional, isNullable, onErrorF);
+    R extends TSchemaSettings<T> = TSchemaSettings<T>
+  >(schemaFnObjArg: U, schemaSettings?: R) => {
+    // Initialize options
+    const settingsF = {
+      optional: !!schemaSettings?.optional,
+      nullable: !!schemaSettings?.nullable,
+      initWithParent: (isUndef(schemaSettings?.initWithParent) ? true : schemaSettings?.initWithParent),
+    };
     // "defaultVal"
-    if (!isOptional && !isNullable && !defaultVal) {
+    if (!settingsF.optional && !settingsF.nullable && !settingsF.initWithParent) {
       throw new Error('Default value must be the full schema-object if type is neither optional or nullable');
     }
+    // Setup
+    const ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
+      newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn, onErrorF),
+      testFn = _setupTestFn(ret.validators, settingsF.optional, settingsF.nullable, onErrorF);
     // Return
     return {
       new: newFn,
@@ -210,12 +219,14 @@ function jetSchema<M extends TDefaultValsMap<M>>(
           };
         }
       },
-      _schemaSettings: {
-        isOptional,
-        isNullable,
-        defaultVal,
-      },
-    } as ISchema<unknown extends T ? InferTypes<U, R[0], R[1]> : T>;
+      _schemaSettings: settingsF,
+    } as ISchema<
+      unknown extends T 
+      ? InferTypes<U,
+        'optional' extends keyof R ? R['optional'] : false,
+        'nullable' extends keyof R ? R['nullable'] : false
+        >
+      : T>;
   };
 }
 
@@ -224,7 +235,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(
  */
 function _setupDefaultsAndValidators<T>(
   setupObj: TSchemaFnObjArg<T>,
-  cloneFn: typeof _clone,
+  cloneFn: typeof _defaultClone,
   defaultValsMap: Map<TFunc, unknown>,
   onError: TOnError,
 ): {
@@ -248,7 +259,7 @@ function _setupDefaultsAndValidators<T>(
     // Schema
     } else if (_isSchemaObj(setupVal)) {
       const childSchema = setupVal,
-        dflt = childSchema._schemaSettings.defaultVal;
+        dflt = childSchema._schemaSettings.initWithParent;
       if (dflt === true) {
         defaults[key] = () => childSchema.new();
       } else if (dflt === null) {
@@ -258,9 +269,9 @@ function _setupDefaultsAndValidators<T>(
       validators[key] = childSchema.test;
     // Enum
     } else if (isObj(setupVal)) {
-      const vals = getEnumVals(setupVal);
-      defaults[key] = () => cloneFn(vals[0]);
-      validators[key] = (arg: unknown): arg is T[keyof T] => vals.some(item => item === arg);
+      const [ dflt, vldr ] = processEnum(setupVal);
+      defaults[key] = () => cloneFn(dflt);
+      validators[key] = vldr as TValidatorFn<unknown>;
     // Just a validator function
     } else if (isFn(setupVal)) {
       validators[key] = setupVal;
@@ -370,9 +381,9 @@ function _setupTestFn(
 /**
  * Clone Function
  */
-function _clone<T>(arg: T): T {
+function _defaultClone(arg: unknown): unknown {
   if (arg instanceof Date) {
-    return new Date(arg) as T;
+    return new Date(arg);
   } else if (isObj(arg)) {
     return structuredClone(arg);
   } else {

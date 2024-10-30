@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { inferType } from '../../src';
@@ -20,7 +21,7 @@ const Post = schema({
   imageOpt: schema({
     fileName: isString,
     data: isString,
-  }, true),
+  }, { optional: true }),
   // imageOptNull: schema({
   //   fileName: isString,
   //   data: isString,
@@ -34,15 +35,15 @@ const Post = schema({
 export type IPost = inferType<typeof Post>;
 
 
-// const other = schema({
-//   fileName: isString,
-//   data: isString,
-// }, true, true);
+const other = schema({
+  fileName: isString,
+  data: isString,
+}, { optional: false, nullable: true, initWithParent: true });
 
-// let val: unknown = 'asdf'
-// if (other.test(val)) {
-//   console.log(val?.data)
-// }
+const val = {};
+if (other.test(val)) {
+  console.log(val?.data);
+}
 
 // const post = Post.new();
 // post.created
