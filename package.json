@@ -7,7 +7,8 @@
   "scripts": {
     "test": "NODE_ENV=test vitest",
     "test:pg": "ts-node ./test/playground.ts",
-    "build": "rm -rf ./dist && tsc -p tsconfig.build.json"
+    "build": "rm -rf ./dist && tsc -p tsconfig.build.json",
+    "lint": "eslint --flag unstable_ts_config"
   },
   "repository": {
     "type": "git",
