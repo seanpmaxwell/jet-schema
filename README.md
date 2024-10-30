@@ -163,7 +163,7 @@ The third option `initWithParent` defines the behavior when a schema is a child-
 {
   optional?: boolean; // default "false", must be true if generic is optional
   nullable?: boolean; // default "false", must be true if generic is nullable
-  initWithParent?: boolean | null; // default "true", must be true or null if generic is not optional.
+  initWithParent?: boolean | null; // default "true", must be undefined, true or null if generic is not optional.
 }
 ```
 
