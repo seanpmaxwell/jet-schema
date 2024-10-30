@@ -89,7 +89,7 @@ After installation, you need to configure the `schema` function by importing and
 
 ```typescript
 // "util/validators.ts"
-
+// As mentioned in the intro, you can copy some validators from here (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts)
 export const isStr = (arg: unknown): arg is string => typeof param === 'string';
 export const isOptStr = (arg: unknown): arg is string => arg === undefined || typeof param === 'string';
 export const isNum = (arg: unknown): arg is string => typeof param === 'number';
@@ -102,13 +102,14 @@ export const isNum = (arg: unknown): arg is string => typeof param === 'number';
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
 
-export default jetSchema([
-  [isNum, 0],
-  [isStr, ''],
-],
-'...pass a custom clone-function here...',
-'...pass a custom error-handler here...',
-);
+export default jetLogger({
+  defaultValuesMap: [
+    [isNum, 0],
+    [isStr, ''],
+  ],
+  cloneFn: // pass a custom clone-function here
+  onError: // pass a custom error-handler here,
+});
 ```
 
 Now that we have our schema function setup, let's make a schema: there are two ways to go about this, enforcing a schema from a type or infering a type from a schema. I'll show you some examples doing it both ways.
@@ -118,10 +119,8 @@ Now that we have our schema function setup, let's make a schema: there are two w
 ```typescript
 // "models/User.ts"
 import { inferType } from 'jet-schema';
-
 import schema from 'util/schema.ts';
 import { isNum, isStr, isOptionalStr } from 'util/type-checks';
-
 
 // **OPTION 1**: Create schema using type
 interface IUser {
@@ -156,9 +155,19 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
-In addition to a schema-object, the `schema()` function accepts 3 additional parameters `isOptional`, `isNullable`, and `default`. These are type-checked against the type supplied to schema (`schema<...Your Type...>()`), so you must supply the correct parameters. So for example, if the schema-type is nullable and optional, then you must enter `true` for the second and third parameters.<br/>
+In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checkd against the generic (`schema<"The Generic">(...)`) that was passed so you must used the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.<nr/>
 
-The third option `default` defines the behavior for nested schemas when initialized from a parent. The value can be a `boolean` or `null`. If `false` the value will not be initialized with the parent, if `null` (the schema must be nullable to do this) the value will be `null`, and if `true` or `undefined` then a full schema object will be created when a parent object is created. The default value for the `default` parameter is `true`. If a nested schema is neither optional or nullable, then `default` must be true.
+The third option `initWithParent` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `initWithParent` is `null` then `nullable` must be `true`.
+
+```typescript
+{
+  optional?: boolean; // default "false", must be true if generic is optional
+  nullable?: boolean; // default "false", must be true if generic is nullable
+  initWithParent?: boolean | null; // default "true", must be true or null if generic is not optional.
+}
+```
+
+Here's an example of the options in use:
 
 ```typescript
 // models/User.ts
@@ -175,17 +184,10 @@ const User = schema<IUser>({
   address: schema({
     street: isString,
     zip: isNumber,
-  }, true /*(isOptional)*/, true /*(isNullable)*/, /*default*/) // You MUST pass true for "isOptional" and "isNullable" here.
+  }, { optional: true, nullable: true, initWithParent: false }),
 })
 
-const User1 = schema<IUser>({
-  id: isNumber,
-  name: isString,
-  address: schema({
-    street: isString,
-    zip: isNumber,
-  }, false, false, false) // **ERROR** since this nested schema is neither optional or nullable, the default cannot be false.
-})
+User.new() // => { id: 0, name: '' }
 ```
 
 
@@ -275,5 +277,4 @@ export default jetSchema([
   [isStr, ''],
   [isNum, 0],
 ]);
-
 ```
