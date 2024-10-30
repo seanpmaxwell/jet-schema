@@ -72,7 +72,7 @@ export interface ISchema<T, NT = NonNullable<T>> {
   new: (arg?: Partial<T>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof NT>(prop: K) => (undefined extends NT[K] ? TPickRetVal<NT[K]> | undefined : TPickRetVal<NT[K]>);
-  _schemaSettings: {
+  _schemaOptions: {
     optional: boolean;
     nullable: boolean;
     init: boolean | null;
@@ -132,44 +132,38 @@ interface IJetOptions<M> {
   onError?: TOnError,
 }
 
+export interface IOptNul {
+  optional: true;
+  nullable: true;
+  init?: null | boolean;
+}
+
+export interface IOptNotNul {
+  optional: true;
+  nullable?: false;
+  init?: boolean;
+}
+
+export interface INotOptButNul {
+  optional?: false;
+  nullable: true;
+  init?: null | true;
+}
+
+export interface INotOptOrNul {
+  optional?: false;
+  nullable?: false;
+  init?: true;
+}
+
 // Need to restrict parameters based on if "T" is null or undefined.
-type TSchemaSettings<T> = (
-  // inferring types
-  unknown extends T ? ({
-    optional: true
-    nullable?: true,
-    init?: null | boolean,
-  } | {
-    optional?: false,
-    nullable?: true,
-    init?: null | true,
-  } | {
-    optional?: false,
-    nullable?: false,
-    init?: true,
-  } | {
-    optional?: true,
-    nullable?: false,
-    init?: boolean,
-  } | undefined) : 
-  // Not inferring types
-  (undefined extends T ? (null extends T ? {
-    optional: true,
-    nullable: true,
-    init?: null | boolean,
-  } : {
-    optional: true,
-    nullable?: false,
-    init?: boolean,
-  }) : (null extends T ? {
-    optional?: false,
-    nullable: true,
-    init?: null | true,
-  } : ({
-    optional?: false,
-    nullable?: false,
-    init?: true,
-  } | undefined)))
+type TSchemaOptions<T> = (
+  unknown extends T 
+  ? (IOptNul | IOptNotNul | INotOptButNul | INotOptOrNul) 
+  : (undefined extends T 
+      ? (null extends T ? IOptNul : IOptNotNul) 
+      : (null extends T ? INotOptButNul : INotOptOrNul)
+    )
 );
 
 
@@ -186,22 +180,22 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
   // Return the "schema" function
   return <T,
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
-    R extends TSchemaSettings<T> = TSchemaSettings<T>
-  >(schemaFnObjArg: U, schemaSettings?: R) => {
+    R extends TSchemaOptions<T> = TSchemaOptions<T>
+  >(schemaFnObjArg: U, schemaOptions?: R) => {
     // Initialize options
-    const settingsF = {
-      optional: !!schemaSettings?.optional,
-      nullable: !!schemaSettings?.nullable,
-      init: (isUndef(schemaSettings?.init) ? true : schemaSettings?.init),
+    const optionsF = {
+      optional: !!schemaOptions?.optional,
+      nullable: !!schemaOptions?.nullable,
+      init: (isUndef(schemaOptions?.init) ? true : schemaOptions?.init),
     };
     // "defaultVal"
-    if (!settingsF.optional && !settingsF.nullable && !settingsF.init) {
+    if (!optionsF.optional && !optionsF.nullable && !optionsF.init) {
       throw new Error('Default value must be the full schema-object if type is neither optional or nullable');
     }
     // Setup
     const ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
       newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.validators, settingsF.optional, settingsF.nullable, onErrorF);
+      testFn = _setupTestFn(ret.validators, optionsF.optional, optionsF.nullable, onErrorF);
     // Return
     return {
       new: newFn,
@@ -219,7 +213,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
           };
         }
       },
-      _schemaSettings: settingsF,
+      _schemaOptions: optionsF,
     } as ISchema<
       unknown extends T 
       ? InferTypes<U,
@@ -259,7 +253,7 @@ function _setupDefaultsAndValidators<T>(
     // Schema
     } else if (_isSchemaObj(setupVal)) {
       const childSchema = setupVal,
-        dflt = childSchema._schemaSettings.init;
+        dflt = childSchema._schemaOptions.init;
       if (dflt === true) {
         defaults[key] = () => childSchema.new();
       } else if (dflt === null) {
@@ -309,7 +303,7 @@ function _setupDefaultsAndValidators<T>(
  * See if value is a schema object.
  */
 function _isSchemaObj(arg: unknown): arg is ISchema<unknown> {
-  return (isObj(arg) && '_schemaSettings' in arg);
+  return (isObj(arg) && '_schemaOptions' in arg);
 }
 
 /**
