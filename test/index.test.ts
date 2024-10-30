@@ -64,6 +64,7 @@ test('test User override each default value', () => {
     },
     adminStatus: User.AdminStatus.High,
     adminStatusAlt: User.AdminStatusAlt.Mid,
+    avatar6: { fileName: 'nil', data: 'nil' },
   });
 
   const expectedResult: IUser = {
@@ -87,6 +88,7 @@ test('test User override each default value', () => {
     },
     adminStatus: User.AdminStatus.High,
     adminStatusAlt: User.AdminStatusAlt.Mid,
+    avatar6: { fileName: 'nil', data: 'nil' },
   };
 
   expect(user).toStrictEqual(expectedResult);
@@ -117,6 +119,7 @@ test('test User pick() function', () => {
   expect(User.pick('avatar3')?.default()).toStrictEqual(undefined);
   expect(User.pick('avatar4')?.default()).toStrictEqual(null);
   expect(User.pick('avatar5')?.default()).toStrictEqual(undefined);
+  expect(User.pick('avatar6')?.default()).toStrictEqual(undefined);
   expect(User.pick('adminStatus').default()).toStrictEqual(User.AdminStatus.Basic);
   expect(User.pick('adminStatus').test('asdf')).toStrictEqual(false);
   expect(User.pick('adminStatusAlt').default()).toStrictEqual(User.AdminStatusAlt.Basic);
