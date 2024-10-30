@@ -29,6 +29,7 @@ test('test User all default values', () => {
         code: 0,
       },
     },
+    avatar7: null,
     adminStatus: User.AdminStatus.Basic,
     adminStatusAlt: User.AdminStatusAlt.Basic,
   };
@@ -89,6 +90,7 @@ test('test User override each default value', () => {
     adminStatus: User.AdminStatus.High,
     adminStatusAlt: User.AdminStatusAlt.Mid,
     avatar6: { fileName: 'nil', data: 'nil' },
+    avatar7: null,
   };
 
   expect(user).toStrictEqual(expectedResult);

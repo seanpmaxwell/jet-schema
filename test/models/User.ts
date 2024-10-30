@@ -41,6 +41,7 @@ export interface IUser {
   avatar4?: IAvatar | null;
   avatar5?: IAvatar;
   avatar6?: IAvatar | null;
+  avatar7?: IAvatar | null;
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
@@ -105,7 +106,12 @@ const User = schema<IUser>({
     fileName: isString,
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
-  }, { nil: true }),
+  }, { nil: true, init: false }),
+  avatar7: schema({
+    fileName: isString,
+    data: [ 'base64:str;', isString ],
+    url: isOptionalString,
+  }, { nil: true, init: null }),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
 });

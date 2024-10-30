@@ -157,13 +157,15 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
 In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must used the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.<nr/>
 
-The third option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.
+The option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.
 
+In the real world it's very common to have a lot of child schemas which are both optional, nullable. So you don't have to write out `{ optional: true, nullable: true }` over-and-over again for every child-schema, you can write `{ nil: true }` as an shorthand alternative.
 ```typescript
 {
   optional?: boolean; // default "false", must be true if generic is optional
   nullable?: boolean; // default "false", must be true if generic is nullable
   init?: boolean | null; // default "true", must be undefined, true, or null if generic is not optional.
+  nil?: true; // Use this instead of { optional: true, nullable: true; }
 }
 ```
 
@@ -188,22 +190,6 @@ const User = schema<IUser>({
 })
 
 User.new() // => { id: 0, name: '' }
-```
-
-#### The alternative `nil` option
-In the real world it's very common to have a lot of child schemas which are both optional, nullable, and you want to skip them on intialization. For example, maybe a child-schema represents a jsonb column in a relational-database, and the database returns `null` everytime the table is queried if the jsonb column is empty. So you don't have to write out `{ optional: true, nullable: true, init: false }` over-and-over again for every child-schema, you can write `{ nil: true }` as an alternative. Note that your schema must be optional and nullable to pass `{ nil: true }`.
-```typescript
-interface IUser {
-  id: number;
-  address?: { street: string } | null;
-}
-
-const User = schema<IUser>({
-  id: isNumber,
-  address: schema({
-    street: isString,
-  }, { nil: true }),
-})
 ```
 
 

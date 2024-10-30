@@ -181,7 +181,7 @@ export interface INil {
   nil: true;
   optional?: undefined;
   nullable?: undefined;
-  init?: undefined;
+  init?: null | boolean;
 }
 
 
@@ -383,17 +383,18 @@ function _setupTestFn(
  * Setup options based on object passed by the user.
  */
 function _processOptions(options: IFullOptions | undefined): Omit<Required<IFullOptions>, 'nil'> {
+  const init = (isUndef(options?.init) ? true : options?.init);
   if (!options?.nil) {
     return {
       optional: !!options?.optional,
       nullable: !!options?.nullable,
-      init: (isUndef(options?.init) ? true : options?.init),
+      init,
     };
   } else {
     return {
       optional: true,
       nullable: true,
-      init: false,
+      init,
     };
   }
 }
