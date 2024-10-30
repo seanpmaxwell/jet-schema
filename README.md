@@ -157,7 +157,7 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
 In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checkd against the generic (`schema<"The Generic">(...)`) that was passed so you must used the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.<nr/>
 
-The third option `initWithParent` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `initWithParent` is `null` then `nullable` must be `true`.
+The third option `initWithParent` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `initWithParent` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.
 
 ```typescript
 {
@@ -248,7 +248,7 @@ const User = schema<IUser>({
   id: isNumber,
   address: schema({
     street: isString,
-  }, true, true)
+  }, { optional: true, nullable: true }),
 })
 
 // Wrapper function: this is also handy for when we want to validate a 
@@ -272,9 +272,11 @@ When calling the `jetSchema` function for this first time, at the very least, I 
 // util/schema.ts
 import { isNum, isStr, isBool } from 'util/type-checks';
 
-export default jetSchema([
-  [isBool, false],
-  [isStr, ''],
-  [isNum, 0],
-]);
+export default jetLogger({
+  defaultValuesMap: [
+    [isNum, 0],
+    [isStr, ''],
+    [isBool, false],
+  ],
+});
 ```
