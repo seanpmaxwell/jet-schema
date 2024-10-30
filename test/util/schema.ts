@@ -1,9 +1,13 @@
+/* eslint-disable n/no-process-env */
 /* eslint-disable no-console */
 
 import jetLogger from '../../src';
 import { isBoolean, isNumber, isRelationalKey, isString } from './validators';
 
 
+/**
+ * Overwrite clone function
+ */
 const customClone = (arg: unknown): unknown => {
   if (arg instanceof Date) {
     return new Date(arg);
@@ -15,16 +19,25 @@ const customClone = (arg: unknown): unknown => {
   }
 };
 
+/**
+ * Overwrite error handling
+ */
 const customError = (property: string, value: unknown) => {
-  console.error(`Validation for "${property}" failed. Value tested:`, value);
+  if (process.env.NODE_ENV !== 'test') {
+    console.error(`Validation for "${property}" failed. Value tested:`, value);
+  }
 };
 
 
 // **** Export default **** //
 
-export default jetLogger([
-  [isBoolean, false],
-  [isNumber, 0],
-  [isString, ''],
-  [isRelationalKey, -1],
-], customClone, customError);
+export default jetLogger({
+  defaultValuesMap: [
+    [isBoolean, false],
+    [isNumber, 0],
+    [isString, ''],
+    [isRelationalKey, -1],
+  ],
+  cloneFn: customClone,
+  onError: customError,
+});

@@ -75,7 +75,7 @@ const User = schema<IUser>({
     fileName: isString,
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
-  }, true, true),
+  }, { optional: true, nullable: true }),
   address: schema({
     street: isString,
     city: isString,
@@ -89,17 +89,17 @@ const User = schema<IUser>({
     fileName: isString,
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
-  }, false, true),
+  }, { nullable: true }),
   avatar3: schema({
     fileName: isString,
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
-  }, true, true, false),
+  }, { optional: true, nullable: true, initWithParent: false }),
   avatar4: schema({
     fileName: isString,
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
-  }, true, true, null),
+  }, { optional: true, nullable: true, initWithParent: null }),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
 });
