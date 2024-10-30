@@ -3,7 +3,7 @@
 import { TJetSchema, transform } from '../src';
 
 import User from './models/User';
-import { IPost } from './models/Post';
+import Post, { IPost } from './models/Post';
 import schema from './util/schema';
 
 import {
@@ -51,22 +51,48 @@ const customPost: IPost = {
   mesage: '123',
   index: 0,
   created: new Date(),
-  // image: {
-  //   data: '',
-  //   fileName: '',
-  // },
+  image: {
+    data: '',
+    fileName: '',
+  },
   // image: null,
-  // imageOpt: undefined,
+  imageOpt: undefined,
   // imageOpt: { data: '', fileName: '' },
-  // imageNull: null,
-  // imageOptNull: null,
+  imageNull: null,
+  imageOptNull: null,
   // imageNull: {
   //   fileName: '',
   //   data: '',
   // },
+  imageReq: { data: '', fileName: '' },
 };
 
 console.log(customPost);
+
+// const misc: unknown = 'asdf';
+// if (Post.test(misc)) {
+
+// }
+
+// const other = schema({
+//   fileName: isString,
+//   data: isString,
+// }, { optional: false, nullable: true, init: true });
+
+// const val = {};
+// if (other.test(val)) {
+//   console.log(val?.data);
+// }
+
+// const post = Post.new();
+// post.created
+
+const post = Post.new();
+console.log(post.image);
+console.log(post.imageNil);
+console.log(post.imageOptNull);
+console.log(post.imageNull);
+
 
 
 // **** Test Partial Schema **** //

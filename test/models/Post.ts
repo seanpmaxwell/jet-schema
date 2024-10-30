@@ -1,6 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { inferType } from '../../src';
 
 import schema from '../util/schema';
@@ -14,36 +11,31 @@ const Post = schema({
   mesage: isString,
   index: isNumber,
   created: Date,
-  // image: schema({
-  //   fileName: isString,
-  //   data: isString,
-  // }),
+  image: schema({
+    fileName: isString,
+    data: isString,
+  }),
   imageOpt: schema({
     fileName: isString,
     data: isString,
   }, { optional: true }),
-  // imageOptNull: schema({
-  //   fileName: isString,
-  //   data: isString,
-  // }, true, true),
-  // imageNull: schema({
-  //   fileName: isString,
-  //   data: isString,
-  // }, false, true),
+  imageOptNull: schema({
+    fileName: isString,
+    data: isString,
+  }, { optional: true, nullable: true }),
+  imageNull: schema({
+    fileName: isString,
+    data: isString,
+  }, { optional: false, nullable: true }),
+  imageReq: schema({
+    fileName: isString,
+    data: isString,
+  }, { optional: false, nullable: false }),
+  imageNil: schema({
+    fileName: isString,
+    data: isString,
+  }, { nil: true }),
 });
 
 export type IPost = inferType<typeof Post>;
-
-
-const other = schema({
-  fileName: isString,
-  data: isString,
-}, { optional: false, nullable: true, init: true });
-
-const val = {};
-if (other.test(val)) {
-  console.log(val?.data);
-}
-
-// const post = Post.new();
-// post.created
+export default Post;

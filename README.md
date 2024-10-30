@@ -190,6 +190,22 @@ const User = schema<IUser>({
 User.new() // => { id: 0, name: '' }
 ```
 
+#### The alternative `nil` option
+In the real world it's very common to have a lot of child schemas which are both optional, nullable, and you want to skip them on intialization. For example, maybe a child-schema represents a jsonb column in a relational-database, and the database returns `null` everytime the table is queried if the jsonb column is empty. So you don't have to write out `{ optional: true, nullable: true, init: false }` over-and-over again for every child-schema, you can write `{ nil: true }` as an alternative. Note that your schema must be optional and nullable to pass `{ nil: true }`.
+```typescript
+interface IUser {
+  id: number;
+  address?: { street: string } | null;
+}
+
+const User = schema<IUser>({
+  id: isNumber,
+  address: schema({
+    street: isString,
+  }, { nil: true }),
+})
+```
+
 
 ### Transforming values with `transform()` <a name="transforming-values-with-transform"></a>
 If you want to modify a value before it passes through a validator-function, you can import the `transform` function and wrap your validator function with it. `transform` accepts a transforming-function and a validator-function and returns a new validator-function (type-predicate is preserved) which will transform the value before testing it. When calling `new` or `test`, `transform` will modify the original object.
