@@ -75,7 +75,7 @@ export interface ISchema<T, NT = NonNullable<T>> {
   _schemaSettings: {
     optional: boolean;
     nullable: boolean;
-    initWithParent: boolean | null;
+    init: boolean | null;
   };
 }
 
@@ -138,37 +138,37 @@ type TSchemaSettings<T> = (
   unknown extends T ? ({
     optional: true
     nullable?: true,
-    initWithParent?: null | boolean,
+    init?: null | boolean,
   } | {
     optional?: false,
     nullable?: true,
-    initWithParent?: null | true,
+    init?: null | true,
   } | {
     optional?: false,
     nullable?: false,
-    initWithParent?: true,
+    init?: true,
   } | {
     optional?: true,
     nullable?: false,
-    initWithParent?: boolean,
+    init?: boolean,
   } | undefined) : 
   // Not inferring types
   (undefined extends T ? (null extends T ? {
     optional: true,
     nullable: true,
-    initWithParent?: null | boolean,
+    init?: null | boolean,
   } : {
     optional: true,
     nullable?: false,
-    initWithParent?: boolean,
+    init?: boolean,
   }) : (null extends T ? {
     optional?: false,
     nullable: true,
-    initWithParent?: null | true,
+    init?: null | true,
   } : ({
     optional?: false,
     nullable?: false,
-    initWithParent?: true,
+    init?: true,
   } | undefined)))
 );
 
@@ -192,10 +192,10 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
     const settingsF = {
       optional: !!schemaSettings?.optional,
       nullable: !!schemaSettings?.nullable,
-      initWithParent: (isUndef(schemaSettings?.initWithParent) ? true : schemaSettings?.initWithParent),
+      init: (isUndef(schemaSettings?.init) ? true : schemaSettings?.init),
     };
     // "defaultVal"
-    if (!settingsF.optional && !settingsF.nullable && !settingsF.initWithParent) {
+    if (!settingsF.optional && !settingsF.nullable && !settingsF.init) {
       throw new Error('Default value must be the full schema-object if type is neither optional or nullable');
     }
     // Setup
@@ -259,7 +259,7 @@ function _setupDefaultsAndValidators<T>(
     // Schema
     } else if (_isSchemaObj(setupVal)) {
       const childSchema = setupVal,
-        dflt = childSchema._schemaSettings.initWithParent;
+        dflt = childSchema._schemaSettings.init;
       if (dflt === true) {
         defaults[key] = () => childSchema.new();
       } else if (dflt === null) {

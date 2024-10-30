@@ -94,12 +94,12 @@ const User = schema<IUser>({
     fileName: isString,
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
-  }, { optional: true, nullable: true, initWithParent: false }),
+  }, { optional: true, nullable: true, init: false }),
   avatar4: schema({
     fileName: isString,
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
-  }, { optional: true, nullable: true, initWithParent: null }),
+  }, { optional: true, nullable: true, init: null }),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
 });

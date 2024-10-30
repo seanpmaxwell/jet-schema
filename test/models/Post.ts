@@ -38,7 +38,7 @@ export type IPost = inferType<typeof Post>;
 const other = schema({
   fileName: isString,
   data: isString,
-}, { optional: false, nullable: true, initWithParent: true });
+}, { optional: false, nullable: true, init: true });
 
 const val = {};
 if (other.test(val)) {
