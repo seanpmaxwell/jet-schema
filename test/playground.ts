@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { TJetSchema, transform } from '../src';
+import { inferType, TJetSchema, transform } from '../src';
 
 import User from './models/User';
 import Post, { IPost } from './models/Post';
@@ -26,16 +26,16 @@ const user1 = User.new({
 console.log(User.test(user1));
 console.log(User.pick('age').test(User.AdminStatus.Basic));
 console.log(User.pick('adminStatus').test);
-console.log(User.pick('avatar')?.default());
-console.log(User.pick('avatar')?.new());
-console.log(User.pick('avatar')?.pick('data'));
-console.log(User.pick('avatar')?.pick('data').default());
-console.log(User.pick('avatar')?.pick('url')?.default());
+console.log(User.pick('avatar').default());
+console.log(User.pick('avatar').new());
+console.log(User.pick('avatar').pick('data'));
+console.log(User.pick('avatar').pick('data').default());
+console.log(User.pick('avatar').pick('url').default());
 console.log(User.pick('avatar2').default());
 console.log(User.pick('avatar2').new());
 
-const avatar = User.pick('avatar')?.new();
-const testAvatar = nonNullable(User.pick('avatar')!.test);
+const avatar = User.pick('avatar').new();
+const testAvatar = nonNullable(User.pick('avatar').test);
 console.log(testAvatar('asdf'));
 console.log(testAvatar(avatar));
 
@@ -65,27 +65,23 @@ const customPost: IPost = {
   //   data: '',
   // },
   imageReq: { data: '', fileName: '' },
+  // imageNil: { data: '', fileName: '' }
+  // optionalStr: 'asdf'
 };
 
 console.log(customPost);
 
-// const misc: unknown = 'asdf';
-// if (Post.test(misc)) {
+const other = schema({
+  fileName: isString,
+  data: isString,
+}, { optional: true, nullable: true, init: true });
 
-// }
+type Tother = inferType<typeof other>;
 
-// const other = schema({
-//   fileName: isString,
-//   data: isString,
-// }, { optional: false, nullable: true, init: true });
-
-// const val = {};
-// if (other.test(val)) {
-//   console.log(val?.data);
-// }
-
-// const post = Post.new();
-// post.created
+const val: Tother = { fileName: '', data: '' };
+if (other.test(val)) {
+  console.log(val?.data);
+}
 
 const post = Post.new();
 console.log(post.image);

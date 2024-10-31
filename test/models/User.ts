@@ -8,6 +8,7 @@ import {
   isRelationalKey,
   isString,
   isOptionalString,
+  isBoolean,
 } from '../util/validators';
 
 
@@ -42,6 +43,7 @@ export interface IUser {
   avatar5?: IAvatar;
   avatar6?: IAvatar | null;
   avatar7?: IAvatar | null;
+  avatar8?: IAvatar | null;
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
@@ -51,6 +53,7 @@ interface IAvatar {
   fileName: string;
   data: string;
   url?: string;
+  // jpg?: boolean;
 }
 
 interface IAddress {
@@ -102,6 +105,11 @@ const User = schema<IUser>({
     data: [ 'base64:str;', isString ],
     url: isOptionalString,
   }, { optional: true, nullable: true, init: null }),
+  avatar5: schema({
+    fileName: isString,
+    data: [ 'base64:str;', isString ],
+    url: isOptionalString,
+  }, { optional: true, init: false }),
   avatar6: schema({
     fileName: isString,
     data: [ 'base64:str;', isString ],
@@ -109,9 +117,17 @@ const User = schema<IUser>({
   }, { nil: true, init: false }),
   avatar7: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: isString,
     url: isOptionalString,
+    jpg: [ false, isBoolean ],
+    foo: isString
   }, { nil: true, init: null }),
+  avatar8: schema({
+    fileName: isString,
+    data: isString,
+    url: isOptionalString,
+    foo: isString
+  }),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
 });

@@ -12,7 +12,7 @@
   - [Combining Schemas](#combining-schemas)
   - [Bonus Features](#bonus-features)
 - [Misc Notes](#misc-notes)
-  - [Validating properties which may be undefined](#validating-properties-which-may-be-undefined)
+  - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Defaults](#recommended-defaults)
 
 
@@ -149,7 +149,7 @@ const TUser = inferType<typeof User>;
 Once you have your schema setup, you can call the `new`, `test`, and `pick` functions. Here is an overview of what each one does:
 - `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will use the default supplied. If no default is supplied, then the value will be skipped.
 - `test` accepts any unknown value, tests that it's valid, and returns a type-predicate,.
-- `pick` allows you to select any property and returns an object with the `test` and `default` functions. If a value is optional, then you need to use an optional-chaining when calling it (i.e. `pick("some optional property")?.test("")` because typescript won't know if you've set that property in the schema.
+- `pick` allows you to select any property and returns an object with the `test` and `default` functions.
 
 > **IMPORTANT:** If an object property is a mapped-type, then it must be initialized with the `schema` function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
 
@@ -236,10 +236,12 @@ console.log(FullSchema.new());
 
 ## Misc Notes <a name="misc-notes"></a>
 
-### Validating properties which may be undefined <a name="validating-properties-which-may-be-undefined"></a>
-As mentioned in the guide, if a property is optional, then the value returned from `pick()` might be undefined. If you know based on context (because you set a property in the `schema` function), and you don't want to have to do optional calling everytime (i.e. `pick("some optional property")?.test(...)`), then I recommend adding a wrapper function to your schema:
+### Creating wrapper functions <a name="creating-wrapper-functions"></a>
+If you need to modify the value of the `test` function for a project, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
+
 ```typescript
 // models/User.ts
+import { nonNullable } from 'util/type-checks';
 
 interface IUser {
   id: number;
@@ -253,17 +255,9 @@ const User = schema<IUser>({
   }, { optional: true, nullable: true }),
 })
 
-// Wrapper function: this is also handy for when we want to validate a 
-// child object without allowing null as a possible value.
-function checkAddr(arg: unknown): arg is NonNullable<IUser['address']> {
-  if (arg === null || arg === undefined) {
-    return false;
-  }
-  return User.pick('address')!.test(arg);
-}
-
 export default {
-  checkAddr,
+  // Wrapper function to remove nullables
+  checkAddr: nonNullable(User.pick('address').test),
   ...User,
 }
 ```

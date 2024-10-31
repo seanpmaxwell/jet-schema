@@ -27,13 +27,6 @@ type IsStaticObj<P, Prop = NonNullable<P>> = (
   TConvertInterfaceToType<Prop> extends TStaticObj<Prop> ? true : false
 );
 
-// If a mapped type property can be undefined, make it optional
-type MakeKeysOptIfUndef<T> = ({
-  [K in keyof T as undefined extends T[K] ? K : never]?: T[K]
-}) & {
-  [K in keyof T as undefined extends T[K] ? never : K]: T[K]
-};
-
 
 // **** Utility types **** //
 
@@ -66,19 +59,19 @@ type TDefaultValsMap<T> = {
 };
 
 // Return value for the pick function
-type TPickRetVal<T, NT = NonNullable<T>> = {
+type TPickRetVal<T, NnT = NonNullable<T>> = {
   test: (arg: unknown) => arg is T,
   default: () => T,
 } & (IsStaticObj<T> extends true ? {
-  pick: <K extends keyof NT>(prop: K) => (undefined extends NT[K] ? TPickRetVal<NT[K]> | undefined : TPickRetVal<NT[K]>);
+  pick: <K extends keyof NnT>(prop: K) => TPickRetVal<NnT[K]>;
   new: (arg?: Partial<T>) => NonNullable<T>;
 } : unknown);
 
 // Value returned by the "schema" function
-export interface ISchema<T, NT = NonNullable<T>> {
+export interface ISchema<T> {
   new: (arg?: Partial<T>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
-  pick: <K extends keyof NT>(prop: K) => (undefined extends NT[K] ? TPickRetVal<NT[K]> | undefined : TPickRetVal<NT[K]>);
+  pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
   _schemaOptions: {
     optional: boolean;
     nullable: boolean;
@@ -90,16 +83,17 @@ type TRefine<T> = (arg: unknown) => arg is T;
 type TTypeArr<Type> = ([Type, TRefine<Type>] | TRefine<Type>);
 
 // Main argument passed to the schema functions
-export type TSchemaFnObjArg<T> = {
-  [K in keyof T]:
-  T[K] extends (string | number)
-  ? (TTypeArr<T[K]> | TEnum)
-  : T[K] extends Date 
-  ? (DateConstructor | TTypeArr<T[K]>)
-  : IsStaticObj<T[K]> extends true
-  ? ISchema<T[K]>
-  : TTypeArr<T[K]>;
-};
+export type TSchemaFnObjArg<T> = Required<{
+  [K in keyof T]: (
+    T[K] extends (string | number)
+    ? (TTypeArr<T[K]> | TEnum)
+    : T[K] extends Date 
+    ? (DateConstructor | TTypeArr<T[K]>)
+    : IsStaticObj<T[K]> extends true
+    ? ISchema<T[K]>
+    : TTypeArr<T[K]>
+  );
+}>;
 
 interface IJetOptions<M> {
   defaultValuesMap?: M extends [TFunc, unknown][] ? M : never,
@@ -120,8 +114,10 @@ type TSchemaOptions<T> = (
 
 // **** Infer Types **** //
 
+type IsSchema = Omit<ISchema<unknown>, 'pick'>;
+
 export type PublicInferType<S> = (
-  S extends ISchema<unknown> 
+  S extends IsSchema
   ? GetTypePredicate<S['test']> 
   : never
 );
@@ -129,12 +125,18 @@ export type PublicInferType<S> = (
 type InferTypes<U, R, Schema = MakeKeysOptIfUndef<InferTypesHelper<U>>> = (
   'nil' extends keyof R
   ? AddNullables<Schema, true, true>
-  : AddNullables<
-    Schema,
+  : AddNullables<Schema,
     'optional' extends keyof R ? R['optional'] : false,
     'nullable' extends keyof R ? R['nullable'] : false
   >
 );
+
+// Need to make optional probs which can be undefined.
+type MakeKeysOptIfUndef<T> = ({
+  [K in keyof T as undefined extends T[K] ? K : never]?: T[K]
+}) & {
+  [K in keyof T as undefined extends T[K] ? never : K]: T[K]
+};
   
 type InferTypesHelper<U> = {
   [K in keyof U]: (
@@ -144,7 +146,7 @@ type InferTypesHelper<U> = {
     ? Date
     : U[K] extends TFunc 
     ? GetTypePredicate<U[K]>
-    : U[K] extends ISchema<unknown>
+    : U[K] extends IsSchema
     ? GetTypePredicate<U[K]['test']>
     : U[K] extends (string | number) 
     ? (TTypeArr<U[K]> | TEnum)
@@ -213,7 +215,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
     return {
       new: newFn,
       test: testFn,
-      pick: <K extends keyof T>(p: K) => {
+      pick: <K extends keyof U>(p: K) => {
         const prop = schemaFnObjArg[p];
         if (!!prop) {
           return {

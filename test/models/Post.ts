@@ -1,7 +1,13 @@
 import { inferType } from '../../src';
 
 import schema from '../util/schema';
-import { isNumber, isRelationalKey, isString } from '../util/validators';
+
+import {
+  isNumber,
+  isOptionalString,
+  isRelationalKey,
+  isString,
+} from '../util/validators';
 
 
 // **** Setup ***** //
@@ -11,6 +17,7 @@ const Post = schema({
   mesage: isString,
   index: isNumber,
   created: Date,
+  optionalStr: isOptionalString,
   image: schema({
     fileName: isString,
     data: isString,
