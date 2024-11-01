@@ -49,7 +49,7 @@ const Post = schema({
     foo: isOptionalString,
   }, { nullish: true }),
   level: Level,
-});
+}, { id: 'Post' });
 
 export type IPost = inferType<typeof Post>;
 

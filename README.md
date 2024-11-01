@@ -88,7 +88,8 @@ After installation, you need to configure the `schema` function by importing and
 `jetSchema()` accepts an optional settings object with 3 three options:
   - `defaultValuesMap`: An `[["val", "function"]]`nested array specifying which default value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a function in the `jetSchema()` function, you can also pass a 2 length array of the default value and the validator-function when `schema` is called (the next 3 snippets below contain examples).
   - `cloneFn`: A custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
-  - `onError`: If a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. Function must have the format: `(property: string, value?: unknown, origMessage?: string) => void;`. This feature is really useful for testing when you may want to return an error string instead of throw an error.
+  - `onError`: If a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. This feature is really useful for testing when you may want to return an error string instead of throw an error.
+    - Format: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`. 
 
 > When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
 
@@ -172,12 +173,15 @@ In addition to a schema-object, the `schema` function accepts an additional **op
   nullable?: boolean; // default "false", must be true if generic is nullable
   init?: boolean | null; // default "true", must be undefined, true, or null if generic is not optional.
   nullish?: true; // Use this instead of "{ optional: true, nullable: true; }"
+  id?: string; // Will identify the schema in error messages
 }
 ```
 
 The option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If `true (default)`, then a nested child-object will be added to the property when a new instance of the parent is created. However, if a child-schema is optional or nullable, maybe you don't want a nested object and just want it to be `null` or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.<br/>
 
 In the real world it's very common to have a lot of schemas which are both optional, nullable. So you don't have to write out `{ optional: true, nullable: true }` over-and-over again, you can write `{ nullish: true }` as an shorthand alternative.<br/>
+
+You can also set the optional `id` field, if you need a unique identifier for your schema for whatever reason. If you set this option then it be added to the default error message. This can be useful if you have to debug a bunch of schemas at once (that's pretty much all I use it for).
 
 
 Here's an example of the options in use:

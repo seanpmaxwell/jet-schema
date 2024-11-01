@@ -103,14 +103,14 @@ console.log(post.imageNull);
 
 // **** Test Partial Schema **** //
 
-const PartialSchema: TJetSchema<{ id: number, name: string }> = {
-  id: (arg: unknown) => typeof arg === 'number', // should return error cause no default set,
+const PartialSchema: TJetSchema<{ idddd: number, name: string }> = {
+  idddd: (arg: unknown) => typeof arg === 'number', // should return error cause no default set,
   name: isString,
 } as const;
 
-const FullSchema = schema<{ id: number, name: string, foo: boolean }>({
+const FullSchema = schema<{ idddd: number, name: string, foo: boolean }>({
   ...PartialSchema,
   foo: isBoolean,
-});
+}, { id: 'FullSchema' });
 
 console.log(FullSchema.new({ foo: 'horse' as unknown as boolean}));

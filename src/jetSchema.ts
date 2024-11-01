@@ -51,13 +51,14 @@ type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef
 type TDefaultVals = Record<string | number | symbol, TFunc>;
 type TValidators = Record<string | number | symbol, IValidatorFn<unknown>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
-type TOnError = (property: string, value?: unknown, origMessage?: string) => void;
+type TOnError = (property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;
 
 interface IFullOptions {
   optional?: boolean;
   nullable?: boolean;
   init?: boolean | null;
-  nullish?: true; 
+  nullish?: true;
+  id?: string;
 }
 
 
@@ -90,6 +91,7 @@ export interface ISchema<T> {
     optional: boolean;
     nullable: boolean;
     init: boolean | null;
+    id?: string;
   };
 }
 
@@ -174,24 +176,28 @@ export interface IOptNul {
   nullable: true;
   init?: null | boolean;
   nullish?: undefined
+  id?: string;
 }
 
 export interface IOptNotNul {
   optional: true;
   nullable?: false;
   init?: boolean;
+  id?: string;
 }
 
 export interface INotOptButNul {
   optional?: false;
   nullable: true;
   init?: null | true;
+  id?: string;
 }
 
 export interface INotOptOrNul {
   optional?: false;
   nullable?: false;
   init?: true;
+  id?: string;
 }
 
 export interface INullish {
@@ -199,6 +205,7 @@ export interface INullish {
   optional?: undefined;
   nullable?: undefined;
   init?: null | boolean;
+  id?: string;
 }
 
 
@@ -210,23 +217,27 @@ export interface INullish {
 function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
   // Setup default values map
   const defaultValsMap = new Map(options?.defaultValuesMap),
-    onErrorF = (options?.onError ? _wrapCustomError(options.onError) : _defaultOnErr),
-    cloneFn = (options?.cloneFn ? options.cloneFn : _defaultClone);
+    cloneFn = (options?.cloneFn ? options.cloneFn : _defaultClone),
+    onError = (options?.onError ? _wrapCustomError(options.onError) : _defaultOnErr);
   // Return the "schema" function
   return <T,
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
     R extends TSchemaOptions<T> = TSchemaOptions<T>,
   >(schemaFnObjArg: U, ...options: TSchemaOptionsHelper<T, R>) => {
-    // setup options
+    // Setup options
     const [ schemaOptions ] = options;
     const optionsF = _processOptions(schemaOptions);
-    if (!optionsF.optional && !optionsF.init) {
+    let onErrorF = onError;
+    if (optionsF.id) {
+      onErrorF = _wrapErrorWithSchemaId(onErrorF, optionsF.id);
+    }
+    if (!optionsF.optional && (optionsF.init === false || isUndef(optionsF.init))) {
       onErrorF('', '', Errors.Init);
     }
-    // Setup
+    // Setup main functions
     const ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
       newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.validators, optionsF.optional, optionsF.nullable, onErrorF),
+      testFn = _setupTestFn(ret.validators, optionsF.optional!, optionsF.nullable!, onErrorF),
       parseFn = _setupParseFn(ret.validators, cloneFn, onErrorF);
     // Return
     return {
@@ -412,7 +423,9 @@ function _setupTestFn(
         onError(key, val);
         return false;
       }
-      (arg as TModel)[key] = val;
+      if (key in arg) {
+        (arg as TModel)[key] = val;
+      }
     }
     // Return
     return true;
@@ -455,20 +468,28 @@ function _setupParseFn(
  * Setup options based on object passed by the user.
  */
 function _processOptions(options: IFullOptions | undefined) {
-  const init = (isUndef(options?.init) ? true : options?.init);
+  let base: IFullOptions = { init: true };
+  if (!isUndef(options?.init)) {
+    base.init = options.init;
+  }
+  if (!!options?.id) {
+    base.id = options?.id;
+  }
   if (!options?.nullish) {
-    return {
+    base = {
+      ...base,
       optional: !!options?.optional,
       nullable: !!options?.nullable,
-      init,
     };
   } else {
-    return {
+    base = {
+      ...base,
       optional: true,
       nullable: true,
-      init,
     };
   }
+  // Return
+  return base;
 }
 
 /**
@@ -487,9 +508,18 @@ function _defaultClone(arg: unknown): unknown {
 /**
  * Provide the default error message to the custom function.
  */
-function _wrapCustomError(onError: TOnError) {
+function _wrapErrorWithSchemaId(onError: TOnError, schemaId: string) {
   return (property: string, value?: unknown, moreDetails?: string) => {
-    const origMessage = _getDefaultErrMsg(property, value, moreDetails);
+    return onError(property, value, moreDetails, schemaId);
+  };
+}
+
+/**
+ * Provide the default error message to the custom function.
+ */
+function _wrapCustomError(onError: TOnError) {
+  return (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => {
+    const origMessage = _getDefaultErrMsg(property, value, moreDetails, schemaId);
     return onError(property, value, origMessage);
   };
 }
@@ -497,35 +527,48 @@ function _wrapCustomError(onError: TOnError) {
 /**
  * Default function to call when a validation fails.
  */
-function _defaultOnErr(property: string, value?: unknown, moreDetails?: string) {
-  const message = _getDefaultErrMsg(property, value, moreDetails);
+function _defaultOnErr(property: string, value?: unknown, moreDetails?: string, schemaId?: string) {
+  const message = _getDefaultErrMsg(property, value, moreDetails, schemaId);
   throw new Error(message);
 }
 
 /**
  * Get the default error message.
  */
-function _getDefaultErrMsg(property: string, value?: unknown, moreDetails?: string) {
+function _getDefaultErrMsg(
+  property: string,
+  value?: unknown,
+  moreDetails?: string,
+  id?: string,
+) {
   if (!!property) {
     property = `The property "${property}" failed to pass validation.`;
   }
   let message = '';
-  if (!!property && !value && !moreDetails) {
+  if (!!property && !value && !moreDetails && !id) {
     message = property;
-  } else if (!property && !!value && !moreDetails) {
+  } else if (!property && !!value && !moreDetails && !id) {
     message = JSON.stringify(value);
-  } else if (!property && !value && !!moreDetails) {
+  } else if (!property && !value && !!moreDetails && !id) {
     message = moreDetails;
   } else {
+    let msgObj: TModel;
     if (!property) {
-      message = JSON.stringify({ message: moreDetails, value });
+      msgObj = {
+        message: moreDetails,
+        value,
+      };
     } else {
-      message = JSON.stringify({
+      msgObj = {
         message: property,
-        value, ['more-details']:
-        moreDetails,
-      });
+        value,
+        ['more-details']: moreDetails,
+      };
     }
+    if (!!id) {
+      msgObj['schema-id'] = id;
+    }
+    message = JSON.stringify(msgObj);
   }
   return message;
 }

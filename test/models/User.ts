@@ -43,7 +43,6 @@ export interface IUser {
   avatar6?: IAvatar | null;
   avatar7?: IAvatar | null;
   avatar8?: IAvatar | null;
-  avatar9?: (IAvatar) | null;
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
@@ -66,9 +65,6 @@ interface IAddress {
   };
 }
 
-// const foo = setDefault(isOptionalString, '');
-// const blah = { setDefault, transform };
-
 
 // **** Setup **** //
 
@@ -79,7 +75,7 @@ const User = schema<IUser>({
   age: setDefault(transform(Number, isNumber), 0),
   created: Date,
   lastLogin: Date,
-  phone: isString,
+  phone: isOptionalString,
   avatar: schema({
     fileName: isString,
     data: setDefault(isString, 'base64:str;'),
@@ -123,42 +119,16 @@ const User = schema<IUser>({
     fileName: isString,
     data: isString,
     url: setDefault(isOptionalString, 'base64:str;'),
-    // jpg: [ false, isBoolean ],
-    // foo: isString
   }, { nullish: true, init: null }),
   avatar8: schema({
     fileName: isString,
     data: isString,
-    url: setDefault(isOptionalString, 'base64:str;'),
+    url: isOptionalString,
     // foo: isString
   }, { nullish: true }),
-  avatar9: schema({
-    fileName: isString,
-    data: isString,
-    // url: foo,
-    // url: transform(String, isOptionalString),
-    url: setDefault(isOptionalString, ''),
-    // url: isString,
-    // status: ,
-    // foo: isString
-  }, { nullish: true }),
-  // avatar8: {
-  //   fileName: '',
-  //   data: '',
-  //   url: '',
-  //   foo: isString
-  // },
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
-});
-
-// const blah = schema<IAvatar>({
-//   fileName: isString,
-//   data: isString,
-//   url: isString,
-// }, { nullable: false });
-
-// blah._out?.();
+}, { id: 'User' });
 
 
 

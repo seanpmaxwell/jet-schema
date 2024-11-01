@@ -104,7 +104,7 @@ test('test User override each default value', () => {
   expect(User.test(expectedResult)).toStrictEqual(true);
   expect(User.test('asdf')).toStrictEqual(false);
   expect(User.parse(somethingElse)).toStrictEqual(expectedResult);
-  expect(User.test(User.parse('asdf'))).toStrictEqual(true);
+  expect(User.test(User.parse('asdf'))).toStrictEqual(false);
 });
 
 
