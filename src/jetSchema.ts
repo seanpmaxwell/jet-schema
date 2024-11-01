@@ -51,7 +51,7 @@ type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef
 type TDefaultVals = Record<string | number | symbol, TFunc>;
 type TValidators = Record<string | number | symbol, IValidatorFn<unknown>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
-type TOnError = (property: string, value?: unknown, moreDetails?: string) => void;
+type TOnError = (property: string, value?: unknown, origMessage?: string) => void;
 
 interface IFullOptions {
   optional?: boolean;
@@ -210,7 +210,7 @@ export interface INullish {
 function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
   // Setup default values map
   const defaultValsMap = new Map(options?.defaultValuesMap),
-    onErrorF = (options?.onError ? options.onError : _defaultOnErr),
+    onErrorF = (options?.onError ? _wrapCustomError(options.onError) : _defaultOnErr),
     cloneFn = (options?.cloneFn ? options.cloneFn : _defaultClone);
   // Return the "schema" function
   return <T,
@@ -281,6 +281,8 @@ function _setupDefaultsAndValidators<T>(
         defaults[key] = () => childSchema.new();
       } else if (dflt === null) {
         defaults[key] = () => null;
+      } else {
+        defaults[key] = () => undefined;
       }
       childSchemaNewFns[key] = () => childSchema.new();
       validators[key] = childSchema.test;
@@ -363,7 +365,7 @@ function _setupNewFn(
         retVal[key] = cloneFn(val);
       } else {
         onError(key, val);
-        return retVal;
+        retVal[key] = '**ERROR**';
       }
     }
     // Return
@@ -384,14 +386,18 @@ function _setupTestFn(
     // Check null/undefined;
     if (isUndef(arg)) {
       if (isOptional) {
+        return true;
+      } else {
         onError('', arg, Errors.Undef);
+        return false;
+      }
+    } else if (arg === null) {
+      if (isNullable) {
         return true;
       } else {
         onError('', arg, Errors.Null);
         return false;
       }
-    } else if (arg === null && isNullable) {
-      return isNullable;
     }
     // Must be an object
     if (!isObj(arg)) {
@@ -434,7 +440,7 @@ function _setupParseFn(
       let val = (arg as TModel)[key];
       if (!testFn(val, ((transVal) => val = transVal))) {
         onError(key, val);
-        return retVal;
+        retVal[key] = '**ERROR**';
       }
       if (key in arg) {
         retVal[key] = cloneFn(val);
@@ -479,9 +485,27 @@ function _defaultClone(arg: unknown): unknown {
 }
 
 /**
+ * Provide the default error message to the custom function.
+ */
+function _wrapCustomError(onError: TOnError) {
+  return (property: string, value?: unknown, moreDetails?: string) => {
+    const origMessage = _getDefaultErrMsg(property, value, moreDetails);
+    return onError(property, value, origMessage);
+  };
+}
+
+/**
  * Default function to call when a validation fails.
  */
 function _defaultOnErr(property: string, value?: unknown, moreDetails?: string) {
+  const message = _getDefaultErrMsg(property, value, moreDetails);
+  throw new Error(message);
+}
+
+/**
+ * Get the default error message.
+ */
+function _getDefaultErrMsg(property: string, value?: unknown, moreDetails?: string) {
   if (!!property) {
     property = `The property "${property}" failed to pass validation.`;
   }
@@ -495,10 +519,15 @@ function _defaultOnErr(property: string, value?: unknown, moreDetails?: string) 
   } else {
     if (!property) {
       message = JSON.stringify({ message: moreDetails, value });
+    } else {
+      message = JSON.stringify({
+        message: property,
+        value, ['more-details']:
+        moreDetails,
+      });
     }
-    message = JSON.stringify({ message, value, moreDetails });
   }
-  throw new Error(message);
+  return message;
 }
 
 

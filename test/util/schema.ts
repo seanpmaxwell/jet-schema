@@ -20,11 +20,11 @@ const customClone = (arg: unknown): unknown => {
 };
 
 /**
- * Overwrite error handling
+ * Print to console instead of throw error.
  */
-const customError = (property: string, value: unknown) => {
+const customError = (_: string, __: unknown, origMessage?: string) => {
   if (process.env.NODE_ENV !== 'test') {
-    console.error(`Validation for "${property}" failed. Value tested:`, value);
+    console.error(origMessage);
   }
 };
 

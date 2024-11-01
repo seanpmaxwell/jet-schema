@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable no-console */
 
 import { inferType, setDefault, TJetSchema, transform } from '../src';
@@ -82,7 +83,7 @@ const other = schema({
   fileName: isString,
   data: isString,
   foo: setDefault(isOptionalString, ''),
-}, { optional: true, nullable: true, init: true });
+}, { nullish: true, init: true });
 
 type Tother = inferType<typeof other>;
 
@@ -103,13 +104,13 @@ console.log(post.imageNull);
 // **** Test Partial Schema **** //
 
 const PartialSchema: TJetSchema<{ id: number, name: string }> = {
-  id: (arg: unknown) => typeof arg === 'number', // should return error,
+  id: (arg: unknown) => typeof arg === 'number', // should return error cause no default set,
   name: isString,
 } as const;
 
-const FullSchema = schema<{ id: number, name: string, e: boolean }>({
+const FullSchema = schema<{ id: number, name: string, foo: boolean }>({
   ...PartialSchema,
-  e: isBoolean,
+  foo: isBoolean,
 });
 
-console.log(FullSchema.new());
+console.log(FullSchema.new({ foo: 'horse' as unknown as boolean}));

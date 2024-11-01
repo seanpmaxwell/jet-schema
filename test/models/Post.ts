@@ -46,7 +46,7 @@ const Post = schema({
   imageNullish: schema({
     fileName: isString,
     data: isString,
-    foo: ['', isOptionalString],
+    foo: isOptionalString,
   }, { nullish: true }),
   level: Level,
 });
