@@ -95,7 +95,16 @@ test('test User override each default value', () => {
     avatar8: { fileName: '', data: '' },
   };
 
+  const somethingElse: unknown = {
+    ...expectedResult,
+    foo: 'bar',
+  };
+
   expect(user).toStrictEqual(expectedResult);
+  expect(User.test(expectedResult)).toStrictEqual(true);
+  expect(User.test('asdf')).toStrictEqual(false);
+  expect(User.parse(somethingElse)).toStrictEqual(expectedResult);
+  expect(User.test(User.parse('asdf'))).toStrictEqual(true);
 });
 
 

@@ -16,8 +16,13 @@ import {
 // **** Variables ****
 
 const Errors = {
-  DefaultVal: 'Default value must be the full schema-object if type is neither optional or nullable.',
+  Init: '"init" must be true if schema is not optional.',
+  Default: 'This validation failed when setting up defaults.',
   Validator: 'Setup error: validator must be a function, enum, schema, or Date constructor.',
+  Undef: 'schema.test failed: value was undefined but not optional.',
+  Null: 'schema.test failed: value was null but not nullable.',
+  NotAnObj: 'schema.test failed: value was neither undefined nor null but not an object.',
+  ParseNotAnObj: 'schema.parse failed: value must be an object.',
 } as const;
 
 
@@ -46,7 +51,7 @@ type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef
 type TDefaultVals = Record<string | number | symbol, TFunc>;
 type TValidators = Record<string | number | symbol, IValidatorFn<unknown>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
-type TOnError = (property: string, value?: unknown) => void;
+type TOnError = (property: string, value?: unknown, moreDetails?: string) => void;
 
 interface IFullOptions {
   optional?: boolean;
@@ -70,26 +75,22 @@ type TDefaultValsMap<T> = {
 type TPickRetVal<T, NnT = NonNullable<T>> = {
   test: (arg: unknown) => arg is T,
   default: () => T,
-  _in: (v: T) => void;
-  _out: () => T;
 } & (IsStaticObj<T> extends true ? {
   pick: <K extends keyof NnT>(prop: K) => TPickRetVal<NnT[K]>;
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
 } : unknown);
 
 // Value returned by the "schema" function
-export interface ISchema<in out T> {
+export interface ISchema<T> {
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
+  parse: (arg: unknown) => NonNullable<T>;
   _schemaOptions: {
     optional: boolean;
     nullable: boolean;
     init: boolean | null;
   };
-  // Debugger functions
-  _in: (v: T) => void;
-  _out: () => T;
 }
 
 // Main argument passed to the schema functions
@@ -216,16 +217,17 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
     R extends TSchemaOptions<T> = TSchemaOptions<T>,
   >(schemaFnObjArg: U, ...options: TSchemaOptionsHelper<T, R>) => {
-    // "defaultVal"
+    // setup options
     const [ schemaOptions ] = options;
     const optionsF = _processOptions(schemaOptions);
-    if (!optionsF.optional && !optionsF.nullable && !optionsF.init) {
-      onErrorF('', Errors.DefaultVal);
+    if (!optionsF.optional && !optionsF.init) {
+      onErrorF('', '', Errors.Init);
     }
     // Setup
     const ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
       newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.validators, optionsF.optional, optionsF.nullable, onErrorF);
+      testFn = _setupTestFn(ret.validators, optionsF.optional, optionsF.nullable, onErrorF),
+      parseFn = _setupParseFn(ret.validators, cloneFn, onErrorF);
     // Return
     return {
       new: newFn,
@@ -243,22 +245,8 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
           };
         }
       },
+      parse: parseFn,
       _schemaOptions: optionsF,
-      // Debugger functions: "_in" and "_out"
-      /* eslint-disable no-console */
-      _in: (v: T) => {
-        console.debug('schema:', schemaFnObjArg);
-        console.debug('options:', optionsF);
-        console.debug('test:', testFn(v));
-      },
-      _out: () => {
-        console.debug('schema:', schemaFnObjArg);
-        console.debug('options:', optionsF);
-        const newModel = newFn();
-        console.debug('test:', newModel);
-        return newModel;
-      },
-      /* eslint-enable no-console */
     } as unknown extends T ? ISchema<InferTypes<U, R>> : ISchema<T>;
   };
 }
@@ -322,13 +310,13 @@ function _setupDefaultsAndValidators<T>(
       // Set the validator function
       validators[key] = vdlrFn;
     } else {
-      onError(key, Errors.Validator);
+      onError(key, '', Errors.Validator);
     }
     // Make sure the default is a valid value
     const vldr = validators[key],
       dfltVal: unknown = defaults[key]();
     if (!vldr(dfltVal)) {
-      onError(key, dfltVal);
+      onError(key, dfltVal, Errors.Default);
     }
   }
   // Return
@@ -366,12 +354,16 @@ function _setupNewFn(
     }
     // Get values from partial
     for (const key in partial) {
+      if (!defaultVals[key]) { // purge extras
+        continue;
+      }
       const testFn = validators[key];
       let val = partial[key];
       if (testFn(val, ((transVal) => val = transVal))) {
         retVal[key] = cloneFn(val);
       } else {
         onError(key, val);
+        return retVal;
       }
     }
     // Return
@@ -390,25 +382,66 @@ function _setupTestFn(
 ): (arg: unknown) => arg is TModel {
   return (arg: unknown): arg is TModel => {
     // Check null/undefined;
-    if (isUndef(arg) && isOptional) {
-      return true;
+    if (isUndef(arg)) {
+      if (isOptional) {
+        onError('', arg, Errors.Undef);
+        return true;
+      } else {
+        onError('', arg, Errors.Null);
+        return false;
+      }
     } else if (arg === null && isNullable) {
-      return true;
+      return isNullable;
     }
     // Must be an object
     if (!isObj(arg)) {
-      onError('schema.test function', arg);
+      onError('', arg, Errors.NotAnObj);
       return false;
     }
+    // Run validators
     for (const key in validators) {
       const testFn = validators[key];
       let val = (arg as TModel)[key];
       if (!testFn(val, ((transVal) => val = transVal))) {
         onError(key, val);
+        return false;
       }
       (arg as TModel)[key] = val;
     }
+    // Return
     return true;
+  };
+}
+
+/**
+ * Setup the new() function
+ */
+function _setupParseFn(
+  validators: TValidators,
+  cloneFn: TFunc,
+  onError: TOnError,
+): (arg: unknown) => TModel {
+  return (arg: unknown) => {
+    // Must be an object
+    const retVal: TModel = {};
+    if (!isObj(arg)) {
+      onError('', arg, Errors.ParseNotAnObj);
+      return retVal;
+    }
+    // Run validators, looping validators will purse extras
+    for (const key in validators) {
+      const testFn = validators[key];
+      let val = (arg as TModel)[key];
+      if (!testFn(val, ((transVal) => val = transVal))) {
+        onError(key, val);
+        return retVal;
+      }
+      if (key in arg) {
+        retVal[key] = cloneFn(val);
+      }
+    }
+    // Return
+    return retVal;
   };
 }
 
@@ -448,18 +481,24 @@ function _defaultClone(arg: unknown): unknown {
 /**
  * Default function to call when a validation fails.
  */
-function _defaultOnErr(property: string, value?: unknown) {
-  if (!!property && !value) {
-    throw new Error(`The item "${property}" failed to pass validation.`);
-  } else if (!property && !!value) {
-    throw new Error(JSON.stringify(value));
-  } else {
-    const message = JSON.stringify({
-      message: `The item "${property}" failed to pass validation.`,
-      value,
-    });
-    throw new Error(message);
+function _defaultOnErr(property: string, value?: unknown, moreDetails?: string) {
+  if (!!property) {
+    property = `The property "${property}" failed to pass validation.`;
   }
+  let message = '';
+  if (!!property && !value && !moreDetails) {
+    message = property;
+  } else if (!property && !!value && !moreDetails) {
+    message = JSON.stringify(value);
+  } else if (!property && !value && !!moreDetails) {
+    message = moreDetails;
+  } else {
+    if (!property) {
+      message = JSON.stringify({ message: moreDetails, value });
+    }
+    message = JSON.stringify({ message, value, moreDetails });
+  }
+  throw new Error(message);
 }
 
 
