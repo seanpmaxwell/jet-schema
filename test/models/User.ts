@@ -1,4 +1,4 @@
-import { transform } from '../../src';
+import { transform, setDefault } from '../../src';
 
 import schema from '../util/schema';
 
@@ -25,7 +25,6 @@ enum AdminStatusAlt {
   High,
 }
 
-
 // **** Types ***** //
 
 export interface IUser {
@@ -33,6 +32,7 @@ export interface IUser {
   name: string;
   age: number;
   email: string;
+  phone?: string;
   created: Date;
   lastLogin: Date;
   avatar?: IAvatar | null;
@@ -42,6 +42,7 @@ export interface IUser {
   avatar5?: IAvatar;
   avatar6?: IAvatar | null;
   avatar7?: IAvatar | null;
+  avatar8?: IAvatar | null;
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
@@ -51,6 +52,7 @@ interface IAvatar {
   fileName: string;
   data: string;
   url?: string;
+  // jpg?: boolean;
 }
 
 interface IAddress {
@@ -69,13 +71,14 @@ interface IAddress {
 const User = schema<IUser>({
   id: isRelationalKey,
   name: isString,
-  email: ['', isEmail],
-  age: [0, transform(Number, isNumber)],
+  email: setDefault(isEmail, ''),
+  age: setDefault(transform(Number, isNumber), 0),
   created: Date,
   lastLogin: Date,
+  phone: isOptionalString,
   avatar: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { optional: true, nullable: true }),
   address: schema({
@@ -89,32 +92,44 @@ const User = schema<IUser>({
   }),
   avatar2: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { nullable: true }),
   avatar3: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { optional: true, nullable: true, init: false }),
   avatar4: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { optional: true, nullable: true, init: null }),
+  avatar5: schema({
+    fileName: isString,
+    data: setDefault(isString, 'base64:str;'),
+    url: isOptionalString,
+  }, { optional: true, init: false }),
   avatar6: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
-  }, { nil: true, init: false }),
+  }, { nullish: true, init: false }),
   avatar7: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: isString,
+    url: setDefault(isOptionalString, 'base64:str;'),
+  }, { nullish: true, init: null }),
+  avatar8: schema({
+    fileName: isString,
+    data: isString,
     url: isOptionalString,
-  }, { nil: true, init: null }),
+    // foo: isString
+  }, { nullish: true }),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
-});
+}, { id: 'User' });
+
 
 
 // **** Export default **** //

@@ -1,16 +1,28 @@
 import { inferType } from '../../src';
 
 import schema from '../util/schema';
-import { isNumber, isRelationalKey, isString } from '../util/validators';
+
+import {
+  isNumber,
+  isOptionalString,
+  isRelationalKey,
+  isString,
+} from '../util/validators';
 
 
 // **** Setup ***** //
+
+enum Level {
+  low,
+  high,
+}
 
 const Post = schema({
   id: isRelationalKey,
   mesage: isString,
   index: isNumber,
   created: Date,
+  optionalStr: isOptionalString,
   image: schema({
     fileName: isString,
     data: isString,
@@ -31,11 +43,17 @@ const Post = schema({
     fileName: isString,
     data: isString,
   }, { optional: false, nullable: false }),
-  imageNil: schema({
+  imageNullish: schema({
     fileName: isString,
     data: isString,
-  }, { nil: true }),
-});
+    foo: isOptionalString,
+  }, { nullish: true }),
+  level: Level,
+}, { id: 'Post' });
 
 export type IPost = inferType<typeof Post>;
-export default Post;
+
+export default {
+  Level,
+  ...Post,
+} as const;

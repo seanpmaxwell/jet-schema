@@ -3,12 +3,13 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
 export type TBasicObj = Record<string, unknown>;
+export type TEnum = Record<string, string | number>;
 
-// The the type return from the transform function
-export type TValidatorFn<T> = (
-  arg: unknown,
-  cb?: ((transformedVal: T) => void),
-) => arg is T;
+export interface IValidatorFn<T> {
+  (arg: unknown, cb?: ((transformedVal: T) => void)): arg is T;
+  defaultVal?: T;
+  origVldtr?: IValidatorFn<T>;
+}
 
 
 // **** Functions **** //
@@ -42,13 +43,6 @@ export function isObj(val: unknown): val is NonNullable<object> {
 }
 
 /**
- * Is the value an array
- */
-export function isArr(arg: unknown): arg is unknown[] {
-  return Array.isArray(arg);
-}
-
-/**
  * Check if non object array.
  */
 export function isNonArrObj(
@@ -62,7 +56,7 @@ export function isNonArrObj(
  */
 export function processEnum(arg: unknown): [ unknown, TFunc ] {
   if (!isNonArrObj(arg)) {
-    throw Error('"getEnumKeys" be an non-array object');
+    throw Error('"getEnumKeys" must receive a non-array object');
   }
   // Get keys
   let vals = Object.keys(arg).reduce((arr: unknown[], key) => {
@@ -83,17 +77,64 @@ export function processEnum(arg: unknown): [ unknown, TFunc ] {
 }
 
 /**
+ * Check if unknown is a valid enum object.
+ */
+export function isEnum(arg: unknown): arg is TEnum {
+  // Check is non-array object
+  if (!(isObj(arg) && !Array.isArray(arg))) {
+    return false;
+  }
+  // Check if string or number enum
+  const param = (arg as TBasicObj),
+    keys = Object.keys(param),
+    middle = Math.floor(keys.length / 2);
+  // ** String Enum ** //
+  if (!isNum(param[keys[middle]])) {
+    return checkObjEntries(arg, (key, val) => {
+      return isStr(key) && isStr(val);
+    });
+  }
+  // ** Number Enum ** //
+  // Enum key length will always be even
+  if (keys.length % 2 !== 0) {
+    return false;
+  }
+  // Check key/values
+  for (let i = 0; i < middle; i++) {
+    const thisKey = keys[i],
+      thisVal = param[thisKey],
+      thatKey = keys[i + middle],
+      thatVal = param[thatKey];
+    if (!(thisVal === thatKey && thisKey === String(thatVal))) {
+      return false;
+    }
+  }
+  // Return
+  return true;
+}
+
+/**
+ * Do a validator callback function for each object key/value pair.
+ */
+export function checkObjEntries(
+  val: unknown,
+  cb: (key: string, val: unknown) => boolean,
+): val is NonNullable<object> {
+  if (isObj(val)) {
+    for (const entry of Object.entries(val)) {
+      if (!cb(entry[0], entry[1])) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/**
  * Check if non-array object.
  */
 export function isBasicObj(arg: unknown): arg is TBasicObj {
   return isObj(arg) && !Object.keys(arg).some(key => !isStr(key));
-}
-
-/**
- * Is arg a function
- */
-export function isFn(arg: unknown): arg is TFunc {
-  return typeof arg === 'function';
 }
 
 /**
@@ -120,7 +161,7 @@ export function isValidDate(val: unknown): val is Date {
 export function transform<T>(
   transFn: TFunc,
   vldt: ((arg: unknown) => arg is T),
-): TValidatorFn<T> {
+): IValidatorFn<T> {
   return (arg: unknown, cb?: (arg: T) => void): arg is T => {
     if (arg !== undefined) {
       arg = transFn(arg);
@@ -130,3 +171,15 @@ export function transform<T>(
   };
 }
 
+/**
+ * Add a default value to a function.
+ */
+export function setDefault<T>(
+  vldtr: IValidatorFn<T>,
+  defaultVal: T,
+): IValidatorFn<T> {
+  const clone = (arg: unknown): arg is T => false;
+  clone.defaultVal = defaultVal;
+  clone.origVldtr = vldtr;
+  return clone;
+}

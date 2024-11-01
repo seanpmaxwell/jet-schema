@@ -1,6 +1,7 @@
+/* eslint-disable max-len */
 /* eslint-disable no-console */
 
-import { TJetSchema, transform } from '../src';
+import { inferType, setDefault, TJetSchema, transform } from '../src';
 
 import User from './models/User';
 import Post, { IPost } from './models/Post';
@@ -11,6 +12,7 @@ import {
   isNumberArray,
   nonNullable,
   isString,
+  isOptionalString,
 } from './util/validators';
 
 
@@ -26,22 +28,27 @@ const user1 = User.new({
 console.log(User.test(user1));
 console.log(User.pick('age').test(User.AdminStatus.Basic));
 console.log(User.pick('adminStatus').test);
-console.log(User.pick('avatar')?.default());
-console.log(User.pick('avatar')?.new());
-console.log(User.pick('avatar')?.pick('data'));
-console.log(User.pick('avatar')?.pick('data').default());
-console.log(User.pick('avatar')?.pick('url')?.default());
+console.log(User.pick('avatar').default());
+console.log(User.pick('avatar').new());
+console.log(User.pick('avatar').pick('data'));
+console.log(User.pick('avatar').pick('data').default());
+console.log(User.pick('avatar').pick('url').default());
 console.log(User.pick('avatar2').default());
 console.log(User.pick('avatar2').new());
 
-const avatar = User.pick('avatar')?.new();
-const testAvatar = nonNullable(User.pick('avatar')!.test);
+const avatar = User.pick('avatar').new();
+const testAvatar = nonNullable(User.pick('avatar').test);
 console.log(testAvatar('asdf'));
 console.log(testAvatar(avatar));
 
 // Test trans function
 const customTest = transform(JSON.parse, isNumberArray);
 console.log(customTest('[1,2,3,5]', transVal => console.log(transVal)));
+
+const blah: unknown = 'asdf';
+if (User.pick('avatar').test(blah)) {
+  console.log(blah);
+}
 
 
 // **** Post test stuff (Post has an inferred type) **** //
@@ -65,31 +72,30 @@ const customPost: IPost = {
   //   data: '',
   // },
   imageReq: { data: '', fileName: '' },
+  // imageNullish: { data: '', fileName: '' }
+  // optionalStr: 'asdf'
+  level: Post.Level.high,
 };
 
-console.log(customPost);
+console.log(customPost.imageNullish?.foo);
 
-// const misc: unknown = 'asdf';
-// if (Post.test(misc)) {
+const other = schema({
+  fileName: isString,
+  data: isString,
+  foo: setDefault(isOptionalString, ''),
+}, { nullish: true, init: true });
 
-// }
+type Tother = inferType<typeof other>;
 
-// const other = schema({
-//   fileName: isString,
-//   data: isString,
-// }, { optional: false, nullable: true, init: true });
+const val: Tother = { fileName: '', data: '' };
+if (other.test(val)) {
+  console.log(val?.data);
+}
 
-// const val = {};
-// if (other.test(val)) {
-//   console.log(val?.data);
-// }
-
-// const post = Post.new();
-// post.created
 
 const post = Post.new();
 console.log(post.image);
-console.log(post.imageNil);
+console.log(post.imageNullish);
 console.log(post.imageOptNull);
 console.log(post.imageNull);
 
@@ -97,14 +103,14 @@ console.log(post.imageNull);
 
 // **** Test Partial Schema **** //
 
-const PartialSchema: TJetSchema<{ id: number, name: string }> = {
-  id: (arg: unknown) => typeof arg === 'number', // should return error,
+const PartialSchema: TJetSchema<{ idddd: number, name: string }> = {
+  idddd: (arg: unknown) => typeof arg === 'number', // should return error cause no default set,
   name: isString,
 } as const;
 
-const FullSchema = schema<{ id: number, name: string, e: boolean }>({
+const FullSchema = schema<{ idddd: number, name: string, foo: boolean }>({
   ...PartialSchema,
-  e: isBoolean,
-});
+  foo: isBoolean,
+}, { id: 'FullSchema' });
 
-console.log(FullSchema.new());
+console.log(FullSchema.new({ foo: 'horse' as unknown as boolean}));
