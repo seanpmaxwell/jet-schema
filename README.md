@@ -27,7 +27,7 @@ If you want a library that includes all kinds of special functions for validatin
 
 > If you're open to `jet-schema` but think writing your own validator functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
 
-Reasons to use Jet-Schema 😎
+### Reasons to use Jet-Schema ### 😎
 - Use your own validator-functions with schema-validation (this is why I wrote it).
 - TypeScript first!
 - Quick, terse, simple, easy-to-use (you can probably learn every feature in like 30 minutes).
