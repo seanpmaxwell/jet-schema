@@ -13,9 +13,10 @@
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
-- [Misc Notes](#misc-notes)
+- [miscellaneous Notes](#misc-notes)
   - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Defaults](#recommended-defaults)
+<br/>
 
 
 ## Introduction <a name="introduction"></a>
@@ -40,6 +41,7 @@ If you want a library that includes all kinds of special functions for validatin
 - Enums can be used for validation.
 - `Date` constructor can be used to automatically transform and validate any valid date value.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
+<br/>
 
 
 ## Quick Glance <a name="quick-glance"></a>
@@ -74,6 +76,7 @@ const User = schema<IUser>({
   }, { optional: true }),
 });
 ```
+<br/>
 
 
 ## Guide <a name="guide"></a>
@@ -285,7 +288,7 @@ const User = schema<IUser>({
 <br>
 
 
-## Misc Notes <a name="misc-notes"></a>
+## Miscellaneous Notes <a name="misc-notes"></a>
 
 ### Creating wrapper functions <a name="creating-wrapper-functions"></a>
 If you need to modify the value of the `test` function for a property, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
