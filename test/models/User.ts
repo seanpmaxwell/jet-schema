@@ -1,5 +1,4 @@
 import { transform, setDefault } from '../../src';
-import { IValidatorFn } from '../../src/util';
 
 import schema from '../util/schema';
 
@@ -9,7 +8,6 @@ import {
   isRelationalKey,
   isString,
   isOptionalString,
-  isBoolean,
 } from '../util/validators';
 
 
@@ -34,6 +32,7 @@ export interface IUser {
   name: string;
   age: number;
   email: string;
+  phone?: string;
   created: Date;
   lastLogin: Date;
   avatar?: IAvatar | null;
@@ -67,8 +66,7 @@ interface IAddress {
   };
 }
 
-const foo = setDefault(isOptionalString, '');
-
+// const foo = setDefault(isOptionalString, '');
 // const blah = { setDefault, transform };
 
 
@@ -81,6 +79,7 @@ const User = schema<IUser>({
   age: setDefault(transform(Number, isNumber), 0),
   created: Date,
   lastLogin: Date,
+  phone: isString,
   avatar: schema({
     fileName: isString,
     data: setDefault(isString, 'base64:str;'),
@@ -137,11 +136,11 @@ const User = schema<IUser>({
     fileName: isString,
     data: isString,
     // url: foo,
-    url: transform(String, isOptionalString),
-    // url: setDefault(isOptionalString, ''),
+    // url: transform(String, isOptionalString),
+    url: setDefault(isOptionalString, ''),
     // url: isString,
     // status: ,
-    foo: isString
+    // foo: isString
   }, { nullish: true }),
   // avatar8: {
   //   fileName: '',
@@ -153,34 +152,13 @@ const User = schema<IUser>({
   adminStatusAlt: AdminStatusAlt,
 });
 
-const blah = schema<IAvatar>({
-  fileName: isString,
-  data: isString,
-  url: isString,
-}) 
+// const blah = schema<IAvatar>({
+//   fileName: isString,
+//   data: isString,
+//   url: isString,
+// }, { nullable: false });
 
-
-import { z } from 'zod';
-
-export interface IUserAlt {
-  // id: number; // pk
-  // name: string;
-  // age: number;
-  avatar?: IAvatar | null;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// const Userx: z.ZodType<IUserAlt> = z.object({
-//   // id: z.number().min(-1).default(-1),
-//   // name: z.string().default(''),
-//   // age: z.preprocess(Number, z.number()),
-//   avatar: z.object<>({ 
-//     fileName: z.string(),
-//     data: z.string(),
-//     // country: z.string().optional(),
-//     foo: z.string(),
-//   }).optional(),
-// });
+// blah._out?.();
 
 
 

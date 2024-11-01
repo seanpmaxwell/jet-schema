@@ -8,7 +8,17 @@ import {
   isUndef,
   TFunc,
   IValidatorFn,
+  TEnum,
+  isEnum,
 } from './util';
+
+
+// **** Variables ****
+
+const Errors = {
+  DefaultVal: 'Default value must be the full schema-object if type is neither optional or nullable.',
+  Validator: 'Setup error: validator must be a function, enum, schema, or Date constructor.',
+} as const;
 
 
 // **** Fancy Composite Types **** //
@@ -32,7 +42,7 @@ type NotUndef<T> = Exclude<T, undefined>;
 type TModel = Record<string | number | symbol, unknown>;
 type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
 type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
-type TEnum = Record<string, string | number>;
+
 type TDefaultVals = Record<string | number | symbol, TFunc>;
 type TValidators = Record<string | number | symbol, IValidatorFn<unknown>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
@@ -60,13 +70,15 @@ type TDefaultValsMap<T> = {
 type TPickRetVal<T, NnT = NonNullable<T>> = {
   test: (arg: unknown) => arg is T,
   default: () => T,
+  _in: (v: T) => void;
+  _out: () => T;
 } & (IsStaticObj<T> extends true ? {
   pick: <K extends keyof NnT>(prop: K) => TPickRetVal<NnT[K]>;
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
 } : unknown);
 
 // Value returned by the "schema" function
-export interface ISchema<T> {
+export interface ISchema<in out T> {
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
@@ -75,6 +87,9 @@ export interface ISchema<T> {
     nullable: boolean;
     init: boolean | null;
   };
+  // Debugger functions
+  _in: (v: T) => void;
+  _out: () => T;
 }
 
 // Main argument passed to the schema functions
@@ -145,6 +160,8 @@ type InferTypesHelper<U> = {
     ? X
     : U[K] extends ISchema<infer X>
     ? X
+    : U[K] extends unknown[] // Don't let arrays get mixed with enums
+    ? never
     : U[K] extends TEnum
     ? U[K][keyof U[K]]
     : never
@@ -203,7 +220,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
     const [ schemaOptions ] = options;
     const optionsF = _processOptions(schemaOptions);
     if (!optionsF.optional && !optionsF.nullable && !optionsF.init) {
-      throw new Error('Default value must be the full schema-object if type is neither optional or nullable.');
+      onErrorF('', Errors.DefaultVal);
     }
     // Setup
     const ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
@@ -227,6 +244,21 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
         }
       },
       _schemaOptions: optionsF,
+      // Debugger functions: "_in" and "_out"
+      /* eslint-disable no-console */
+      _in: (v: T) => {
+        console.debug('schema:', schemaFnObjArg);
+        console.debug('options:', optionsF);
+        console.debug('test:', testFn(v));
+      },
+      _out: () => {
+        console.debug('schema:', schemaFnObjArg);
+        console.debug('options:', optionsF);
+        const newModel = newFn();
+        console.debug('test:', newModel);
+        return newModel;
+      },
+      /* eslint-enable no-console */
     } as unknown extends T ? ISchema<InferTypes<U, R>> : ISchema<T>;
   };
 }
@@ -235,7 +267,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
  * Setup the new() function
  */
 function _setupDefaultsAndValidators<T>(
-  setupObj: TSchemaFnObjArg<T>,
+  schemaArgObj: TSchemaFnObjArg<T>,
   cloneFn: typeof _defaultClone,
   defaultValsMap: Map<TFunc, unknown>,
   onError: TOnError,
@@ -247,15 +279,15 @@ function _setupDefaultsAndValidators<T>(
   const defaults: TDefaultVals = {},
     childSchemaNewFns: TDefaultVals = {},
     validators: TValidators = {};
-  for (const key in setupObj) {
-    const setupVal = setupObj[key];
+  for (const key in schemaArgObj) {
+    const schemaArgProp = schemaArgObj[key];
     // Date
-    if (setupVal === Date) {
+    if (schemaArgProp === Date) {
       defaults[key] = () => new Date();
       validators[key] = isDate;
     // Is nexted schema
-    } else if (_isSchemaObj(setupVal)) {
-      const childSchema = setupVal,
+    } else if (_isSchemaObj(schemaArgProp)) {
+      const childSchema = schemaArgProp,
         dflt = childSchema._schemaOptions.init;
       if (dflt === true) {
         defaults[key] = () => childSchema.new();
@@ -265,13 +297,13 @@ function _setupDefaultsAndValidators<T>(
       childSchemaNewFns[key] = () => childSchema.new();
       validators[key] = childSchema.test;
     // Enum
-    } else if (isObj(setupVal)) {
-      const [ dflt, vldr ] = processEnum(setupVal);
+    } else if (isEnum(schemaArgProp)) {
+      const [ dflt, vldr ] = processEnum(schemaArgProp);
       defaults[key] = () => cloneFn(dflt);
       validators[key] = vldr as IValidatorFn<unknown>;
-    // Just a validator function
-    } else if (typeof setupVal === 'function') {
-      let vdlrFn: IValidatorFn<unknown> = setupVal; 
+    // Validator function
+    } else if (typeof schemaArgProp === 'function') {
+      let vdlrFn = schemaArgProp as IValidatorFn<unknown>; 
       // Check if default wrapper was used
       let dflt;
       if (!!vdlrFn.origVldtr) {
@@ -284,20 +316,17 @@ function _setupDefaultsAndValidators<T>(
       if (!isUndef(dflt)) {
         const defaultF = cloneFn(dflt);
         defaults[key] = () => defaultF;
+      } else {
+        defaults[key] = () => undefined;
       }
       // Set the validator function
       validators[key] = vdlrFn;
-    // If something is nullable and you wanna let its default value be null
-    } else if (setupVal === null) {
-      defaults[key] = () => null;
-    }
-    // Safe guard
-    if (isUndef(defaults[key])) {
-      defaults[key] = () => undefined;
+    } else {
+      onError(key, Errors.Validator);
     }
     // Make sure the default is a valid value
     const vldr = validators[key],
-      dfltVal: unknown = defaults[key]?.();
+      dfltVal: unknown = defaults[key]();
     if (!vldr(dfltVal)) {
       onError(key, dfltVal);
     }
@@ -351,7 +380,7 @@ function _setupNewFn(
 }
 
 /**
- * Setup the new() function
+ * Setup the test() function
  */
 function _setupTestFn(
   validators: TValidators,
@@ -419,8 +448,18 @@ function _defaultClone(arg: unknown): unknown {
 /**
  * Default function to call when a validation fails.
  */
-function _defaultOnErr(property: string) {
-  throw new Error(`The item "${property}" failed to pass validation.`);
+function _defaultOnErr(property: string, value?: unknown) {
+  if (!!property && !value) {
+    throw new Error(`The item "${property}" failed to pass validation.`);
+  } else if (!property && !!value) {
+    throw new Error(JSON.stringify(value));
+  } else {
+    const message = JSON.stringify({
+      message: `The item "${property}" failed to pass validation.`,
+      value,
+    });
+    throw new Error(message);
+  }
 }
 
 

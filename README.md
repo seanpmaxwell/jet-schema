@@ -10,7 +10,7 @@
   - [Making schemas optional/nullable](#making-schemas-opt-null)
   - [Transforming values with transform()](#transforming-values-with-transform)
   - [Combining Schemas](#combining-schemas)
-  - [Child Schemas](#child-schemas)
+  - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
 - [Misc Notes](#misc-notes)
   - [Creating wrapper functions](#creating-wrapper-functions)
@@ -33,30 +33,32 @@ Reasons to use Jet-Schema 😎
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new` and `test` functions provided automatically on every new schema.
 - Provides a `transform` wrapper function to modify values before validating them.
+- Default values can be set globally on initial setup or with the `setDefault` wrapper. Default values can be set for required properties and will be used for partials passed to the `new` function.
 - Works client-side or server-side.
 - Enums can be used for validation.
-- Date constructor can be used to automatically transform and validate any valid date value.
+- `Date` constructor can be used to automatically transform and validate any valid date value.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 
 
 ## Quick Glance <a name="quick-glance"></a>
 ```typescript
-// An example using "zod", a popular schema validation library
-const User: z.ZodType<IUser> = z.object({
-  id: z.number().min(-1).default(-1),
-  name: z.string().default(''),
-  email: z.string().email().or(z.literal('')).default('x@x.x'),
-  age: z.preprocess(Number, z.number()),
-  created: z.preprocess((arg => arg === undefined ? new Date() : arg), z.coerce.date()),
-  address: z.object({ 
-    street: z.string(),
-    zip: z.number(),
-    country: z.string().optional(),
-  }).optional(),
-});
+import { setDefault, transform } from 'jet-schema';
+import schema from 'utils/schema';
+import { isRelKey, isString, isNumber, isOptionalStr } from 'utils/validators';
 
-// Equivalent using "jet-schema" (other than "schema/transform", the other functions 
-// must be defined elsewhere in your application)
+interface IUser {
+  id: number;
+  name: string;
+  email: string;
+  age: number;
+  created: Date;
+  address?: {
+    street: string;
+    zip: number;
+    country?: string;
+  };
+}
+
 const User = schema<IUser>({
   id: isRelKey,
   name: isString,
@@ -148,7 +150,7 @@ const TUser = inferType<typeof User>;
 ```
 
 Once you have your schema setup, you can call the `new`, `test`, and `pick` functions. Here is an overview of what each one does:
-- `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will use the default supplied. If no default is supplied, then the value will be skipped.
+- `new` Allows you to create new instances of your type using partials. If the value is absent, `new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped.
 - `test` accepts any unknown value, tests that it's valid, and returns a type-predicate,.
 - `pick` allows you to select any property and returns an object with the `test` and `default` functions.
 
@@ -156,11 +158,7 @@ Once you have your schema setup, you can call the `new`, `test`, and `pick` func
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
-In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must used the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.<nr/>
-
-The option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.
-
-In the real world it's very common to have a lot of child schemas which are both optional, nullable. So you don't have to write out `{ optional: true, nullable: true }` over-and-over again for every child-schema, you can write `{ nullish: true }` as an shorthand alternative.
+In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must use the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.
 ```typescript
 {
   optional?: boolean; // default "false", must be true if generic is optional
@@ -169,6 +167,11 @@ In the real world it's very common to have a lot of child schemas which are both
   nullish?: true; // Use this instead of { optional: true, nullable: true; }
 }
 ```
+
+The option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be `null` or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.<br/>
+
+In the real world it's very common to have a lot of child schemas which are both optional, nullable. So you don't have to write out `{ optional: true, nullable: true }` over-and-over again for every child-schema, you can write `{ nullish: true }` as an shorthand alternative.<br/>
+
 
 Here's an example of the options in use:
 
@@ -187,7 +190,7 @@ const User = schema<IUser>({
   address: schema<IUser['address']>({
     street: isString,
     zip: isNumber,
-  }, { optional: true, nullable: true, init: false }),
+  }, { nullish: true, init: false }),
 })
 
 User.new() // => { id: 0, name: '' }
@@ -230,7 +233,24 @@ console.log(FullSchema.new());
 
 
 ### TypeScript Caveats <a name="typescript-caveats"></a>
-As mentioned, if a property in a parent is mapped-object type (it as a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of the way typing works in typescript, it is highly-recommended that you pass a generic to your child-objects so that way additional properties don't get added:
+Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
+
+**Validator functions**<br/>
+If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `arg is string` will still work. However a if a type predicate returns `arg is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`.
+```typescript
+interface IUser {
+  id: string;
+  name?: string;
+}
+
+const User = schema<IUser>({
+  id: isString, // "isOptionalString" will throw type errors
+  name: isOptionalString, // "isString" will not throw type errors but will throw runtime errors
+})
+```
+
+**Child (aka nested) schemas**<br/>
+As mentioned, if a property in a parent is mapped-object type (it as a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added.
 ```typescript
 interface IUser {
   id: number;
@@ -241,15 +261,15 @@ const User = schema<IUser>({
   id: isNumber,
   address: schema<IUser['address']>({
     street: isString,
-    // city: isString, // If we left off the generic <IUser['address']> we could add "city"
-  }, { optional: true, nullable: true }),
-})
+    // foo: isString, // If we left off the generic <IUser['address']> we could add "foo"
+  }, { nullish: true }),
+});
 ```
-
+> If you know of a way to enforce typesafety on child-object without requiring a generic please make a pull-request because I couldn't figure out a way.
 
 
 ### Bonus Features <a name="bonus-features"></a>
-- When passing the `Date` constructor, `jet-schema` automatically converts all valid date values (i.e. string/number ) to a `Date` object. The default value will be a `Date` object with the current datetime.
+- When passing the `Date` constructor, `jet-schema` sets the type to be a `Date` object and automatically converts all valid date values (i.e. `string/number`, maybe a `Date` object got stringified in an API call) to a `Date` object. The default value will be a `Date` object with the current datetime. 
 - You can also use an enum as a validator. The default value will be the first value in the enum object and validation will make sure it is an enum value.
 <br>
 
@@ -257,7 +277,7 @@ const User = schema<IUser>({
 ## Misc Notes <a name="misc-notes"></a>
 
 ### Creating wrapper functions <a name="creating-wrapper-functions"></a>
-If you need to modify the value of the `test` function for a project, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
+If you need to modify the value of the `test` function for a property, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
 
 ```typescript
 // models/User.ts
@@ -265,13 +285,14 @@ import { nonNullable } from 'util/type-checks';
 
 interface IUser {
   id: number;
-  address?: { street: string } | null;
+  address?: { street: string, zip: number } | null;
 }
 
 const User = schema<IUser>({
   id: isNumber,
   address: schema<IUser['address']>({
     street: isString,
+    zip: isNumber,
   }, { optional: true, nullable: true }),
 })
 
