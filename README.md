@@ -33,7 +33,7 @@ Reasons to use Jet-Schema 😎
 - Quick, terse, simple, easy-to-use (you can probably learn every feature in like 30 minutes).
 - Much smaller and less complex than most schema-validation libraries.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
-- `new` and `test` functions provided automatically on every new schema.
+- `new`, `test`, `parse` functions provided automatically on every new schema.
 - Provides a `transform` wrapper function to modify values before validating them.
 - Default values can be set globally on initial setup or with the `setDefault` wrapper.
 - Works client-side or server-side.
@@ -205,7 +205,7 @@ User.new() // => { id: 0, name: '' }
 
 
 ### Transforming values with `transform()` <a name="transforming-values-with-transform"></a>
-If you want to modify a value before it passes through a validator-function, you can import the `transform` function and wrap your validator function with it. `transform` accepts a transforming-function and a validator-function and returns a new validator-function (type-predicate is preserved) which will transform the value before testing it. When calling `new` or `test`, `transform` will modify the original object.
+If you want to modify a value before it passes through a validator-function, you can import the `transform` function and wrap your validator function with it. `transform` accepts a transforming-function and a validator-function and returns a new validator-function (type-predicate is preserved) which will transform the value before testing it. When calling `new`, `test`, or `parse`, `transform` will modify the original object.
 <br/>
 
 If you want to access the transformed value yourself for whatever reason, you can pass a callback as the second argument to the returned validator-function and `transform` will supply the modified value to it. I've found `transform` can be useful for other parts of my application where I need to modify a value before validating it and then access the transformed value.
