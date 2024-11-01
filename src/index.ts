@@ -8,6 +8,6 @@ export type {
 } from './jetSchema';
 
 // Export functions
-export { transform } from './util';
+export { transform, setDefault } from './util';
 export const schema = jetSchema();
 export default jetSchema;

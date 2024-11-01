@@ -12,6 +12,11 @@ import {
 
 // **** Setup ***** //
 
+enum Level {
+  low,
+  high,
+}
+
 const Post = schema({
   id: isRelationalKey,
   mesage: isString,
@@ -38,11 +43,17 @@ const Post = schema({
     fileName: isString,
     data: isString,
   }, { optional: false, nullable: false }),
-  imageNil: schema({
+  imageNullish: schema({
     fileName: isString,
     data: isString,
-  }, { nil: true }),
+    foo: ['', isOptionalString],
+  }, { nullish: true }),
+  level: Level,
 });
 
 export type IPost = inferType<typeof Post>;
-export default Post;
+
+export default {
+  Level,
+  ...Post,
+} as const;

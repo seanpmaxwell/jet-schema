@@ -66,7 +66,7 @@ test('test User override each default value', () => {
     },
     adminStatus: User.AdminStatus.High,
     adminStatusAlt: User.AdminStatusAlt.Mid,
-    avatar6: { fileName: 'nil', data: 'nil' },
+    avatar6: { fileName: 'nullish', data: '' },
   });
 
   const expectedResult: IUser = {
@@ -90,7 +90,7 @@ test('test User override each default value', () => {
     },
     adminStatus: User.AdminStatus.High,
     adminStatusAlt: User.AdminStatusAlt.Mid,
-    avatar6: { fileName: 'nil', data: 'nil' },
+    avatar6: { fileName: 'nullish', data: '' },
     avatar7: null,
     avatar8: { fileName: '', data: '' },
   };
@@ -117,13 +117,13 @@ test('test User pick() function', () => {
   expect(User.pick('created').default() instanceof Date).toStrictEqual(true);
   expect(User.pick('created').test(EPOCH_PAST_TIME)).toStrictEqual(true);
   expect(User.pick('address').pick('city').default()).toStrictEqual('');
-  expect(User.pick('avatar')?.default()).toStrictEqual({ fileName: '', data: 'base64:str;' });
-  expect(User.pick('avatar')?.default()).toStrictEqual({ fileName: '', data: 'base64:str;' });
+  expect(User.pick('avatar').default()).toStrictEqual({ fileName: '', data: 'base64:str;' });
+  expect(User.pick('avatar').default()).toStrictEqual({ fileName: '', data: 'base64:str;' });
   expect(User.pick('avatar2').default()).toStrictEqual({ fileName: '', data: 'base64:str;' });
-  expect(User.pick('avatar3')?.default()).toStrictEqual(undefined);
-  expect(User.pick('avatar4')?.default()).toStrictEqual(null);
-  expect(User.pick('avatar5')?.default()).toStrictEqual(undefined);
-  expect(User.pick('avatar6')?.default()).toStrictEqual(undefined);
+  expect(User.pick('avatar3').default()).toStrictEqual(undefined);
+  expect(User.pick('avatar4').default()).toStrictEqual(null);
+  expect(User.pick('avatar5').default()).toStrictEqual(undefined);
+  expect(User.pick('avatar6').default()).toStrictEqual(undefined);
   expect(User.pick('adminStatus').default()).toStrictEqual(User.AdminStatus.Basic);
   expect(User.pick('adminStatus').test('asdf')).toStrictEqual(false);
   expect(User.pick('adminStatusAlt').default()).toStrictEqual(User.AdminStatusAlt.Basic);

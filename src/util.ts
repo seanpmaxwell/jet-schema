@@ -4,11 +4,11 @@
 export type TFunc = (...args: any[]) => any;
 export type TBasicObj = Record<string, unknown>;
 
-// The the type return from the transform function
-export type TValidatorFn<T> = (
-  arg: unknown,
-  cb?: ((transformedVal: T) => void),
-) => arg is T;
+export interface IValidatorFn<T> {
+  (arg: unknown, cb?: ((transformedVal: T) => void)): arg is T;
+  defaultVal?: T;
+  origVldtr?: IValidatorFn<T>;
+}
 
 
 // **** Functions **** //
@@ -39,13 +39,6 @@ export function isStr(param: unknown): param is string {
  */
 export function isObj(val: unknown): val is NonNullable<object> {
   return !!val && typeof val === 'object';
-}
-
-/**
- * Is the value an array
- */
-export function isArr(arg: unknown): arg is unknown[] {
-  return Array.isArray(arg);
 }
 
 /**
@@ -90,13 +83,6 @@ export function isBasicObj(arg: unknown): arg is TBasicObj {
 }
 
 /**
- * Is arg a function
- */
-export function isFn(arg: unknown): arg is TFunc {
-  return typeof arg === 'function';
-}
-
-/**
  * Not necessarily a Date object but makes sure it is a valid date.
  */
 export const isDate = transform((arg: string | number | Date) => {
@@ -120,7 +106,7 @@ export function isValidDate(val: unknown): val is Date {
 export function transform<T>(
   transFn: TFunc,
   vldt: ((arg: unknown) => arg is T),
-): TValidatorFn<T> {
+): IValidatorFn<T> {
   return (arg: unknown, cb?: (arg: T) => void): arg is T => {
     if (arg !== undefined) {
       arg = transFn(arg);
@@ -130,3 +116,15 @@ export function transform<T>(
   };
 }
 
+/**
+ * Add a default value to a function.
+ */
+export function setDefault<T>(
+  vldtr: IValidatorFn<T>,
+  defaultVal: T,
+): IValidatorFn<T> {
+  const clone = (arg: unknown): arg is T => false;
+  clone.defaultVal = defaultVal;
+  clone.origVldtr = vldtr;
+  return clone;
+}

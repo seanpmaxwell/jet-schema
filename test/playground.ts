@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { inferType, TJetSchema, transform } from '../src';
+import { inferType, setDefault, TJetSchema, transform } from '../src';
 
 import User from './models/User';
 import Post, { IPost } from './models/Post';
@@ -11,6 +11,7 @@ import {
   isNumberArray,
   nonNullable,
   isString,
+  isOptionalString,
 } from './util/validators';
 
 
@@ -43,6 +44,11 @@ console.log(testAvatar(avatar));
 const customTest = transform(JSON.parse, isNumberArray);
 console.log(customTest('[1,2,3,5]', transVal => console.log(transVal)));
 
+const blah: unknown = 'asdf';
+if (User.pick('avatar').test(blah)) {
+  console.log(blah);
+}
+
 
 // **** Post test stuff (Post has an inferred type) **** //
 
@@ -65,15 +71,17 @@ const customPost: IPost = {
   //   data: '',
   // },
   imageReq: { data: '', fileName: '' },
-  // imageNil: { data: '', fileName: '' }
+  // imageNullish: { data: '', fileName: '' }
   // optionalStr: 'asdf'
+  level: Post.Level.high,
 };
 
-console.log(customPost);
+console.log(customPost.imageNullish?.foo);
 
 const other = schema({
   fileName: isString,
   data: isString,
+  foo: setDefault(isOptionalString, ''),
 }, { optional: true, nullable: true, init: true });
 
 type Tother = inferType<typeof other>;
@@ -83,9 +91,10 @@ if (other.test(val)) {
   console.log(val?.data);
 }
 
+
 const post = Post.new();
 console.log(post.image);
-console.log(post.imageNil);
+console.log(post.imageNullish);
 console.log(post.imageOptNull);
 console.log(post.imageNull);
 

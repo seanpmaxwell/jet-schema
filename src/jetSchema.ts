@@ -3,13 +3,11 @@
 
 import {
   processEnum,
-  isArr, 
   isDate,
-  isFn,
   isObj,
   isUndef,
   TFunc,
-  TValidatorFn,
+  IValidatorFn,
 } from './util';
 
 
@@ -36,7 +34,7 @@ type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : Non
 type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
 type TEnum = Record<string, string | number>;
 type TDefaultVals = Record<string | number | symbol, TFunc>;
-type TValidators = Record<string | number | symbol, TValidatorFn<unknown>>;
+type TValidators = Record<string | number | symbol, IValidatorFn<unknown>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
 type TOnError = (property: string, value?: unknown) => void;
 
@@ -44,13 +42,13 @@ interface IFullOptions {
   optional?: boolean;
   nullable?: boolean;
   init?: boolean | null;
-  nil?: true; 
+  nullish?: true; 
 }
 
 
 // **** Schema Types **** //
 
-// Set the Default values arrays
+// Make sure validator function type-predicate returns default type
 type TDefaultValsMap<T> = {
   [K in keyof T]: {
     0: ((arg: unknown) => arg is unknown),
@@ -64,12 +62,12 @@ type TPickRetVal<T, NnT = NonNullable<T>> = {
   default: () => T,
 } & (IsStaticObj<T> extends true ? {
   pick: <K extends keyof NnT>(prop: K) => TPickRetVal<NnT[K]>;
-  new: (arg?: Partial<T>) => NonNullable<T>;
+  new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
 } : unknown);
 
 // Value returned by the "schema" function
 export interface ISchema<T> {
-  new: (arg?: Partial<T>) => NonNullable<T>;
+  new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
   _schemaOptions: {
@@ -79,22 +77,20 @@ export interface ISchema<T> {
   };
 }
 
-type TRefine<T> = (arg: unknown) => arg is T;
-type TTypeArr<Type> = ([Type, TRefine<Type>] | TRefine<Type>);
-
 // Main argument passed to the schema functions
 export type TSchemaFnObjArg<T> = Required<{
   [K in keyof T]: (
     T[K] extends (string | number)
-    ? (TTypeArr<T[K]> | TEnum)
+    ? (IValidatorFn<T[K]> | TEnum)
     : T[K] extends Date 
-    ? (DateConstructor | TTypeArr<T[K]>)
+    ? (DateConstructor | IValidatorFn<T[K]>)
     : IsStaticObj<T[K]> extends true
     ? ISchema<T[K]>
-    : TTypeArr<T[K]>
+    : IValidatorFn<T[K]>
   );
 }>;
 
+// "Jet Options"
 interface IJetOptions<M> {
   defaultValuesMap?: M extends [TFunc, unknown][] ? M : never,
   cloneFn?: (value: unknown) => unknown,
@@ -104,26 +100,31 @@ interface IJetOptions<M> {
 // Need to restrict parameters based on if "T" is null or undefined.
 type TSchemaOptions<T> = (
   unknown extends T 
-  ? (IOptNul | IOptNotNul | INotOptButNul | INotOptOrNul | INil) 
+  ? (IOptNul | IOptNotNul | INotOptButNul | INotOptOrNul | INullish) 
   : (undefined extends T 
-      ? (null extends T ? (IOptNul | INil) : IOptNotNul) 
+      ? (null extends T ? (IOptNul | INullish) : IOptNotNul) 
       : (null extends T ? INotOptButNul : INotOptOrNul)
     )
+);
+
+// If not optional or nullable, make this an optional parameter
+type TSchemaOptionsHelper<T, R> = (
+  unknown extends T 
+  ? ([] | [R]) 
+  : undefined extends T 
+  ? [R] 
+  : null extends T 
+  ? [R] 
+  : ([] | [R])
 );
 
 
 // **** Infer Types **** //
 
-type IsSchema = Omit<ISchema<unknown>, 'pick'>;
-
-export type PublicInferType<S> = (
-  S extends IsSchema
-  ? GetTypePredicate<S['test']> 
-  : never
-);
+export type PublicInferType<S> = (S extends ISchema<infer X> ? X : never);
 
 type InferTypes<U, R, Schema = MakeKeysOptIfUndef<InferTypesHelper<U>>> = (
-  'nil' extends keyof R
+  'nullish' extends keyof R
   ? AddNullables<Schema, true, true>
   : AddNullables<Schema,
     'optional' extends keyof R ? R['optional'] : false,
@@ -131,25 +132,21 @@ type InferTypes<U, R, Schema = MakeKeysOptIfUndef<InferTypesHelper<U>>> = (
   >
 );
 
-// Need to make optional probs which can be undefined.
-type MakeKeysOptIfUndef<T> = ({
-  [K in keyof T as undefined extends T[K] ? K : never]?: T[K]
-}) & {
-  [K in keyof T as undefined extends T[K] ? never : K]: T[K]
-};
+type MakeKeysOptIfUndef<T> = { [K in keyof T]-?:
+  (x: undefined extends T[K] ? Partial<Record<K, T[K]>> : Record<K, T[K]>) => void
+}[keyof T] extends (x: infer I) => void ?
+  I extends infer U ? { [K in keyof U]: U[K] } : never : never;
   
 type InferTypesHelper<U> = {
   [K in keyof U]: (
-    U[K] extends unknown[]
-    ? U[K][0]
-    : U[K] extends DateConstructor
+    U[K] extends DateConstructor
     ? Date
-    : U[K] extends TFunc 
-    ? GetTypePredicate<U[K]>
-    : U[K] extends IsSchema
-    ? GetTypePredicate<U[K]['test']>
-    : U[K] extends (string | number) 
-    ? (TTypeArr<U[K]> | TEnum)
+    : U[K] extends IValidatorFn<infer X>
+    ? X
+    : U[K] extends ISchema<infer X>
+    ? X
+    : U[K] extends TEnum
+    ? U[K][keyof U[K]]
     : never
   );
 };
@@ -158,7 +155,7 @@ export interface IOptNul {
   optional: true;
   nullable: true;
   init?: null | boolean;
-  nil?: undefined
+  nullish?: undefined
 }
 
 export interface IOptNotNul {
@@ -179,8 +176,8 @@ export interface INotOptOrNul {
   init?: true;
 }
 
-export interface INil {
-  nil: true;
+export interface INullish {
+  nullish: true;
   optional?: undefined;
   nullable?: undefined;
   init?: null | boolean;
@@ -200,17 +197,18 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
   // Return the "schema" function
   return <T,
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
-    R extends TSchemaOptions<T> = TSchemaOptions<T>
-  >(schemaFnObjArg: U, schemaOptions?: R) => {
+    R extends TSchemaOptions<T> = TSchemaOptions<T>,
+  >(schemaFnObjArg: U, ...options: TSchemaOptionsHelper<T, R>) => {
     // "defaultVal"
-    const options = _processOptions(schemaOptions);
-    if (!options.optional && !options.nullable && !options.init) {
+    const [ schemaOptions ] = options;
+    const optionsF = _processOptions(schemaOptions);
+    if (!optionsF.optional && !optionsF.nullable && !optionsF.init) {
       throw new Error('Default value must be the full schema-object if type is neither optional or nullable.');
     }
     // Setup
     const ret = _setupDefaultsAndValidators(schemaFnObjArg, cloneFn, defaultValsMap, onErrorF),
       newFn = _setupNewFn(ret.defaults, ret.validators, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.validators, options.optional, options.nullable, onErrorF);
+      testFn = _setupTestFn(ret.validators, optionsF.optional, optionsF.nullable, onErrorF);
     // Return
     return {
       new: newFn,
@@ -228,8 +226,8 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
           };
         }
       },
-      _schemaOptions: options,
-    } as ISchema<unknown extends T ? InferTypes<U, R> : T>;
+      _schemaOptions: optionsF,
+    } as unknown extends T ? ISchema<InferTypes<U, R>> : ISchema<T>;
   };
 }
 
@@ -255,11 +253,7 @@ function _setupDefaultsAndValidators<T>(
     if (setupVal === Date) {
       defaults[key] = () => new Date();
       validators[key] = isDate;
-    // An array
-    } else if (isArr(setupVal)) {
-      defaults[key] = () => cloneFn(setupVal[0]);
-      validators[key] = setupVal[1];
-    // Schema
+    // Is nexted schema
     } else if (_isSchemaObj(setupVal)) {
       const childSchema = setupVal,
         dflt = childSchema._schemaOptions.init;
@@ -274,17 +268,25 @@ function _setupDefaultsAndValidators<T>(
     } else if (isObj(setupVal)) {
       const [ dflt, vldr ] = processEnum(setupVal);
       defaults[key] = () => cloneFn(dflt);
-      validators[key] = vldr as TValidatorFn<unknown>;
+      validators[key] = vldr as IValidatorFn<unknown>;
     // Just a validator function
-    } else if (isFn(setupVal)) {
-      validators[key] = setupVal;
-      // If it's a required field, get the defaults from the function
-      if (isUndef(defaults[key])) {
-        const dflt = defaultValsMap.get(setupVal);
-        if (!isUndef(dflt)) {
-          defaults[key] = () => dflt;
-        }
+    } else if (typeof setupVal === 'function') {
+      let vdlrFn: IValidatorFn<unknown> = setupVal; 
+      // Check if default wrapper was used
+      let dflt;
+      if (!!vdlrFn.origVldtr) {
+        dflt = vdlrFn.defaultVal;
+        vdlrFn = vdlrFn.origVldtr;
+      } else if (defaultValsMap.has(vdlrFn)) {
+        dflt = defaultValsMap.get(vdlrFn);
       }
+      // Set the default
+      if (!isUndef(dflt)) {
+        const defaultF = cloneFn(dflt);
+        defaults[key] = () => defaultF;
+      }
+      // Set the validator function
+      validators[key] = vdlrFn;
     // If something is nullable and you wanna let its default value be null
     } else if (setupVal === null) {
       defaults[key] = () => null;
@@ -384,9 +386,9 @@ function _setupTestFn(
 /**
  * Setup options based on object passed by the user.
  */
-function _processOptions(options: IFullOptions | undefined): Omit<Required<IFullOptions>, 'nil'> {
+function _processOptions(options: IFullOptions | undefined) {
   const init = (isUndef(options?.init) ? true : options?.init);
-  if (!options?.nil) {
+  if (!options?.nullish) {
     return {
       optional: !!options?.optional,
       nullable: !!options?.nullable,

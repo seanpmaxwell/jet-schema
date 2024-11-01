@@ -1,4 +1,5 @@
-import { transform } from '../../src';
+import { transform, setDefault } from '../../src';
+import { IValidatorFn } from '../../src/util';
 
 import schema from '../util/schema';
 
@@ -26,7 +27,6 @@ enum AdminStatusAlt {
   High,
 }
 
-
 // **** Types ***** //
 
 export interface IUser {
@@ -44,6 +44,7 @@ export interface IUser {
   avatar6?: IAvatar | null;
   avatar7?: IAvatar | null;
   avatar8?: IAvatar | null;
+  avatar9?: (IAvatar) | null;
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
@@ -66,19 +67,23 @@ interface IAddress {
   };
 }
 
+const foo = setDefault(isOptionalString, '');
+
+// const blah = { setDefault, transform };
+
 
 // **** Setup **** //
 
 const User = schema<IUser>({
   id: isRelationalKey,
   name: isString,
-  email: ['', isEmail],
-  age: [0, transform(Number, isNumber)],
+  email: setDefault(isEmail, ''),
+  age: setDefault(transform(Number, isNumber), 0),
   created: Date,
   lastLogin: Date,
   avatar: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { optional: true, nullable: true }),
   address: schema({
@@ -92,45 +97,91 @@ const User = schema<IUser>({
   }),
   avatar2: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { nullable: true }),
   avatar3: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { optional: true, nullable: true, init: false }),
   avatar4: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { optional: true, nullable: true, init: null }),
   avatar5: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
   }, { optional: true, init: false }),
   avatar6: schema({
     fileName: isString,
-    data: [ 'base64:str;', isString ],
+    data: setDefault(isString, 'base64:str;'),
     url: isOptionalString,
-  }, { nil: true, init: false }),
+  }, { nullish: true, init: false }),
   avatar7: schema({
     fileName: isString,
     data: isString,
-    url: isOptionalString,
-    jpg: [ false, isBoolean ],
-    foo: isString
-  }, { nil: true, init: null }),
+    url: setDefault(isOptionalString, 'base64:str;'),
+    // jpg: [ false, isBoolean ],
+    // foo: isString
+  }, { nullish: true, init: null }),
   avatar8: schema({
     fileName: isString,
     data: isString,
-    url: isOptionalString,
+    url: setDefault(isOptionalString, 'base64:str;'),
+    // foo: isString
+  }, { nullish: true }),
+  avatar9: schema({
+    fileName: isString,
+    data: isString,
+    // url: foo,
+    url: transform(String, isOptionalString),
+    // url: setDefault(isOptionalString, ''),
+    // url: isString,
+    // status: ,
     foo: isString
-  }),
+  }, { nullish: true }),
+  // avatar8: {
+  //   fileName: '',
+  //   data: '',
+  //   url: '',
+  //   foo: isString
+  // },
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
 });
+
+const blah = schema<IAvatar>({
+  fileName: isString,
+  data: isString,
+  url: isString,
+}) 
+
+
+import { z } from 'zod';
+
+export interface IUserAlt {
+  // id: number; // pk
+  // name: string;
+  // age: number;
+  avatar?: IAvatar | null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// const Userx: z.ZodType<IUserAlt> = z.object({
+//   // id: z.number().min(-1).default(-1),
+//   // name: z.string().default(''),
+//   // age: z.preprocess(Number, z.number()),
+//   avatar: z.object<>({ 
+//     fileName: z.string(),
+//     data: z.string(),
+//     // country: z.string().optional(),
+//     foo: z.string(),
+//   }).optional(),
+// });
+
 
 
 // **** Export default **** //

@@ -10,6 +10,7 @@
   - [Making schemas optional/nullable](#making-schemas-opt-null)
   - [Transforming values with transform()](#transforming-values-with-transform)
   - [Combining Schemas](#combining-schemas)
+  - [Child Schemas](#child-schemas)
   - [Bonus Features](#bonus-features)
 - [Misc Notes](#misc-notes)
   - [Creating wrapper functions](#creating-wrapper-functions)
@@ -17,7 +18,7 @@
 
 
 ## Introduction <a name="introduction"></a>
-Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I usually already have a lot of my own custom validation logic specific for each of my applications (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object schema. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
+Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I usually already have a lot of my own custom validation logic specific for each of my applications (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
 <br/>
 
 If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different than the one your application needs. Instead of of having to dig into the library's features to validate using your custom method, with **jet-schema** you can just pass your method.
@@ -27,7 +28,7 @@ If you want a library that includes all kinds of special functions for validatin
 
 Reasons to use Jet-Schema 😎
 - TypeScript first!
-- Quick, terse, simple, easy-to-use (there are only 3 function exports and 2 type exports).
+- Quick, terse, simple, easy-to-use (you can probably learn every feature in like 30 minutes).
 - Much smaller and less complex than most schema-validation libraries.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new` and `test` functions provided automatically on every new schema.
@@ -42,7 +43,7 @@ Reasons to use Jet-Schema 😎
 ```typescript
 // An example using "zod", a popular schema validation library
 const User: z.ZodType<IUser> = z.object({
-  id: z.number().default(-1).min(-1),
+  id: z.number().min(-1).default(-1),
   name: z.string().default(''),
   email: z.string().email().or(z.literal('')).default('x@x.x'),
   age: z.preprocess(Number, z.number()),
@@ -59,10 +60,10 @@ const User: z.ZodType<IUser> = z.object({
 const User = schema<IUser>({
   id: isRelKey,
   name: isString,
-  email: ['x@x.x', isEmail],
+  email: setDefault(isEmail, 'x@x.com'),
   age: transform(Number, isNumber),
   created: Date,
-  address: schema({
+  address: schema<IUser['address']>({
     street: isString,
     zip: isNumber,
     country: isOptionalStr,
@@ -159,13 +160,13 @@ In addition to a schema-object, the `schema` function accepts an additional **op
 
 The option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If a child-schema is optional/nullable, maybe you don't want a nested object and just want it to be null or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.
 
-In the real world it's very common to have a lot of child schemas which are both optional, nullable. So you don't have to write out `{ optional: true, nullable: true }` over-and-over again for every child-schema, you can write `{ nil: true }` as an shorthand alternative.
+In the real world it's very common to have a lot of child schemas which are both optional, nullable. So you don't have to write out `{ optional: true, nullable: true }` over-and-over again for every child-schema, you can write `{ nullish: true }` as an shorthand alternative.
 ```typescript
 {
   optional?: boolean; // default "false", must be true if generic is optional
   nullable?: boolean; // default "false", must be true if generic is nullable
   init?: boolean | null; // default "true", must be undefined, true, or null if generic is not optional.
-  nil?: true; // Use this instead of { optional: true, nullable: true; }
+  nullish?: true; // Use this instead of { optional: true, nullable: true; }
 }
 ```
 
@@ -183,7 +184,7 @@ interface IUser {
 const User = schema<IUser>({
   id: isNumber,
   name: isString,
-  address: schema({
+  address: schema<IUser['address']>({
     street: isString,
     zip: isNumber,
   }, { optional: true, nullable: true, init: false }),
@@ -228,6 +229,25 @@ console.log(FullSchema.new());
 ```
 
 
+### TypeScript Caveats <a name="typescript-caveats"></a>
+As mentioned, if a property in a parent is mapped-object type (it as a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of the way typing works in typescript, it is highly-recommended that you pass a generic to your child-objects so that way additional properties don't get added:
+```typescript
+interface IUser {
+  id: number;
+  address?: { street: string } | null;
+}
+
+const User = schema<IUser>({
+  id: isNumber,
+  address: schema<IUser['address']>({
+    street: isString,
+    // city: isString, // If we left off the generic <IUser['address']> we could add "city"
+  }, { optional: true, nullable: true }),
+})
+```
+
+
+
 ### Bonus Features <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` automatically converts all valid date values (i.e. string/number ) to a `Date` object. The default value will be a `Date` object with the current datetime.
 - You can also use an enum as a validator. The default value will be the first value in the enum object and validation will make sure it is an enum value.
@@ -250,7 +270,7 @@ interface IUser {
 
 const User = schema<IUser>({
   id: isNumber,
-  address: schema({
+  address: schema<IUser['address']>({
     street: isString,
   }, { optional: true, nullable: true }),
 })
