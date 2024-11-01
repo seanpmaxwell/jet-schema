@@ -201,7 +201,7 @@ const User = schema<IUser>({
   address: schema<IUser['address']>({
     street: isString,
     zip: isNumber,
-  }, { nullish: true, init: false }),
+  }, { nullish: true, init: false, id: 'User_address' }),
 })
 
 User.new() // => { id: 0, name: '' }
