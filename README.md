@@ -31,7 +31,7 @@ If you want a library that includes all kinds of special functions for validatin
 ### Reasons to use Jet-Schema 😎
 - Use your own validator-functions with schema-validation (this is why I wrote it).
 - TypeScript first!
-- Quick, terse, simple, easy-to-use (this library only exports 2 function and 2 types).
+- Quick, terse, simple, easy-to-use (this library only exports 2 functions and 2 types).
 - Much smaller and less complex than most schema-validation libraries.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new`, `test`, `parse` functions provided automatically on every new schema.
