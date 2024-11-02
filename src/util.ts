@@ -147,20 +147,9 @@ export function isBasicObj(arg: unknown): arg is TBasicObj {
 /**
  * Not necessarily a Date object but makes sure it is a valid date.
  */
-export const isDate = (arg: unknown): arg is Date => {
-  return isValidDate(new Date(arg as Date));
+export const isDate = (val: unknown): val is Date => {
+  return (val instanceof Date) && !isNaN(new Date(val).getTime());
 };
-
-/**
- * HACK: isn't necessarily a date object but says its one if it is a valid 
- * date.
- */
-export function isValidDate(val: unknown): val is Date {
-  return (
-    (isStr(val) || isNum(val) || (val instanceof Date)) && 
-    !isNaN(new Date(val).getTime())
-  );
-}
 
 /**
  * Transform a value before checking it.

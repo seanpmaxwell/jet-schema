@@ -12,6 +12,7 @@ import {
   isEnum,
   IValidatorObj,
   TValidatorFn,
+  transform,
 } from './util';
 
 
@@ -284,8 +285,18 @@ function _setupDefaultsAndVldtrs<T>(
     childSchemaNewFns: Record<string, TFunc> = {};
   for (const key in schemaArgObj) {
     const schemaArgProp = schemaArgObj[key];
+    defaultsAndVldtrs[key] = {
+      fn: (arg: unknown): arg is boolean  => false,
+      default: () => false,
+    };
     // Is validator function or object
-    if (
+    if (schemaArgProp === Date) {
+      defaultsAndVldtrs[key] = {
+        fn: transform((arg: Date) => new Date(arg), isDate),
+        default: () => new Date(),
+      };
+    // Is nested schema
+    } else if (
       (typeof schemaArgProp === 'function') ||
       _isValidatorObj(schemaArgProp)
     ) {
@@ -294,6 +305,7 @@ function _setupDefaultsAndVldtrs<T>(
         defaultVal,
         hasLocalDefault = false,
         hasLocalTransform = false;
+      // Check local validator-objects
       if (_isValidatorObj(schemaArgProp)) {
         const localObj = schemaArgProp;
         vdlrFn = localObj.fn;
@@ -302,7 +314,7 @@ function _setupDefaultsAndVldtrs<T>(
           hasLocalDefault = true;
         }
         if (!!localObj.transform) {
-          vdlrFn = localObj.transform(vdlrFn) as TValidatorFn<unknown>;
+          vdlrFn = transform(localObj.transform, vdlrFn);
           hasLocalTransform = true;
         }
       } else {
@@ -315,7 +327,7 @@ function _setupDefaultsAndVldtrs<T>(
           defaultVal = globalsObj.default;
         }
         if (!hasLocalTransform && globalsObj.transform) {
-          vdlrFn = globalsObj.transform(vdlrFn) as TValidatorFn<unknown>;
+          vdlrFn = transform(globalsObj.transform, vdlrFn);
         }
       }
       // Set the default
@@ -327,13 +339,7 @@ function _setupDefaultsAndVldtrs<T>(
       }
       // Set the validator function
       defaultsAndVldtrs[key].fn = vdlrFn;
-    // Date
-    } else if (schemaArgProp === Date) {
-      defaultsAndVldtrs[key] = {
-        fn: isDate,
-        default: () => new Date(),
-      };
-    // Is nested schema
+    // Nest schema
     } else if (_isSchemaObj(schemaArgProp)) {
       const childSchema = schemaArgProp,
         dflt = childSchema._schemaOptions.init;
