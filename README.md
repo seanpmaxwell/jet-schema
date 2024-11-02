@@ -81,25 +81,28 @@ const User = schema<IUser>({
 
 ### Getting Started <a name="getting-started"></a>
 
+Note that at the heart of `jet-schema` are **validator-functions**. Since functions are objects in javascript, and objects are pass by reference, `jet-schema` will map certain settings to validator-functions by using the functions themselves as a reference. This is what enables us to use existing validator-functions in our schema without have to deal with `jet-schema`'s features everytime.
+
 > npm install -s jet-schema
 
-After installation, you need to configure the `schema` function by importing and calling the `jetSchema()` function.
+After installation, you need to configure the `schema` function by importing and calling `jetSchema()`. 
 <br/>
 
 `jetSchema()` accepts an optional settings object with 3 three options:
-  - `globals`: An array specifying which default values and transform-functions should be used for which validator-function: you should use this option for frequently used validator-function/default/transform combinations where you don't want to set a default value or transform-function every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will occur when the schema is initialized. If you don't set a default value for a validator-function in `jetSchema()`, you can also do so when setting up the schema (the next 3 snippets below contain examples). The format for a global-array item is:
+  - `globals`: An array of **validator-objects**, which set certain default settings for specific validator-functions. You should use this option for frequently used validator-function/default/transform combinations where you don't want to set a default value or transform-function every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will occur when the schema is initialized. If you don't set a default value for a validator-function in `jetSchema()`, you can also do so when setting up an individual schema (the next 3 snippets below contain examples). The format for a **validator-object** is:
   ```typescript
   {
-    fn: // a validator-function
-    default?: // the value to use for the validator-function
-    transform?: // modify the value before calling the validator-function
+    fn: <T>(arg: unknown) => arg is T; // a validator-function
+    default?: T; // the value to use for the validator-function
+    transform?: (arg: unknown) => T; // modify the value before calling the validator-function
+    onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
   }
   ```
   - `cloneFn`: A custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
-  - `onError`: If a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. This feature is really useful for testing when you may want to return an error string instead of throw an error.
+  - `onError`: A global error handler. By default, if a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. This feature is really useful for testing when you may want to return an error string instead of throw an error.
     - Format: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`. 
 
-> When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function (I never really set transform-functions at the global level but that is up to you). If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
+> When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any globals and a custom clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
 
 ```typescript
 // "util/validators.ts"
@@ -121,8 +124,8 @@ export default jetLogger({
     { fn: isNum, default: 0 },
     { fn: isStr, default: '' },
   ],
-  cloneFn: // pass a custom clone-function here
-  onError: // pass a custom error-handler here,
+  cloneFn: () => ... // pass a custom clone-function here if you want
+  onError: () => ... // pass a custom error-handler here if you want,
 });
 ```
 
