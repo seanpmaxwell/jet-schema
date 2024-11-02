@@ -72,7 +72,7 @@ const customPost: IPost = {
   level: Post.Level.high,
 };
 
-console.log(customPost.imageNullish?.foo);
+console.log('foo', customPost.imageNullish?.foo);
 
 const other = schema({
   fileName: isString,
@@ -84,7 +84,7 @@ type Tother = inferType<typeof other>;
 
 const val: Tother = { fileName: '', data: '' };
 if (other.test(val)) {
-  console.log(val?.data);
+  console.log('Tother', val?.data);
 }
 
 
