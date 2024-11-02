@@ -327,10 +327,10 @@ When calling the `jetSchema` function for this first time, at the very least, I 
 import { isNum, isStr, isBool } from 'util/validators.ts';
 
 export default jetLogger({
-  defaultValuesMap: [
-    [isNum, 0],
-    [isStr, ''],
-    [isBool, false],
+  globals: [
+    { fn: isNum, default: 0 },
+    { fn: isStr, default: '' },
+    { fn: isBool, default: false },
   ],
 });
 ```
