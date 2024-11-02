@@ -13,7 +13,7 @@
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
-- [miscellaneous Notes](#misc-notes)
+- [Miscellaneous Notes](#misc-notes)
   - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Defaults](#recommended-defaults)
 <br/>
