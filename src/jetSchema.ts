@@ -26,6 +26,9 @@ const Errors = {
   Null: 'schema.test failed: value was null but not nullable.',
   NotAnObj: 'schema.test failed: value was neither undefined nor null but not an object.',
   ParseNotAnObj: 'schema.parse failed: value must be an object.',
+  NewFn: 'Failed in the "new" function',
+  TestFn: 'Failed in the "test" function',
+  ParseFn: 'Failed in the "parse" function',
 } as const;
 
 
@@ -51,10 +54,15 @@ type TModel = Record<string | number | symbol, unknown>;
 type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
 type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
 
-type TGlobalsMap = Map<TValidatorFn<unknown>, Pick<IValidatorObj<unknown>, 'default' | 'transform'>>;
-type TDefaultsAndVldtrs = Record<string, { fn: TValidatorFn<unknown>, default: TFunc }>;
+type TGlobalsMap = Map<TValidatorFn<unknown>, Pick<IValidatorObj<unknown>, 'default' | 'transform' | 'onError'>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
 type TOnError = (property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;
+
+type TAllVldtrsObj = Record<string, {
+  fn: TValidatorFn<unknown>,
+  default: TFunc,
+  onError?: IValidatorObj<unknown>['onError'],
+}>;
 
 interface IFullOptions {
   optional?: boolean;
@@ -117,6 +125,7 @@ type TGlobalsArr<M> = {
   } & ('fn' extends keyof M[K] ? {
     default?: GetTypePredicate<M[K]['fn']>,
     transform?: TFunc,
+    onError?: IValidatorObj<unknown>['onError'],
   } : never)
 };
 
@@ -240,10 +249,10 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
       onErrorF('', '', Errors.Init);
     }
     // Setup main functions
-    const ret = _setupDefaultsAndVldtrs(schemaFnObjArg, cloneFn, globalsMap, onErrorF),
-      newFn = _setupNewFn(ret.defaultsAndVldtrs, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.defaultsAndVldtrs, optionsF.optional!, optionsF.nullable!, onErrorF),
-      parseFn = _setupParseFn(ret.defaultsAndVldtrs, cloneFn, onErrorF);
+    const ret = _setupAllVldtrsHolder(schemaFnObjArg, cloneFn, globalsMap, onErrorF, optionsF.id),
+      newFn = _setupNewFn(ret.allVldtrsHolder, cloneFn, onErrorF),
+      testFn = _setupTestFn(ret.allVldtrsHolder, optionsF.optional!, optionsF.nullable!, onErrorF),
+      parseFn = _setupParseFn(ret.allVldtrsHolder, cloneFn, onErrorF);
     // Return
     return {
       new: newFn,
@@ -253,8 +262,8 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
           key = p as string;
         if (!!prop) {
           return {
-            default: ret.defaultsAndVldtrs[key].default,
-            test: ret.defaultsAndVldtrs[key].fn,
+            default: ret.allVldtrsHolder[key].default,
+            test: ret.allVldtrsHolder[key].fn,
             ...(_isSchemaObj(prop) ? {
               pick: prop.pick,
               new: ret.childSchemaNewFns[key],
@@ -272,26 +281,27 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
 /**
  * Setup the new() function
  */
-function _setupDefaultsAndVldtrs<T>(
+function _setupAllVldtrsHolder<T>(
   schemaArgObj: TSchemaFnObjArg<T>,
   cloneFn: typeof _defaultClone,
   globalsMap: TGlobalsMap,
   onError: TOnError,
+  schemaId = '',
 ): {
   childSchemaNewFns: Record<string, TFunc>,
-  defaultsAndVldtrs: TDefaultsAndVldtrs,
+  allVldtrsHolder: TAllVldtrsObj,
 } {
-  const defaultsAndVldtrs: TDefaultsAndVldtrs = {},
+  const allVldtrsHolder: TAllVldtrsObj = {},
     childSchemaNewFns: Record<string, TFunc> = {};
   for (const key in schemaArgObj) {
     const schemaArgProp = schemaArgObj[key];
-    defaultsAndVldtrs[key] = {
+    allVldtrsHolder[key] = {
       fn: (arg: unknown): arg is boolean  => false,
       default: () => false,
     };
     // Is validator function or object
     if (schemaArgProp === Date) {
-      defaultsAndVldtrs[key] = {
+      allVldtrsHolder[key] = {
         fn: transform((arg: Date) => new Date(arg), isDate),
         default: () => new Date(),
       };
@@ -317,6 +327,13 @@ function _setupDefaultsAndVldtrs<T>(
           vdlrFn = transform(localObj.transform, vdlrFn);
           hasLocalTransform = true;
         }
+        if (!!localObj.onError) {
+          let customErr = localObj.onError;
+          if (!!schemaId) {
+            customErr = _wrapErrorWithSchemaId(customErr, schemaId);
+          }
+          allVldtrsHolder[key].onError = customErr;
+        }
       } else {
         vdlrFn = schemaArgProp as TValidatorFn<unknown>;
       }
@@ -329,49 +346,60 @@ function _setupDefaultsAndVldtrs<T>(
         if (!hasLocalTransform && globalsObj.transform) {
           vdlrFn = transform(globalsObj.transform, vdlrFn);
         }
+        if (!!globalsObj.onError) {
+          let customErr = globalsObj.onError;
+          if (!!schemaId) {
+            customErr = _wrapErrorWithSchemaId(customErr, schemaId);
+          }
+          allVldtrsHolder[key].onError = customErr;
+        }
       }
       // Set the default
       if (!isUndef(defaultVal)) {
         const defaultF = cloneFn(defaultVal);
-        defaultsAndVldtrs[key].default = () => defaultF;
+        allVldtrsHolder[key].default = () => defaultF;
       } else {
-        defaultsAndVldtrs[key].default = () => undefined;
+        allVldtrsHolder[key].default = () => undefined;
       }
       // Set the validator function
-      defaultsAndVldtrs[key].fn = vdlrFn;
+      allVldtrsHolder[key].fn = vdlrFn;
     // Nest schema
     } else if (_isSchemaObj(schemaArgProp)) {
       const childSchema = schemaArgProp,
         dflt = childSchema._schemaOptions.init;
       if (dflt === true) {
-        defaultsAndVldtrs[key].default = () => childSchema.new();
+        allVldtrsHolder[key].default = () => childSchema.new();
       } else if (dflt === null) {
-        defaultsAndVldtrs[key].default = () => null;
+        allVldtrsHolder[key].default = () => null;
       } else {
-        defaultsAndVldtrs[key].default = () => undefined;
+        allVldtrsHolder[key].default = () => undefined;
       }
       childSchemaNewFns[key] = () => childSchema.new();
-      defaultsAndVldtrs[key].fn = childSchema.test;
+      allVldtrsHolder[key].fn = childSchema.test;
     // Enum
     } else if (isEnum(schemaArgProp)) {
       const [ dflt, vldr ] = processEnum(schemaArgProp);
-      defaultsAndVldtrs[key].default = () => cloneFn(dflt);
-      defaultsAndVldtrs[key].fn = vldr as TValidatorFn<unknown>;
+      allVldtrsHolder[key].default = () => cloneFn(dflt);
+      allVldtrsHolder[key].fn = vldr as TValidatorFn<unknown>;
     // Error
     } else {
       onError(key, '', Errors.Validator);
     }
     // Make sure the default is a valid value
-    const vldr = defaultsAndVldtrs[key].fn,
-      dfltVal: unknown = defaultsAndVldtrs[key].default();
+    const vldr = allVldtrsHolder[key].fn,
+      dfltVal: unknown = allVldtrsHolder[key].default();
     if (!vldr(dfltVal)) {
-      onError(key, dfltVal, Errors.Default);
+      if (!!allVldtrsHolder[key].onError) {
+        allVldtrsHolder[key].onError(key, dfltVal, Errors.Default);
+      } else {
+        onError(key, dfltVal, Errors.Default);
+      }
     }
   }
   // Return
   return {
     childSchemaNewFns,
-    defaultsAndVldtrs,
+    allVldtrsHolder,
   };
 }
 
@@ -393,30 +421,34 @@ function _isValidatorObj(arg: unknown): arg is IValidatorObj<unknown> {
  * Setup the new() function
  */
 function _setupNewFn(
-  defaultsAndVldtrs: TDefaultsAndVldtrs,
+  allVldtrsHolder: TAllVldtrsObj,
   cloneFn: TFunc,
   onError: TOnError,
 ): (partial?: Partial<TModel>) => TModel {
   return (partial: Partial<TModel> = {}) => {
     // Get default values
     const retVal: TModel = {};
-    for (const key in defaultsAndVldtrs) {
-      const val: unknown = defaultsAndVldtrs[key].default();
+    for (const key in allVldtrsHolder) {
+      const val: unknown = allVldtrsHolder[key].default();
       if (val !== undefined) {
         retVal[key] = val;
       }
     }
     // Get values from partial
     for (const key in partial) {
-      if (!defaultsAndVldtrs[key]) { // purge extras
+      if (!allVldtrsHolder[key]) { // purge extras
         continue;
       }
-      const testFn = defaultsAndVldtrs[key].fn;
+      const testFn = allVldtrsHolder[key].fn;
       let val = partial[key];
       if (testFn(val, ((transVal) => val = transVal))) {
         retVal[key] = cloneFn(val);
       } else {
-        onError(key, val);
+        if (!!allVldtrsHolder[key].onError) {
+          allVldtrsHolder[key].onError(key, val, Errors.NewFn);
+        } else {
+          onError(key, val, Errors.NewFn);
+        }
         retVal[key] = '**ERROR**';
       }
     }
@@ -429,7 +461,7 @@ function _setupNewFn(
  * Setup the test() function
  */
 function _setupTestFn(
-  defaultsAndVldtrs: TDefaultsAndVldtrs,
+  allVldtrsHolder: TAllVldtrsObj,
   isOptional: boolean,
   isNullable: boolean,
   onError: TOnError,
@@ -457,11 +489,15 @@ function _setupTestFn(
       return false;
     }
     // Run validators
-    for (const key in defaultsAndVldtrs) {
-      const testFn = defaultsAndVldtrs[key].fn;
+    for (const key in allVldtrsHolder) {
+      const testFn = allVldtrsHolder[key].fn;
       let val = (arg as TModel)[key];
       if (!testFn(val, ((transVal) => val = transVal))) {
-        onError(key, val);
+        if (!!allVldtrsHolder[key].onError) {
+          allVldtrsHolder[key].onError(key, val, Errors.TestFn);
+        } else {
+          onError(key, val, Errors.TestFn);
+        }
         return false;
       }
       if (key in arg) {
@@ -477,7 +513,7 @@ function _setupTestFn(
  * Setup the new() function
  */
 function _setupParseFn(
-  defaultsAndVldtrs: TDefaultsAndVldtrs,
+  allVldtrsHolder: TAllVldtrsObj,
   cloneFn: TFunc,
   onError: TOnError,
 ): (arg: unknown) => TModel {
@@ -489,11 +525,15 @@ function _setupParseFn(
       return retVal;
     }
     // Run validators, looping validators will purse extras
-    for (const key in defaultsAndVldtrs) {
-      const testFn = defaultsAndVldtrs[key].fn;
+    for (const key in allVldtrsHolder) {
+      const testFn = allVldtrsHolder[key].fn;
       let val = (arg as TModel)[key];
       if (!testFn(val, ((transVal) => val = transVal))) {
-        onError(key, val);
+        if (!!allVldtrsHolder[key].onError) {
+          allVldtrsHolder[key].onError(key, val, Errors.ParseFn);
+        } else {
+          onError(key, val, Errors.ParseFn);
+        }
         retVal[key] = '**ERROR**';
       }
       if (key in arg) {

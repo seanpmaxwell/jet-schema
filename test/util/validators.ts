@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 // **** Functions **** //
 
 /**
@@ -47,6 +48,13 @@ export function isOptionalString(param: unknown): param is string | undefined {
  */
 export function isBoolean(param: unknown): param is boolean {
   return typeof param === 'boolean';
+}
+
+/**
+ * Is a valid boolean
+ */
+export function isOptionalBoolean(param: unknown): param is boolean | undefined {
+  return typeof param === 'boolean' || param === undefined;
 }
 
 /**

@@ -109,3 +109,15 @@ const FullSchema = schema<{ idddd: number, name: string, foo: boolean }>({
 }, { id: 'FullSchema' });
 
 console.log(FullSchema.new({ foo: 'horse' as unknown as boolean}));
+
+
+// **** Test Global Overrides ***** //
+
+User.new({ pastIds: '[1, 2, 3]' as unknown as number[] }); // should not print error
+User.new({ pastIds: '[1, 2, "horse"]' as unknown as number[] }); // should print error
+
+
+// **** Test Local Overrides ***** //
+
+User.new({ single: undefined }); // should not print error
+User.new({ single: 'true' as unknown as boolean }); // should print error

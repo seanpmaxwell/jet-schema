@@ -14,6 +14,12 @@ export interface IValidatorObj<T> {
   fn: TValidatorFn<T>,
   default?: T,
   transform?: TFunc,
+  onError?: (
+    property: string,
+    value?: unknown,
+    moreDetails?: string,
+    schemaId?: string,
+  ) => void;
 }
 
 export type IValidatorFnOrObj<T> = TValidatorFn<T> | IValidatorObj<T>;

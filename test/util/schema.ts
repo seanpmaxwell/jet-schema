@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable n/no-process-env */
 /* eslint-disable no-console */
@@ -54,7 +56,17 @@ export default jetLogger({
         } else {
           return arg;
         }
-      }},
+      },
+      onError: (property: string, value: unknown, moreDetails?: string, schemaId?: string) => {
+        const message = JSON.stringify({
+          message: `Property "${property}" must be a number[] or a string equivalent. `,
+          value: JSON.stringify(value),
+          ['more-details']: moreDetails || '--',
+          ['schema-id']: schemaId || '--',
+        });
+        console.error(message);
+      },
+    },
   ],
   cloneFn: customClone,
   onError: customError,

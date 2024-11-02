@@ -1,3 +1,6 @@
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable max-len */
 import schema from '../util/schema';
 
 import {
@@ -7,6 +10,7 @@ import {
   isString,
   isOptionalString,
   isNumberArray,
+  isOptionalBoolean,
 } from '../util/validators';
 
 
@@ -46,6 +50,7 @@ export interface IUser {
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
   pastIds: number[],
+  single?: boolean,
 }
 
 interface IAvatar {
@@ -129,6 +134,18 @@ const User = schema<IUser>({
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
   pastIds: isNumberArray,
+  single: {
+    fn: isOptionalBoolean,
+    onError: (_: string, value: unknown, moreDetails?: string, schemaId?: string) => {
+      const message = JSON.stringify({
+        message: 'Property "single" must be a boolean or undefined.',
+        value: JSON.stringify(value),
+        ['more-details']: moreDetails || '--',
+        ['schema-id']: schemaId || '--',
+      });
+      console.error(message);
+    },
+  },
 }, { id: 'User' });
 
 
