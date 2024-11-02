@@ -2,7 +2,14 @@
 /* eslint-disable no-console */
 
 import jetLogger from '../../src';
-import { isBoolean, isNumber, isRelationalKey, isString } from './validators';
+
+import {
+  isBoolean,
+  isNumber,
+  isNumberArray,
+  isRelationalKey,
+  isString,
+} from './validators';
 
 
 /**
@@ -32,11 +39,12 @@ const customError = (_: string, __: unknown, origMessage?: string) => {
 // **** Export default **** //
 
 export default jetLogger({
-  defaultValuesMap: [
-    [isBoolean, false],
-    [isNumber, 0],
-    [isString, ''],
-    [isRelationalKey, -1],
+  globals: [
+    { fn: isBoolean, default: false },
+    { fn: isNumber, default: 0 },
+    { fn: isString, default: '' },
+    { fn: isRelationalKey, default: -1 },
+    { fn: isNumberArray, default: [], transform: JSON.parse },
   ],
   cloneFn: customClone,
   onError: customError,

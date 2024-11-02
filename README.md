@@ -10,7 +10,6 @@
   - [Creating Custom Schemas](#creating-custom-schemas)
   - [Child schemas](#child-schemas)
   - [Making schemas optional/nullable](#making-schemas-opt-null)
-  - [Transforming values with "transform"](#transforming-values-with-transform)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
@@ -32,12 +31,11 @@ If you want a library that includes all kinds of special functions for validatin
 ### Reasons to use Jet-Schema 😎
 - Use your own validator-functions with schema-validation (this is why I wrote it).
 - TypeScript first!
-- Quick, terse, simple, easy-to-use (you can probably learn every feature in like 30 minutes).
+- Quick, terse, simple, easy-to-use (this library only exports 2 function and 2 types).
 - Much smaller and less complex than most schema-validation libraries.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new`, `test`, `parse` functions provided automatically on every new schema.
-- Provides a `transform` wrapper function to modify values before validating them.
-- Default values can be set globally on initial setup or with the `setDefault` wrapper.
+- Setting defaults and transforming values can be set globally on initial setup or at the schema-level.
 - Works client-side or server-side.
 - Enums can be used for validation.
 - `Date` constructor can be used to automatically transform and validate any valid date value.
@@ -47,7 +45,6 @@ If you want a library that includes all kinds of special functions for validatin
 
 ## Quick Glance <a name="quick-glance"></a>
 ```typescript
-import { setDefault, transform } from 'jet-schema';
 import schema from 'utils/schema';
 import { isRelKey, isString, isNumber, isOptionalStr } from 'utils/validators';
 
@@ -67,8 +64,8 @@ interface IUser {
 const User = schema<IUser>({
   id: isRelKey,
   name: isString,
-  email: setDefault(isEmail, 'x@x.com'),
-  age: transform(Number, isNumber),
+  email: { fn: isEmail, default: 'x@x.com' },
+  age: { fn: isNumber, transform: Number },
   created: Date,
   address: schema<IUser['address']>({
     street: isString,
@@ -90,12 +87,19 @@ After installation, you need to configure the `schema` function by importing and
 <br/>
 
 `jetSchema()` accepts an optional settings object with 3 three options:
-  - `defaultValuesMap`: An `[["val", "function"]]`nested array specifying which default value should be used for which validator-function: you should use this option for frequently used validator-function/default-value combinations where you don't want to set a default value every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will be thrown when the schema is initialized. If you don't set a default value for a validator-function in `jetSchema()`, you can also call `setDefault` when setting up the schema (the next 3 snippets below contain examples).
+  - `globals`: An array specifying which default values and transform-functions should be used for which validator-function: you should use this option for frequently used validator-function/default/transform combinations where you don't want to set a default value or transform-function every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will occur when the schema is initialized. If you don't set a default value for a validator-function in `jetSchema()`, you can also do so when setting up the schema (the next 3 snippets below contain examples). The format for a global-array item is:
+  ```typescript
+  {
+    fn: // a validator-function
+    default?: // the value to use for the validator-function
+    transform?: // modify the value before calling the validator-function
+  }
+  ```
   - `cloneFn`: A custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
   - `onError`: If a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. This feature is really useful for testing when you may want to return an error string instead of throw an error.
     - Format: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`. 
 
-> When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
+> When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any frequently used validator-function/default-value combinations I have and a clone-function (I never really set transform-functions at the global level but that is up to you). If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
 
 ```typescript
 // "util/validators.ts"
@@ -113,9 +117,9 @@ import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
 
 export default jetLogger({
-  defaultValuesMap: [
-    [isNum, 0],
-    [isStr, ''],
+  globals: [
+    { fn: isNum, default: 0 },
+    { fn: isStr, default: '' },
   ],
   cloneFn: // pass a custom clone-function here
   onError: // pass a custom error-handler here,
@@ -124,7 +128,7 @@ export default jetLogger({
 
 ### Creating custom schemas <a name="creating-custom-schemas"></a>
 
-Now that we have our `schema` function setup, let's make a schema. Simply import the `schema` function from `util/schema.ts` and then your existing validator-functions and pass them as the value to each property in the `schema` function. If you want to set a default value at the schema level instead of at the global level in the `jetSchema` function, you can import the `setDefault` function from `jet-schema` and pass it the validator-function and the default value to go with it. Note that setting a default does not modify the validator function in any way. If a property is required then a default must be set for it (either globally or in `setDefault`) or else `new` won't know what to use as a value if the partial doesn't contain it.<br/>
+Now that we have our `schema` function setup, let's make a schema. Simply import the `schema` function from `util/schema.ts` and your existing validator-functions, then pass them as the value to each property in the `schema` function or use a validator-object. The format for a validator-object is the same as for a globals-array item. All local-settings will for a validator-function will overwrite the global ones. Remember that if a property is required then a default must be set for it or else `new` won't know what to use as a value if the partial doesn't contain it.<br/>
 
 For handling the overall schema's type, there are two ways to go about this, enforcing a schema from a type or infering a type from a schema. I'll show you an example of doing it both ways. 
 
@@ -132,7 +136,7 @@ For handling the overall schema's type, there are two ways to go about this, enf
 
 ```typescript
 // "models/User.ts"
-import { inferType, setDefault } from 'jet-schema';
+import { inferType } from 'jet-schema';
 import schema from 'util/schema.ts';
 import { isNum, isStr, isOptionalStr } from 'util/validators.ts';
 
@@ -146,7 +150,7 @@ interface IUser {
 const User = schema<IUser>({
   id: isNum,
   name: isStr,
-  email: setDefault(isEmail, ''),
+  email: { fn: isEmail, default: '' },
   nickName: isOptionalStr,
 })
 
@@ -154,7 +158,7 @@ const User = schema<IUser>({
 const User = schema({
   id: isNum,
   name: isStr,
-  email: setDefault(isEmail, ''),
+  email: { fn: isEmail, default: '' },
   nickName: isOptionalStr,
 })
 const TUser = inferType<typeof User>;
@@ -222,21 +226,6 @@ const User = schema<IUser>({
 })
 
 User.new() // => { id: 0, name: '' }
-```
-
-
-### Transforming values with `transform()` <a name="transforming-values-with-transform"></a>
-If you want to modify a value before it passes through a validator-function, you can import the `transform` function and wrap your validator function with it. `transform` accepts a transforming-function and a validator-function and returns a new validator-function (type-predicate is preserved) which will transform the value before testing it. When calling `new`, `test`, or `parse`, `transform` will modify the original object.
-<br/>
-
-If you want to access the transformed value yourself for whatever reason, you can pass a callback as the second argument to the returned validator-function and `transform` will supply the modified value to it. I've found `transform` can be useful for other parts of my application where I need to modify a value before validating it and then access the transformed value.
-```typescript
-import { transform } from 'jet-schema';
-
-const modifyAndTest = transform(JSON.parse, isNumberArray);
-let val = '[1,2,3,5]';
-console.log(modifyAndTest(val, transVal => val = transVal)); // => true
-console.log(val); // => [1,2,3,5] this is number array not a string
 ```
 
 
