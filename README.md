@@ -8,6 +8,7 @@
 - [Guide](#guide)
   - [Getting Started](#getting-started)
   - [Creating Custom Schemas](#creating-custom-schemas)
+  - [Child schemas](#child-schemas)
   - [Making schemas optional/nullable](#making-schemas-opt-null)
   - [Transforming values with "transform"](#transforming-values-with-transform)
   - [Combining Schemas](#combining-schemas)
@@ -165,8 +166,21 @@ Once you have your custom schema setup, you can call the `new`, `test`, `pick`, 
 - `pick` allows you to select any property and returns an object with the `test` and `default` functions.
 - `parse` is like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. If you have an incoming unknown value (i.e. an api call) and you want to validate the properties and return a new instance while removing any possible extra ones, use `parse`. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
 
-> **IMPORTANT:** If an object property is a mapped-type, then it must be initialized with the `schema` function. Just like with the parent schemas, you can also call `new`, `test`, `pick`, `parse` in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
+### Child (aka nested) schemas <a name="child-schemas"></a>
+- If an object property is a mapped-type, then it must be initialized with the `schema` function.
+- Just like with the parent schemas, you can also call `new`, `test`, `pick`, `parse` in addition to `default`. The value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
+- There is one extra function `schema()` that you can call when using `pick` on a child-schema. This can be handy if you need to export a child-schema from one parent-schema to another:
+```typescript
+interface IUserAlt {
+  id: number;
+  address: IUser['address'];
+}
 
+const UserAlt = schema<IUserAlt>({
+  id: isNumber,
+  address: User.pick('address').schema(),
+});
+```
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
 In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must use the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.
@@ -263,7 +277,7 @@ const User = schema<IUser>({
 })
 ```
 
-**Child (aka nested) schemas**<br/>
+**Child schemas**<br/>
 As mentioned, if a property in a parent is mapped-object type (it as a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added.
 ```typescript
 interface IUser {

@@ -1,6 +1,9 @@
 /* eslint-disable max-len */
 import { expect, test } from 'vitest';
+
+import schema from './util/schema';
 import User, { IUser } from './models/User';
+import { isNum, isStr } from '../src/util';
 
 
 /**
@@ -137,4 +140,26 @@ test('test User pick() function', () => {
   expect(User.pick('adminStatus').test('asdf')).toStrictEqual(false);
   expect(User.pick('adminStatusAlt').default()).toStrictEqual(User.AdminStatusAlt.Basic);
   expect(User.pick('adminStatusAlt').test(100)).toStrictEqual(false);
+});
+
+
+test('test User.pick("child schema").schema() function', () => {
+
+
+  interface IUserAlt {
+    id: number;
+    name: string;
+    avatar?: IUser['avatar'];
+  }
+
+  const UserAlt = schema<IUserAlt>({
+    id: isNum,
+    name: isStr,
+    avatar: User.pick('avatar').schema(),
+  });
+
+  expect(UserAlt.pick('avatar').default()).toStrictEqual({
+    fileName: '',
+    data: 'base64:str;',
+  });
 });

@@ -79,6 +79,7 @@ type TPickRetVal<T, NnT = NonNullable<T>> = {
 } & (IsStaticObj<T> extends true ? {
   pick: <K extends keyof NnT>(prop: K) => TPickRetVal<NnT[K]>;
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
+  schema: () => ISchema<T>;
 } : unknown);
 
 // Value returned by the "schema" function
@@ -252,6 +253,7 @@ function jetSchema<M extends TDefaultValsMap<M>>(options?: IJetOptions<M>) {
             ...(_isSchemaObj(prop) ? {
               pick: prop.pick,
               new: ret.childSchemaNewFns[p],
+              schema: () => ({ ...prop }),
             } : {}),
           };
         }
@@ -284,7 +286,7 @@ function _setupDefaultsAndValidators<T>(
     if (schemaArgProp === Date) {
       defaults[key] = () => new Date();
       validators[key] = isDate;
-    // Is nexted schema
+    // Is nested schema
     } else if (_isSchemaObj(schemaArgProp)) {
       const childSchema = schemaArgProp,
         dflt = childSchema._schemaOptions.init;
