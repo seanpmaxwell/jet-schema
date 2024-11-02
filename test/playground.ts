@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable no-console */
 
-import { inferType, setDefault, TJetSchema, transform } from '../src';
+import { inferType, TJetSchema } from '../src';
 
 import User from './models/User';
 import Post, { IPost } from './models/Post';
@@ -9,7 +9,6 @@ import schema from './util/schema';
 
 import {
   isBoolean,
-  isNumberArray,
   nonNullable,
   isString,
   isOptionalString,
@@ -40,10 +39,6 @@ const avatar = User.pick('avatar').new();
 const testAvatar = nonNullable(User.pick('avatar').test);
 console.log(testAvatar('asdf'));
 console.log(testAvatar(avatar));
-
-// Test trans function
-const customTest = transform(JSON.parse, isNumberArray);
-console.log(customTest('[1,2,3,5]', transVal => console.log(transVal)));
 
 const blah: unknown = 'asdf';
 if (User.pick('avatar').test(blah)) {
@@ -77,19 +72,19 @@ const customPost: IPost = {
   level: Post.Level.high,
 };
 
-console.log(customPost.imageNullish?.foo);
+console.log('foo', customPost.imageNullish?.foo);
 
 const other = schema({
   fileName: isString,
   data: isString,
-  foo: setDefault(isOptionalString, ''),
+  foo: { fn: isOptionalString, default: '' },
 }, { nullish: true, init: true });
 
 type Tother = inferType<typeof other>;
 
 const val: Tother = { fileName: '', data: '' };
 if (other.test(val)) {
-  console.log(val?.data);
+  console.log('Tother', val?.data);
 }
 
 
