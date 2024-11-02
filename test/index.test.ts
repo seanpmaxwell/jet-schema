@@ -36,6 +36,7 @@ test('test User all default values', () => {
     avatar8: { fileName: '', data: '' },
     adminStatus: User.AdminStatus.Basic,
     adminStatusAlt: User.AdminStatusAlt.Basic,
+    pastIds: [],
   };
 
   expect(user).toStrictEqual(expectedResult);
@@ -70,6 +71,7 @@ test('test User override each default value', () => {
     adminStatus: User.AdminStatus.High,
     adminStatusAlt: User.AdminStatusAlt.Mid,
     avatar6: { fileName: 'nullish', data: '' },
+    pastIds: '[1,2,3]' as unknown as number[], // test global transform
   });
 
   const expectedResult: IUser = {
@@ -96,6 +98,7 @@ test('test User override each default value', () => {
     avatar6: { fileName: 'nullish', data: '' },
     avatar7: null,
     avatar8: { fileName: '', data: '' },
+    pastIds: [1,2,3],
   };
 
   const somethingElse: unknown = {

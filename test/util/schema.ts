@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable n/no-process-env */
 /* eslint-disable no-console */
 
@@ -44,7 +45,16 @@ export default jetLogger({
     { fn: isNumber, default: 0 },
     { fn: isString, default: '' },
     { fn: isRelationalKey, default: -1 },
-    { fn: isNumberArray, default: [], transform: JSON.parse },
+    {
+      fn: isNumberArray,
+      default: [],
+      transform: (arg: unknown) => {
+        if (isString(arg)) {
+          return JSON.parse(arg);
+        } else {
+          return arg;
+        }
+      }},
   ],
   cloneFn: customClone,
   onError: customError,

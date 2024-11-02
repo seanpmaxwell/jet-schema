@@ -6,6 +6,7 @@ import {
   isRelationalKey,
   isString,
   isOptionalString,
+  isNumberArray,
 } from '../util/validators';
 
 
@@ -44,6 +45,7 @@ export interface IUser {
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
+  pastIds: number[],
 }
 
 interface IAvatar {
@@ -126,6 +128,7 @@ const User = schema<IUser>({
   }, { nullish: true }),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
+  pastIds: isNumberArray,
 }, { id: 'User' });
 
 
