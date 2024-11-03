@@ -23,13 +23,15 @@
 Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I already have a lot of my own custom validation functions specific for each of my applications that I also like to copy-n-paste a lot and modify as needed (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties? Well **jet-schema** does just that :)
 <br/>
 
-If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different than the one your application needs. Instead of of having to dig into the library's features to run validations specific to your needs, with **jet-schema** you can just pass your method.
+> I know some libraries like `zod` have functions such as `.refine()` which allow you to integrate custom validation logic. But this isn't quite the same because you could still chain additional validation logic onto `.refine` and you still have to look through the documentation to see how to do it. I wanted a library that allowed me to just slap in validator-functions that were not tied to any specific schema-validation library.
+
+If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different than the one your application needs. Instead of of having to dig into the library's features to run application specific logic, with **jet-schema** you can just drop in your method.
 <br/>
 
-> If you're open to `jet-schema` but think writing your own validator functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
+> If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
 
 ### Reasons to use Jet-Schema 😎
-- Use your own validator-functions with schema-validation (this is why I wrote it).
+- Focused on using your own validator-functions to validate object properties (this is why I wrote it).
 - TypeScript first!
 - Quick, terse, simple, easy-to-use (this library only exports 2 functions and 2 types).
 - Much smaller and less complex than most schema-validation libraries.
@@ -89,7 +91,7 @@ After installation, you need to configure the `schema` function by importing and
 <br/>
 
 `jetSchema()` accepts an optional settings object with 3 three properties:
-  - `globals?`: An array of **validator-objects**, which set certain default settings for specific validator-functions. You should use this option for frequently used validator-function/default/transform combinations where you don't want to set a default value or transform-function every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will occur when the schema is initialized. If you don't set a default value for a validator-function in `jetSchema()`, you can also do so when setting up an individual schema (the next 3 snippets below contain examples).<br/>
+  - `globals`: An array of **validator-objects**, which set certain default settings for specific validator-functions. You should use this option for frequently used validator-function/default/transform combinations where you don't want to set a default value or transform-function every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will occur when the schema is initialized. If you don't set a default value for a validator-function in `jetSchema()`, you can also do so when setting up an individual schema (the next 3 snippets below contain examples).<br/>
   
   The format for a **validator-object** is:
   ```typescript
@@ -100,15 +102,14 @@ After installation, you need to configure the `schema` function by importing and
     onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
   }
   ```
-  - `cloneFn?`: A custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
-  - `onError?`: A global error handler. By default, if a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. This feature is really useful for testing when you may want to return an error string instead of throw an error.
-    - Format: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`. 
+  - `cloneFn`: A custom clone-function if you don't want to use the built-in function which uses `structuredClone` (I like to use `lodash.cloneDeep`).
+  - `onError`: A global error handler. By default, if a validator-function fails then an error is thrown. You can override this behavior by passing a custom error handling function as the third argument. This feature is really useful for testing when you may want to return an error string instead of throw an error. Format, `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`. 
 
 When setting up **jet-schema** for the first time, usually what I do is create two files under my `util/` folder: `schema.ts` and `validators.ts`. In `schema.ts` I'll import and call the `jet-schema` function then apply any globals and a custom clone-function. If you don't want to go through this step, you can import the `schema` function directly from `jet-schema`.
 
 ```typescript
 // "util/validators.ts"
-// As mentioned in the intro, you can copy some predefined validators from here (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts)
+// As mentioned in the intro, you can copy some predefined validators from here (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts). These are just some examples.
 export const isStr = (arg: unknown): arg is string => typeof param === 'string';
 export const isOptStr = (arg: unknown): arg is string => arg === undefined || typeof param === 'string';
 export const isNum = (arg: unknown): arg is string => typeof param === 'number';
