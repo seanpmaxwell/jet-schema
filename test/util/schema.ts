@@ -43,12 +43,12 @@ const customError = (_: string, __: unknown, origMessage?: string) => {
 
 export default jetLogger({
   globals: [
-    { fn: isBoolean, default: false },
-    { fn: isNumber, default: 0 },
-    { fn: isString, default: '' },
-    { fn: isRelationalKey, default: -1 },
+    { vf: isBoolean, default: false },
+    { vf: isNumber, default: 0 },
+    { vf: isString, default: '' },
+    { vf: isRelationalKey, default: -1 },
     {
-      fn: isNumberArray,
+      vf: isNumberArray,
       default: [],
       transform: (arg: unknown) => {
         if (isString(arg)) {

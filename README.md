@@ -25,13 +25,13 @@ Most schema validation libraries have fancy functions for validating objects and
 
 > I know some libraries like `zod` have functions such as `.refine()` which allow you to integrate custom validation logic. But this isn't quite the same because you could still chain additional validation logic onto `.refine` and you still have to look through the documentation to see how to do it. I wanted a library that allowed me to just slap in validator-functions that were not tied to any specific schema-validation library.
 
-If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe the email format that's built into the library is different than the one your application needs. Instead of of having to dig into the library's features to run application specific logic, with **jet-schema** you can just drop in your method.
+If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe you use another datetime handling library other than JavasScript's `Date` object (i.e. `DayJs`). Instead of of having to dig into the library's features to accept `dayjs` objects as valid-objects, with **jet-schema** you can just drop in `dayjs.isValid`.
 <br/>
 
 > If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
 
 ### Reasons to use Jet-Schema 😎
-- Focused on using your own validator-functions to validate object properties (this is why I wrote it).
+- Focus is on using your own validator-functions to validate object properties (this is why I wrote it).
 - TypeScript first!
 - Quick, terse, simple, easy-to-use (this library only exports 2 functions and 2 types).
 - Much smaller and less complex than most schema-validation libraries.
@@ -64,10 +64,10 @@ interface IUser {
 }
 
 const User = schema<IUser>({
-  id: isRelKey,
+  id: isNumber,
   name: isString,
-  email: { fn: isEmail, default: 'x@x.com' },
-  age: { fn: isNumber, transform: Number },
+  email: { vf: isEmail, default: 'x@x.com' },
+  age: { vf: isNumber, transform: Number },
   created: Date,
   address: schema<IUser['address']>({
     street: isString,
@@ -83,20 +83,20 @@ const User = schema<IUser>({
 
 ### Getting Started <a name="getting-started"></a>
 
-Note that at the heart of `jet-schema` are **validator-functions**. Since functions are objects in javascript, and objects are pass by reference, `jet-schema` will map certain settings to validator-functions by using the functions themselves as a reference. This is what enables you to pass your existing validator-functions to your schema without have to deal with the library's features everytime.
+Note that at the heart of `jet-schema` are **validator-functions**. Since functions are objects in javascript, and objects are pass by reference, `jet-schema` will map certain settings to validator-functions by using the functions themselves as a reference. This is what enables you to pass your existing validator-functions to your schema without have to deal with the library's features for every object-property.
 
 > npm install -s jet-schema
 
 After installation, you need to configure the `schema` function by importing and calling `jetSchema()`. 
 <br/>
 
-`jetSchema()` accepts an optional settings object with 3 three properties:
+`jetSchema()` accepts an optional settings object with 3 three optional properties:
   - `globals`: An array of **validator-objects**, which set certain default settings for specific validator-functions. You should use this option for frequently used validator-function/default/transform combinations where you don't want to set a default value or transform-function every time. Upon initialization, the validator-functions will check their defaults. If a value is not optional and you do not supply a default value, then an error will occur when the schema is initialized. If you don't set a default value for a validator-function in `jetSchema()`, you can also do so when setting up an individual schema (the next 3 snippets below contain examples).<br/>
   
   The format for a **validator-object** is:
   ```typescript
   {
-    fn: <T>(arg: unknown) => arg is T; // a validator-function
+    vf: <T>(arg: unknown) => arg is T; // a vf => "validator function"
     default?: T; // the value to use for the validator-function
     transform?: (arg: unknown) => T; // modify the value before calling the validator-function
     onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
@@ -124,8 +124,8 @@ import { isNum, isStr } from './validators';
 
 export default jetLogger({
   globals: [
-    { fn: isNum, default: 0 },
-    { fn: isStr, default: '' },
+    { vf: isNum, default: 0 },
+    { vf: isStr, default: '' },
   ],
   cloneFn: () => ... // pass a custom clone-function here if you want
   onError: () => ... // pass a custom error-handler here if you want,
@@ -156,7 +156,7 @@ interface IUser {
 const User = schema<IUser>({
   id: isNum,
   name: isStr,
-  email: { fn: isEmail, default: '' },
+  email: { vf: isEmail, default: '' },
   nickName: isOptionalStr,
 })
 
@@ -164,7 +164,7 @@ const User = schema<IUser>({
 const User = schema({
   id: isNum,
   name: isStr,
-  email: { fn: isEmail, default: '' },
+  email: { vf: isEmail, default: '' },
   nickName: isOptionalStr,
 })
 const TUser = inferType<typeof User>;
@@ -351,9 +351,9 @@ import { isNum, isStr, isBool } from 'util/validators.ts';
 
 export default jetLogger({
   globals: [
-    { fn: isNum, default: 0 },
-    { fn: isStr, default: '' },
-    { fn: isBool, default: false },
+    { vf: isNum, default: 0 },
+    { vf: isStr, default: '' },
+    { vf: isBool, default: false },
   ],
 });
 ```

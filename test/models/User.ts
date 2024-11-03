@@ -76,14 +76,14 @@ interface IAddress {
 const User = schema<IUser>({
   id: isRelationalKey,
   name: isString,
-  email: { fn: isEmail, default: '' },
-  age: { fn: isNumber, transform: Number, default: 0 },
+  email: { vf: isEmail, default: '' },
+  age: { vf: isNumber, transform: Number, default: 0 },
   created: Date,
   lastLogin: Date,
   phone: isOptionalString,
   avatar: schema({
     fileName: isString,
-    data: { fn: isString, default: 'base64:str;' },
+    data: { vf: isString, default: 'base64:str;' },
     url: isOptionalString,
   }, { optional: true, nullable: true }),
   address: schema({
@@ -97,33 +97,33 @@ const User = schema<IUser>({
   }),
   avatar2: schema({
     fileName: isString,
-    data: { fn: isString, default: 'base64:str;' },
+    data: { vf: isString, default: 'base64:str;' },
     url: isOptionalString,
   }, { nullable: true }),
   avatar3: schema({
     fileName: isString,
-    data: { fn: isString, default: 'base64:str;' },
+    data: { vf: isString, default: 'base64:str;' },
     url: isOptionalString,
   }, { optional: true, nullable: true, init: false }),
   avatar4: schema({
     fileName: isString,
-    data: { fn: isString, default: 'base64:str;' },
+    data: { vf: isString, default: 'base64:str;' },
     url: isOptionalString,
   }, { optional: true, nullable: true, init: null }),
   avatar5: schema({
     fileName: isString,
-    data: { fn: isString, default: 'base64:str;' },
+    data: { vf: isString, default: 'base64:str;' },
     url: isOptionalString,
   }, { optional: true, init: false }),
   avatar6: schema({
     fileName: isString,
-    data: { fn: isString, default: 'base64:str;' },
+    data: { vf: isString, default: 'base64:str;' },
     url: isOptionalString,
   }, { nullish: true, init: false }),
   avatar7: schema({
     fileName: isString,
     data: isString,
-    url: { fn: isOptionalString, default: 'base64:str;' },
+    url: { vf: isOptionalString, default: 'base64:str;' },
   }, { nullish: true, init: null }),
   avatar8: schema({
     fileName: isString,
@@ -135,7 +135,7 @@ const User = schema<IUser>({
   adminStatusAlt: AdminStatusAlt,
   pastIds: isNumberArray,
   single: {
-    fn: isOptionalBoolean,
+    vf: isOptionalBoolean,
     onError: (_: string, value: unknown, moreDetails?: string, schemaId?: string) => {
       const message = JSON.stringify({
         message: 'Property "single" must be a boolean or undefined.',

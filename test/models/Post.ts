@@ -37,7 +37,7 @@ const Post = schema({
   }, { optional: true, nullable: true }),
   imageNull: schema({
     fileName: isString,
-    data: isString,
+    data: { vf: isString, default: '' },
   }, { optional: false, nullable: true }),
   imageReq: schema({
     fileName: isString,

@@ -11,7 +11,7 @@ export type TValidatorFn<T> = (
 ) => arg is T;
 
 export interface IValidatorObj<T> {
-  fn: TValidatorFn<T>,
+  vf: TValidatorFn<T>,
   default?: T,
   transform?: TFunc,
   onError?: (

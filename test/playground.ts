@@ -77,7 +77,7 @@ console.log('foo', customPost.imageNullish?.foo);
 const other = schema({
   fileName: isString,
   data: isString,
-  foo: { fn: isOptionalString, default: '' },
+  foo: { vf: isOptionalString, default: '' },
 }, { nullish: true, init: true });
 
 type Tother = inferType<typeof other>;
