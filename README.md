@@ -7,7 +7,7 @@
 - [Quick Glance](#quick-glance)
 - [Guide](#guide)
   - [Installation](#installation)
-  - [Validator-functions](#validator-functions)
+  - [Validator functions](#validator-functions)
   - [Creating Schemas](#creating-schemas)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
