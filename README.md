@@ -183,8 +183,7 @@ const TUser = inferType<typeof User>;
 ```
 <br/>
 
-Once you have your custom schema setup, you can call the `new`, `test`, `pick`, and `parse` functions:
-> Note: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
+Once you have your custom schema setup, you can call the `new`, `test`, `pick`, and `parse` functions. NOTE the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
 
 #### .new
 Allows you to create new instances of your type using partials. If the property is absent, `new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
