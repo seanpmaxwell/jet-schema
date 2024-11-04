@@ -122,7 +122,7 @@ function isOptionalString(arg: unknown): param is string | undefined {
 
 ## Creating schemas <a name="creating-schemas"></a>
 
-Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call the function and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a> for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
+Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call the function and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
@@ -160,7 +160,7 @@ const TUser = inferType<typeof User>;
 ## Schema APIs <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
-> NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
+> NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`. See the <a href="#configuring-settings">Configuring Settings</a> section for how to set default values.
 
 ### `.new` <a name="new"></a>
 Allows you to create new instances of your type using partials. If the property is absent, `.new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
