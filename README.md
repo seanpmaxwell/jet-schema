@@ -104,8 +104,8 @@ User.parse('something') // => Error
 ## Guide <a name="guide"></a>
 
 ### Installation <a name="installation"></a>
-
-*****
+<div style="background-color:grey;height:1px;margin-bottom:8px;">
+</div>
 
 > npm install -s jet-schema
 
