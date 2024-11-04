@@ -103,16 +103,12 @@ User.parse('something') // => Error
 
 ## Guide <a name="guide"></a>
 
-### Installation <a name="installation"></a>
-<div style="background-color:grey;height:1px;margin-bottom:8px;">
-</div>
+### <h3 class="guide-section">Installation</h3> <a name="installation"></a>
 
 > npm install -s jet-schema
 
 
-### Validator-functions <a name="validator-functions"></a>
-
-*****
+### <h3 class="guide-section">Validator-functions</h3> <a name="validator-functions"></a>
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
@@ -124,9 +120,7 @@ function isOptionalString(arg: unknown): param is string | undefined {
 > I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy a bunch of validator-functions from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
 
 
-### Creating schemas <a name="creating-schemas"></a>
-
-*****
+### <h3 class="guide-section">Creating schemas</h3> <a name="creating-schemas"></a>
 
 Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a> for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
@@ -163,7 +157,7 @@ const TUser = inferType<typeof User>;
 ```
 
 
-### Schema APIs <a name="schema-apis"></a>
+### <h3 class="guide-section">Schema APIs</h3> <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
 > NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
@@ -220,7 +214,7 @@ User.parse({ id: '1', name: 'john' }); // => Error
 ```
 
 
-### Schema options <a name="schema-options"></a>
+### <h3 class="guide-section">Schema options</h3> <a name="schema-options"></a>
 In addition to a schema-object, the `schema` function accepts an additional **options** object parameter:
 ```typescript
 const User = schema<IUser>({
@@ -256,7 +250,7 @@ const User = schema<TUser>({
 ```
 
 
-### Configuring settings <a name="configuring-settings"></a>
+### <h3 class="guide-section">Configuring settings</h3> <a name="configuring-settings"></a>
 
 Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
 
@@ -312,7 +306,7 @@ const User = schema<IUser>({
 ```
 
 
-### Combining Schemas <a name="combining-schemas"></a>
+### <h3 class="guide-section">Combining Schemas</h3> <a name="combining-schemas"></a>
 If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup a partial schema, then merge it with your full schema later:
 ```typescript
 import schema, { TJetSchema } from 'jet-schema';
@@ -331,7 +325,7 @@ console.log(FullSchema.new());
 ```
 
 
-### TypeScript Caveats <a name="typescript-caveats"></a>
+### <h3 class="guide-section">TypeScript Caveats</h3> <a name="typescript-caveats"></a>
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
 **Validator functions:**<br/>
@@ -367,7 +361,7 @@ const User = schema<IUser>({
 > If you know of a way to enforce typesafety on child-object without requiring a generic please make a pull-request because I couldn't figure out a way.
 
 
-### Bonus Features <a name="bonus-features"></a>
+### <h3 class="guide-section">Bonus Features</h3> <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` sets the type to be a `Date` object and automatically converts all valid date values (i.e. `string/number`, maybe a `Date` object got stringified in an API call) to a `Date` object. The default value will be a `Date` object with the current datetime. 
 - You can also use an `enum` as a validator. The default value will be the first value in the enum object and validation will make sure it is value of that enum.
 <br>
@@ -426,3 +420,9 @@ I know some libraries like `zod` have functions such as `.refine` which allow yo
 
 If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe you use another datetime handling library other than JavasScript's `Date` object (i.e. `DayJs`). Instead of of having to dig into the library's features to accept `dayjs` objects as valid-objects, with **jet-schema** you can just drop in `dayjs.isValid`.
 <br/>
+
+<style>
+  .guide-section {
+    border-bottom: 1px solid grey;
+  }
+</style>
