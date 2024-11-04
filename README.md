@@ -101,16 +101,19 @@ console.log(User.parse('something')) // **ERROR**
 > npm install -s jet-schema
 
 Validator-functions can be passed directly or within a settings-object, so you can do more than just validate an object property. Validator-functions settings can be done at the **global-level**, so you don't have to configure them for every new schema or when a schema is initialized **local-level**.  
+
+A settings object, NOTE: validator-functions must return type-predicates:
 ```typescript
-// A settings object, NOTE: validator-functions must return type-predicates
 {
   vf: <T>(arg: unknown) => arg is T; // a "vf" => "validator function", 
   default?: T; // the default value for the validator-function
   transform?: (arg: unknown) => T; // modify the value before calling the validator-function
   onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
 }
+```
 
-// Settings object in use:
+Settings object in use:
+```typescript
 const User = schema<IUser>({
   id: {
     vf: (arg: unknown) => isNum(arg) && arg > -1,
@@ -148,7 +151,6 @@ Global settings explained:
   - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
   - `onError`: A global error handler, the default error-handler throws an error.
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`. 
-<br/>
 
 
 ### Creating schemas <a name="creating-schemas"></a>
