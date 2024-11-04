@@ -120,7 +120,7 @@ function isOptionalString(arg: unknown): param is string | undefined {
 > I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy a bunch of validator-functions from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
 
 
-### Creating schemas <a name="creating-schemas"></a>
+<ins>### Creating schemas <a name="creating-schemas"></a></ins>
 
 Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a> for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
