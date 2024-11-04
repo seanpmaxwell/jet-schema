@@ -7,7 +7,7 @@
 - [Quick Glance](#quick-glance)
 - [Guide](#guide)
   - [Installation](#installation)
-  - [Validator functions](#validator-functions)
+  - [Validator functions](#init-validator-functions)
   - [Creating Schemas](#creating-schemas)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
@@ -109,7 +109,7 @@ User.parse('something') // => Error
 > npm install -s jet-schema
 
 
-## Validator functions <a name="validator-functions"></a>
+## Validator functions <a name="init-validator-functions"></a>
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
