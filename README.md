@@ -102,7 +102,7 @@ console.log(User.parse('something')) // **ERROR**
 
 Validator-functions can be passed directly or within a settings-object, so you can do more than just validate an object property. Validator-functions settings can be done at the **global-level**, so you don't have to configure them for every new schema or when a schema is initialized **local-level**.  
 
-A settings object, NOTE: validator-functions must return type-predicates:
+A settings object (Note, validator-functions must return type-predicates):
 ```typescript
 {
   vf: <T>(arg: unknown) => arg is T; // a "vf" => "validator function", 
