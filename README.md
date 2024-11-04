@@ -157,7 +157,7 @@ Global settings explained:
 
 Using the function returned from `jetSchema` or the `schema` function from the library, call the function and pass an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object. For handling a schema's type, you can enforce a schema from a type or infering a type from a schema.
 
-Create schema using type:
+Create a schema using a type:
 ```typescript
 interface IUser {
   id: number;
@@ -172,7 +172,7 @@ const User = schema<IUser>({
 });
 ```
 
-Create type using schema:
+Create a type using a schema:
 ```typescript
 const User = schema({
   id: isNum,
