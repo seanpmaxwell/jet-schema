@@ -197,7 +197,7 @@ const User = schema<TUser>({
 }, /* Pass options here*/);
 ```
 
-Schema options explained:
+Schema **options** explained:
   - `optional`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
   - `nullable`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
   - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
