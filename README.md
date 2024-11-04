@@ -186,7 +186,7 @@ const TUser = inferType<typeof User>;
 Once you have your custom schema setup, you can call the `new`, `test`, `pick`, and `parse` functions:
 > Note: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
 
-#### new
+#### .new
 Allows you to create new instances of your type using partials. If the property is absent, `new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
 ```typescript
 User.new(); // => { id: 0, name: '' }
@@ -195,8 +195,8 @@ User.new({ name: 'john' }); // => { id: 0, name: 'john' }
 User.new({ id: 1, name: 'a', email: 'b@b' }); // => { id: 1, name: 'a', email: 'b@b' }
 ```
 
-#### test
-`test` accepts any unknown value, tests that it's valid, and returns a type-predicate:
+#### .test
+Accepts any unknown value, tests that it's valid, and returns a type-predicate:
 ```typescript
 User.test(); // => throws Error
 User.test({ id: 5, name: 'john' }); // => arg is IUser
@@ -204,14 +204,14 @@ User.new({ name: 'john' }); // => throws Error
 User.new({ id: 1, name: 'a', email: 'b@b' }); // => arg is IUser
 ```
 
-#### pick
+#### .pick
 Selects a property and returns an object with the `test` and `default` functions.
 ```typescript
   // pick up here, explain child schema stuff
 ```
 
-#### parse
-`parse` is like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
+#### .parse
+Like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
 
 
 ### Schema options <a name="schema-options"></a>
