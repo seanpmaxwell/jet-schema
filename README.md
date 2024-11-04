@@ -8,9 +8,6 @@
 - [Guide](#guide)
   - [Installation](#installation)
   - [Validator-functions](#validator-functions)
-  - [Configuring settings](#configuring-settings)
-    - [Global settings](#global-settings)
-    - [Local settings](#global-settings)
   - [Creating Schemas](#creating-schemas)
   - [Schema Options](#schema-options)
   - [Schema APIs](#schema-apis)
@@ -18,6 +15,9 @@
     - [.test](#test)
     - [.pick](#pick)
     - [.parse](#parse)
+  - [Configuring settings](#configuring-settings)
+    - [Global settings](#global-settings)
+    - [Local settings](#global-settings)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
@@ -117,65 +117,9 @@ function isOptionalString(arg: unknown): param is string | undefined {
 }
 ```
 
-### Configuring settings <a name="configuring-settings"></a>
-
-Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
-
-Settings object overview:
-```typescript
-{
-  vf: <T>(arg: unknown) => arg is T; // a "vf" => "validator function", 
-  default?: T; // the default value for the validator-function
-  transform?: (arg: unknown) => T; // modify the value before calling the validator-function
-  onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
-}
-```
-
-#### Global settings: <a name="global-settings"></a>
-
-You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
-```typescript
-import jetSchema from 'jet-schema';
-import { isNum, isStr } from './validators';
-
-export default jetLogger({
-  globals?: [
-    { vf: isNum, default: 0 },
-    { vf: isStr, default: '' },
-  ],
-  cloneFn?: () => ... // use a custom clone-function
-  onError?: () => ... // pass a custom error-handler,
-});
-```
-
-Global settings explained:
-  - `globals`: An array of settings-objects, which map certain global settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
-  - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
-  - `onError`: A global error handler, the default error-handler throws an error.
-    - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
-
-#### Local settings: <a name="local-settings"></a>
-
-To configure settings at the local-level, use them when creating a schema (Note that we haven't covered creating schemas yet, see the <a href="#creating-schemas">Creating schemas section</a> below). All local-settings will override all global ones; if you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
-```typescript
-import { schema } from 'jet-schema'; // Use this if you don't want use global-settings
-import schemaAlt from 'util/schema.ts'; // or this if you configured global-settings
-
-const User = schema<IUser>({
-  id: {
-    vf: (arg: unknown) => isNum(arg) && arg > -1,
-    transform: (arg: unknown) => Number(arg),
-    default: -1,
-    onError: (prop: string, value: unknown) => `Property "id" was not a number. Value: ${value}.`
-  },
-  name: isString,
-});
-```
-
-
 ### Creating schemas <a name="creating-schemas"></a>
 
-Using the function returned from `jetSchema` or the `schema` function from the library, call either one and pass it an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object. For handling a schema's type, you can enforce a schema from a type or infere a type from a schema.
+Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a>). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
@@ -294,6 +238,62 @@ User.parse(); // => Error
 User.parse({ id: 1, name: 'john' }); // => { id: 1, name: 'john' }
 User.parse({ id: 1, name: 'john', foo: 'bar' }); // => { id: 1, name: 'john' }
 User.parse({ id: '1', name: 'john' }); // => Error
+```
+
+
+### Configuring settings <a name="configuring-settings"></a>
+
+Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
+
+Settings object overview:
+```typescript
+{
+  vf: <T>(arg: unknown) => arg is T; // a "vf" => "validator function", 
+  default?: T; // the default value for the validator-function
+  transform?: (arg: unknown) => T; // modify the value before calling the validator-function
+  onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
+}
+```
+
+#### Global settings: <a name="global-settings"></a>
+
+You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
+```typescript
+import jetSchema from 'jet-schema';
+import { isNum, isStr } from './validators';
+
+export default jetLogger({
+  globals?: [
+    { vf: isNum, default: 0 },
+    { vf: isStr, default: '' },
+  ],
+  cloneFn?: () => ... // use a custom clone-function
+  onError?: () => ... // pass a custom error-handler,
+});
+```
+
+Global settings explained:
+  - `globals`: An array of settings-objects, which map certain global settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
+  - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
+  - `onError`: A global error handler, the default error-handler throws an error.
+    - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
+
+#### Local settings: <a name="local-settings"></a>
+
+To configure settings at the local-level, use them when creating a schema. All local-settings will override all global ones; if you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
+```typescript
+import { schema } from 'jet-schema'; // Use this if you don't want use global-settings
+import schemaAlt from 'util/schema.ts'; // or this if you configured global-settings
+
+const User = schema<IUser>({
+  id: {
+    vf: (arg: unknown) => isNum(arg) && arg > -1,
+    transform: (arg: unknown) => Number(arg),
+    default: -1,
+    onError: (prop: string, value: unknown) => `Property "id" was not a number. Value: ${value}.`
+  },
+  name: isString,
+});
 ```
 
 
