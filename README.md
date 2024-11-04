@@ -134,7 +134,7 @@ import jetSchema, {
 } from 'jet-schema';
 import { isNum, isStr } from './validators';
 
-// Global settings
+// Configure settings here
 export default jetLogger({
   globals?: [
     { vf: isNum, default: 0 },
@@ -145,7 +145,7 @@ export default jetLogger({
 });
 ```
 
-Global settings explained:
+Global settings in detail:
   - `globals`: An array of settings-objects, which map certain global settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
   - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
   - `onError`: A global error handler, the default error-handler throws an error.
@@ -214,80 +214,31 @@ Like a combination of `new` and `test`. It accepts an `unknown` value which is n
 
 
 ### Schema options <a name="schema-options"></a>
-In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must use the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are used.
+In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. If you set
 ```typescript
-{
-  optional?: boolean; // default "false", must be true if generic is optional
-  nullable?: boolean; // default "false", must be true if generic is nullable
-  init?: boolean | null; // default "true", must be undefined, true, or null if generic is not optional.
-  nullish?: true; // Use this instead of "{ optional: true, nullable: true; }"
-  id?: string; // Will identify the schema in error messages
-}
+type TUser = IUser | null | undefined;
+
+const User = schema<TUser>({
+  id: isNum,
+  name: isStr,
+}, {
+  optional?: boolean;
+  nullable?: boolean;
+  nullish?: true;
+  init?: boolean | null;
+  id?: string;
+});
 ```
 
-- 
-
-The option `init` defines the behavior when a schema is a child-schema and is being initialized from the parent. If `true (default)`, then a nested child-object will be added to the property when a new instance of the parent is created. However, if a child-schema is optional or nullable, maybe you don't want a nested object and just want it to be `null` or skipped entirely. If `init` is `null` then `nullable` must be `true`, if `false` then `optional` must be `true`.<br/>
-
-In the real world it's very common to have a lot of schemas which are both optional, nullable. So you don't have to write out `{ optional: true, nullable: true }` over-and-over again, you can write `{ nullish: true }` as an shorthand alternative.<br/>
-
-You can also set the optional `id` field, if you need a unique identifier for your schema for whatever reason. If you set this option then it will be added to the default error message. This can be useful if you have to debug a bunch of schemas at once (that's pretty much all I use it for).
-
-Here's an example of the options in use:
-
-```typescript
-// models/User.ts
-
-interface IUser {
-  id: number;
-  name: string;
-  address?: { street: string, zip: number } | null;
-}
-
-const User = schema<IUser>({
-  id: isNumber,
-  name: isString,
-  address: schema<IUser['address']>({
-    street: isString,
-    zip: isNumber,
-  }, { nullish: true, init: false, id: 'User_address' }),
-})
-
-User.new() // => { id: 0, name: '' }
-```
-
-
-<!-- ### Child (aka nested) schemas <a name="child-schemas"></a>
-- If an object property is a mapped-type, then it must be initialized with the `schema` function.
-- Just like with the parent schemas, you can also call `new`, `test`, `pick`, `parse` in addition to `default`. Note: the value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
-- There is one extra function `schema()` that you can call when using `pick` on a child-schema. This can be handy if you need to export a child-schema from one parent-schema to another:
-```typescript
-interface IUser {
-  id: number;
-  address?: { street: string, city: string };
-}
-
-const User = schema<IUser>({
-  id: isNumber,
-  address: schema<IUser['address']>({
-    street: isStr,
-    city: isString
-  }, { optional: true, init: false }),
-});
-
-User.pick('address').default() // => undefined because we said "init: false"
-User.pick('address').new() // { street: '', city: '' }
-
-interface IUserAlt {
-  id: number;
-  address?: IUser['address'];
-}
-
-const UserAlt = schema<IUserAlt>({
-  id: isNumber,
-  address: User.pick('address').schema(),
-});
-``` -->
+Schema options in detail:
+  - `optional`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
+  - `nullable`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
+  - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
+  - `init`: Tells the parent what to do when the parent calls `new`. There are 3 options:
+    - `false`: Skip creating a child-object. The child-object must be `optional`.
+    - `true`: Create a new child-object (Uses the child's `new` function).
+    - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
+    - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
 
 
 ### Combining Schemas <a name="combining-schemas"></a>
