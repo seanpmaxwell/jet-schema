@@ -106,7 +106,7 @@ User.parse('something') // **ERROR**
 
 Validator-functions can be passed directly or within a settings-object, so you can do more than just validate an object property. Validator-function settings can be done at the **global-level**, so you don't have to configure them for every new schema or when a schema is initialized (**local-level**).  
 
-A settings object (NOTE validator-functions must return type-predicates):
+Settings object overview (NOTE validator-functions must return *type predicates*):
 ```typescript
 {
   vf: <T>(arg: unknown) => arg is T; // a "vf" => "validator function", 
@@ -123,7 +123,7 @@ const User = schema<IUser>({
     vf: (arg: unknown) => isNum(arg) && arg > -1,
     transform: (arg: unknown) => Number(arg),
     default: -1,
-    onError: (prop: string) => `Property "${prop}" was not a valid id.`
+    onError: (prop: string, value: unknown) => `Property "id" was not a number. Value: ${value}.`
   },
   name: isString,
 });
@@ -139,7 +139,7 @@ import jetSchema, {
 } from 'jet-schema';
 import { isNum, isStr } from './validators';
 
-// Configure settings here
+// Configure global settings here
 export default jetLogger({
   globals?: [
     { vf: isNum, default: 0 },
@@ -159,7 +159,7 @@ Global settings in detail:
 
 ### Creating schemas <a name="creating-schemas"></a>
 
-Using the function returned from `jetSchema` or the `schema` function from the library, call the function and pass an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object. For handling a schema's type, you can enforce a schema from a type or infering a type from a schema.
+Using the function returned from `jetSchema` or the `schema` function from the library, call one and pass it an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object. For handling a schema's type, you can enforce a schema from a type or infere a type from a schema.
 
 Create a schema using a type:
 ```typescript
@@ -337,10 +337,6 @@ const User = schema<IUser>({
 
 ## Tips <a name="tips"></a>
 
-### Organizing your code <a name="organizing-code"></a>
-In nearly all projects I've done, there's been a `utils/` folder where shareable functions are put. What  // pick up here
-
-
 ### Creating wrapper functions <a name="creating-wrapper-functions"></a>
 If you need to modify the value of the `.test` function for a property, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
 
@@ -388,7 +384,7 @@ export default jetLogger({
 Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I already have a lot of my own custom validation functions specific for each of my applications that I also like to copy-n-paste a lot and modify as needed (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties?
 <br/>
 
-I know some libraries like `zod` have functions such as `.refine()` which allow you to integrate custom validation logic. But this isn't quite the same because you could still chain additional validation logic onto `.refine` and you still have to look through the documentation to see how to do it. I wanted a library that allowed me to just slap in validator-functions that were not tied to any specific schema-validation library.
+I know some libraries like `zod` have functions such as `.refine` which allow you to integrate custom validation logic. But this isn't quite the same because you could still chain additional validation logic onto `.refine` and you still have to look through the documentation to see how to do it. I wanted a library that allowed me to just slap in validator-functions that were not tied to any specific schema-validation library.
 <br/>
 
 If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe you use another datetime handling library other than JavasScript's `Date` object (i.e. `DayJs`). Instead of of having to dig into the library's features to accept `dayjs` objects as valid-objects, with **jet-schema** you can just drop in `dayjs.isValid`.
