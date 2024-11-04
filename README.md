@@ -224,14 +224,14 @@ const User = schema<IUser>({
 ```
 
 **options** explained:
-  - `optional`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
-  - `nullable`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
+  - `optional`: Default `false`, must be set to true if the generic is optional.
+  - `nullable`: Default `false`, must be set to true if the generic is nullable.
   - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
-  - `init`: Tells the parent what to do when the parent calls `new`. There are 3 options:
+  - `init`: Tells the parent what to do when the parent calls `.new`. There are 3 options:
     - `false`: Skip creating a child-object. The child-object must be `optional`.
-    - `true`: Create a new child-object (Uses the child's `new` function).
+    - `true`: Create a new child-object (Uses the child's `.new` function).
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
-  - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
+  - `id`: A unique-identifier for the schema (useful if debugging a bunch of schemas at once).
 
 **options** example:
 ```typescript
