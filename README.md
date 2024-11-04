@@ -106,10 +106,9 @@ User.parse('something') // => Error
 ### Installation <a name="installation"></a>
 
 > npm install -s jet-schema
-<br/>
 
 
-### Validator-functions <a name="validator-functions"></a>
+## Validator-functions <a name="validator-functions"></a>
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
@@ -122,7 +121,7 @@ function isOptionalString(arg: unknown): param is string | undefined {
 <br/>
 
 
-### <h3 style="border-bottom: 1px solid grey;">Creating schemas</h3> <a name="creating-schemas"></a>
+## Creating schemas <a name="creating-schemas"></a>
 
 Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a> for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
@@ -157,10 +156,9 @@ const User = schema({
 
 const TUser = inferType<typeof User>;
 ```
-<br/>
 
 
-### Schema APIs <a name="schema-apis"></a>
+## Schema APIs <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
 > NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
@@ -218,7 +216,7 @@ User.parse({ id: '1', name: 'john' }); // => Error
 <br/>
 
 
-### Schema options <a name="schema-options"></a>
+## Schema options <a name="schema-options"></a>
 In addition to a schema-object, the `schema` function accepts an additional **options** object parameter:
 ```typescript
 const User = schema<IUser>({
@@ -252,10 +250,9 @@ const User = schema<TUser>({
   id: 'User', // custom string
 });
 ```
-<br/>
 
 
-### Configuring settings <a name="configuring-settings"></a>
+## Configuring settings <a name="configuring-settings"></a>
 
 Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
 
@@ -309,10 +306,9 @@ const User = schema<IUser>({
   name: isString,
 });
 ```
-<br/>
 
 
-### Combining Schemas <a name="combining-schemas"></a>
+## Combining Schemas <a name="combining-schemas"></a>
 If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup a partial schema, then merge it with your full schema later:
 ```typescript
 import schema, { TJetSchema } from 'jet-schema';
@@ -332,7 +328,7 @@ console.log(FullSchema.new());
 <br/>
 
 
-### TypeScript Caveats <a name="typescript-caveats"></a>
+## TypeScript Caveats <a name="typescript-caveats"></a>
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
 **Validator functions:**<br/>
@@ -366,10 +362,9 @@ const User = schema<IUser>({
 });
 ```
 > If you know of a way to enforce typesafety on child-object without requiring a generic please make a pull-request because I couldn't figure out a way.
-<br/>
 
 
-### Bonus Features <a name="bonus-features"></a>
+## Bonus Features <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` sets the type to be a `Date` object and automatically converts all valid date values (i.e. `string/number`, maybe a `Date` object got stringified in an API call) to a `Date` object. The default value will be a `Date` object with the current datetime. 
 - You can also use an `enum` as a validator. The default value will be the first value in the enum object and validation will make sure it is value of that enum.
 <br>
