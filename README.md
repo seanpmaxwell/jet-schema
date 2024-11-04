@@ -155,7 +155,7 @@ Global settings explained:
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
 
 #### Local settings <a name="local-settings"></a>
-To configure settings at the local-level, use them when creating a schema. Note that we haven't covered creating schemas yet (see the <a name="creating-schemas">Creating schemas section</a> below) All local-settings will override all global ones. If you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
+To configure settings at the local-level, use them when creating a schema. Note that we haven't covered creating schemas yet (see the <a href="#creating-schemas">Creating schemas section</a> below) All local-settings will override all global ones. If you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
 import { schema } from 'jet-schema'; // Use this if you don't want use global-settings.
 import schemaAlt from 'util/schema.ts'; // Where you configured the global-settings
