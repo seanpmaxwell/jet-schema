@@ -156,30 +156,30 @@ Global settings explained:
 ### Creating schemas <a name="creating-schemas"></a>
 
 Using the function returned from `jetSchema` or the `schema` function from the library, call the function and pass an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object. For handling a schema's type, you can enforce a schema from a type or infering a type from a schema.
-```typescript
-// "models/User.ts"
-import { inferType } from 'jet-schema';
-import schema from 'util/schema.ts';
-import { isNum, isStr, isOptionalStr } from 'util/validators.ts';
 
-// **OPTION 1**: Create schema using type
+Create schema using type:
+```typescript
 interface IUser {
   id: number;
   name: string;
   email?: string;
 }
+
 const User = schema<IUser>({
   id: isNum,
   name: isStr,
   email: isOptionalStr,
 });
+```
 
-// **OPTION 2**: Create type using schema
+Create type using schema:
+```typescript
 const User = schema({
   id: isNum,
   name: isStr,
   email: isOptionalStr,
 });
+
 const TUser = inferType<typeof User>;
 ```
 <br/>
