@@ -354,7 +354,7 @@ const User = schema<IUser>({
 
 ### Bonus Features <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` sets the type to be a `Date` object and automatically converts all valid date values (i.e. `string/number`, maybe a `Date` object got stringified in an API call) to a `Date` object. The default value will be a `Date` object with the current datetime. 
-- You can also use an enum as a validator. The default value will be the first value in the enum object and validation will make sure it is value of that enum.
+- You can also use an `enum` as a validator. The default value will be the first value in the enum object and validation will make sure it is value of that enum.
 <br>
 
 
