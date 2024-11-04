@@ -78,7 +78,8 @@ const User = schema<IUser>({
   }, { optional: true }),
 });
 
-User.new({ id: 5, age: '50' }) // => {
+User.new({ id: 5, age: '50' })
+// Line above outputs => {
 //   id: 5,
 //   name: '',
 //   email: 'x@x.com',
