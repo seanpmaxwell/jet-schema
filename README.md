@@ -238,7 +238,7 @@ Schema options in detail:
     - `false`: Skip creating a child-object. The child-object must be `optional`.
     - `true`: Create a new child-object (Uses the child's `new` function).
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
-    - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
+  - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
 
 
 ### Combining Schemas <a name="combining-schemas"></a>
