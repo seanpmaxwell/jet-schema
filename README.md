@@ -122,7 +122,7 @@ function isOptionalString(arg: unknown): param is string | undefined {
 
 ## Creating schemas <a name="creating-schemas"></a>
 
-Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a> for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
+Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a> for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
