@@ -10,7 +10,6 @@
   - [Global Settings](#global-settings)
   - [Creating Schemas](#creating-schemas)
   - [Schema Options](#schema-options)
-  - [Child schemas](#child-schemas)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
@@ -187,7 +186,8 @@ const TUser = inferType<typeof User>;
 Once you have your custom schema setup, you can call the `new`, `test`, `pick`, and `parse` functions:
 > Note: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
 
-- `new` allows you to create new instances of your type using partials. If the property is absent, `new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
+#### new
+Allows you to create new instances of your type using partials. If the property is absent, `new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
 ```typescript
 User.new(); // => { id: 0, name: '' }
 User.new({ id: 5 }); // => { id: 5, name: '' }
@@ -195,7 +195,8 @@ User.new({ name: 'john' }); // => { id: 0, name: 'john' }
 User.new({ id: 1, name: 'a', email: 'b@b' }); // => { id: 1, name: 'a', email: 'b@b' }
 ```
 
-- `test` accepts any unknown value, tests that it's valid, and returns a type-predicate:
+#### test
+`test` accepts any unknown value, tests that it's valid, and returns a type-predicate:
 ```typescript
 User.test(); // => throws Error
 User.test({ id: 5, name: 'john' }); // => arg is IUser
@@ -203,12 +204,14 @@ User.new({ name: 'john' }); // => throws Error
 User.new({ id: 1, name: 'a', email: 'b@b' }); // => arg is IUser
 ```
 
-- `pick` allows you to select any property and returns an object with the `test` and `default` functions.
+#### pick
+Selects a property and returns an object with the `test` and `default` functions.
 ```typescript
-  // pick up here
+  // pick up here, explain child schema stuff
 ```
 
-- `parse` is like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
+#### parse
+`parse` is like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
 
 
 ### Schema options <a name="schema-options"></a>
@@ -255,7 +258,7 @@ User.new() // => { id: 0, name: '' }
 ```
 
 
-### Child (aka nested) schemas <a name="child-schemas"></a>
+<!-- ### Child (aka nested) schemas <a name="child-schemas"></a>
 - If an object property is a mapped-type, then it must be initialized with the `schema` function.
 - Just like with the parent schemas, you can also call `new`, `test`, `pick`, `parse` in addition to `default`. Note: the value returned from `default` could be different from `new` if the schema is optional/nullable and the default value is `null` or `undefined`.
 - There is one extra function `schema()` that you can call when using `pick` on a child-schema. This can be handy if you need to export a child-schema from one parent-schema to another:
@@ -285,7 +288,7 @@ const UserAlt = schema<IUserAlt>({
   id: isNumber,
   address: User.pick('address').schema(),
 });
-```
+``` -->
 
 
 ### Combining Schemas <a name="combining-schemas"></a>
