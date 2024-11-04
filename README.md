@@ -220,10 +220,10 @@ In addition to a schema-object, the `schema` function accepts an additional **op
 const User = schema<IUser>({
   id: isNum,
   name: isStr,
-}, /* Pass options here*/);
+}, /* { ...options object... } */); // <-- Pass options here
 ```
 
-Schema **options** explained:
+**options** explained:
   - `optional`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
   - `nullable`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
   - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
@@ -233,7 +233,7 @@ Schema **options** explained:
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
   - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
 
-Schema **options** example:
+**options** example:
 ```typescript
 type TUser = IUser | null | undefined;
 
