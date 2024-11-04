@@ -33,7 +33,7 @@ If you want a library that includes all kinds of special functions for validatin
 ### Reasons to use Jet-Schema 😎
 - Focus is on using your own validator-functions to validate object properties (this is why I wrote it).
 - TypeScript first!
-- Quick, terse, simple, easy-to-use (this library only exports 2 functions and 2 types).
+- Quick, terse, simple, small (this library only exports 2 functions and 2 types, minified size is **4.56 KB**).
 - Much smaller and less complex than most schema-validation libraries.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new`, `test`, `parse` functions provided automatically on every new schema.
@@ -357,3 +357,13 @@ export default jetLogger({
   ],
 });
 ```
+
+
+### Comparison to other validation libraries <a name="creating-wrapper-functions"></a>
+
+- Size comparison to other popular schema validators (npm Unpacked Size)
+  - TypeBox: 1.28 MB
+  - Ajv: 676 kB
+  - Zod: 570 kB
+  - Joi: 149 kB
+  - Jet-Schema: 44.9 kB 😊

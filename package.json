@@ -1,13 +1,16 @@
 {
   "name": "jet-schema",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Simple, typescript-first schema validation tool",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
     "test": "NODE_ENV=test vitest",
     "test:pg": "ts-node ./test/playground.ts",
-    "build": "rm -rf ./dist && tsc -p tsconfig.build.json",
+    "test:min:mjs": "node ./test/test-es6-min.mjs",
+    "test:min:cjs": "node ./test/test-cjs-min.js",
+    "build": "rm -rf ./dist && tsc -p tsconfig.build.json && npm run bundle",
+    "bundle": "rollup --bundleConfigAsCjs --config rollup.config.ts --configPlugin typescript",
     "lint": "eslint --flag unstable_ts_config"
   },
   "repository": {
@@ -35,12 +38,17 @@
   "homepage": "https://github.com/seanpmaxwell/jet-schema#readme",
   "devDependencies": {
     "@eslint/js": "^9.11.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.1",
     "@stylistic/eslint-plugin-ts": "^2.8.0",
     "@types/eslint__js": "^8.42.3",
     "@types/node": "^22.8.1",
     "eslint": "^9.11.1",
     "eslint-plugin-n": "^17.10.3",
+    "i": "^0.3.7",
     "jiti": "^2.3.3",
+    "npm": "^10.9.0",
+    "rollup": "^4.24.3",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.0",
     "typescript": "^5.6.3",

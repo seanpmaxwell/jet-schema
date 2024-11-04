@@ -18,6 +18,7 @@
   "exclude": [
     "./node_modules",
     "test",
-    "eslint.config.ts"
+    "eslint.config.ts",
+    "rollup.config.ts"
   ]
 }

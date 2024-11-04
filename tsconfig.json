@@ -10,7 +10,8 @@
   "include": [
     "./src",
     "./test",
-    "eslint.config.ts"
+    "eslint.config.ts",
+    "rollup.config.ts"
   ],
   "exclude": [
     "./node_modules"
