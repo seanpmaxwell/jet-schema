@@ -207,6 +207,7 @@ Schema **options** explained:
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
   - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
 
+Schema options example:
 ```typescript
 type TUser = IUser | null | undefined;
 
