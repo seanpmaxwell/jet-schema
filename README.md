@@ -6,7 +6,8 @@
 - [Introduction](#introduction)
 - [Quick Glance](#quick-glance)
 - [Guide](#guide)
-  - [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Validator functions](#validator-functions)
   - [Global Settings](#global-settings)
   - [Creating Schemas](#creating-schemas)
   - [Schema Options](#schema-options)
@@ -100,13 +101,23 @@ User.parse('something') // => Error
 
 ## Guide <a name="guide"></a>
 
-### Getting Started <a name="getting-started"></a>
+### Installation <a name="installation"></a>
 
 > npm install -s jet-schema
 
-Validator-functions can be passed directly or within a settings-object, so you can do more than just validate an object property. Validator-function settings can be done at the **global-level**, so you don't have to configure them for every new schema or when a schema is initialized (**local-level**).  
 
-Settings object overview (NOTE validator-functions must return *type predicates*):
+### Using validator-functions adding settings to them <a name="validator-functions"></a>
+
+Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
+```typescript
+function isOptionalString(arg: unknown): param is string | undefined {
+  return arg === unknown || typeof arg === 'string';
+}
+```
+
+Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
+
+Settings object overview:
 ```typescript
 {
   vf: <T>(arg: unknown) => arg is T; // a "vf" => "validator function", 
