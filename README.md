@@ -110,7 +110,7 @@ User.parse('something') // => Error
 
 
 ### Validator-functions <a name="validator-functions"></a>
------
+---
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
@@ -123,7 +123,7 @@ function isOptionalString(arg: unknown): param is string | undefined {
 
 
 ### Creating schemas <a name="creating-schemas"></a>
------
+---
 
 Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a> for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
