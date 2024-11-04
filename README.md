@@ -163,7 +163,7 @@ Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick
 
 > NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
 
-#### `.new` <a name="new"></a>
+### `.new` <a name="new"></a>
 Allows you to create new instances of your type using partials. If the property is absent, `.new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
 ```typescript
 User.new(); // => { id: 0, name: '' }
@@ -172,7 +172,7 @@ User.new({ name: 'john' }); // => { id: 0, name: 'john' }
 User.new({ id: 1, name: 'a', email: 'b@b' }); // => { id: 1, name: 'a', email: 'b@b' }
 ```
 
-#### `.test` <a name="test"></a>
+### `.test` <a name="test"></a>
 Accepts any unknown value, tests that it's valid, and returns a type-predicate:
 ```typescript
 User.test(); // => Error
@@ -181,7 +181,7 @@ User.test({ name: 'john' }); // => Error
 User.test({ id: 1, name: 'a', email: 'b@b' }); // => param is IUser
 ```
 
-#### `.pick` <a name="test"></a>
+### `.pick` <a name="test"></a>
 Selects a property and returns an object with the `.test` and `.default` functions. If you use `.pick` on a child schema, you can also use the schema functions (`.new`, `.pick` etc), in addition to `.default`. Note that for a child-schema, `.default` could return a different value from `.new` if the default value is set to `null` or `undefined` (see the `init:` setting the <a href="#schema-options">Schema Options Section</a>).
 ```typescript
 const User = schema<IUser>({
@@ -200,7 +200,7 @@ User.pick('address').default(); // => "null"
 User.pick('address').pick('city').test('asdf'); // => "true"
 ```
 
-#### `.parse` <a name="parse"></a>
+### `.parse` <a name="parse"></a>
 Like a combination of `.new` and `.test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `.parse` function, even if a schema is nullish, `null/undefined` values will not pass.
 ```typescript
 const User = schema<IUser>({
@@ -265,7 +265,7 @@ Settings object overview:
 }
 ```
 
-#### Global settings: <a name="global-settings"></a>
+### Global settings: <a name="global-settings"></a>
 
 You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
 ```typescript
@@ -288,7 +288,7 @@ Global settings explained:
   - `onError`: A global error handler, the default error-handler throws an error.
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
 
-#### Local settings: <a name="local-settings"></a>
+### Local settings: <a name="local-settings"></a>
 
 To configure settings at the local-level, use them when creating a schema. All local-settings will override all global ones; if you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
@@ -329,7 +329,7 @@ console.log(FullSchema.new());
 ## TypeScript Caveats <a name="typescript-caveats"></a>
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
-**Validator functions:**<br/>
+### Validator functions
 If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `param is string` will still work. However a if a type predicate returns `param is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`.
 ```typescript
 interface IUser {
@@ -343,7 +343,7 @@ const User = schema<IUser>({
 })
 ```
 
-**Child schemas:**<br/>
+### Child schemas:
 As mentioned, if a property in a parent is mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added.
 ```typescript
 interface IUser {
