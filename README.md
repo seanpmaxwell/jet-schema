@@ -116,10 +116,9 @@ function isOptionalString(arg: unknown): param is string | undefined {
   return arg === unknown || typeof arg === 'string';
 }
 ```
-<br/>
-
 
 > I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy a bunch of validator-functions from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
+<br/>
 
 
 ### <h3 style="border-bottom: 1px solid grey;">Creating schemas</h3> <a name="creating-schemas"></a>
