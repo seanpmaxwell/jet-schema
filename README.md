@@ -26,7 +26,6 @@
   - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Global Settings](#recommended-global-settings)
 - [Author's Notes](#authors-notes)
-
 <br/>
 
 
@@ -46,7 +45,7 @@
 - Validator-function settings can be done globally (for every schema) or locally (for each new schema).
 - Works client-side or server-side.
 - Enums can be used for validation.
-- `Date` constructor can be used to automatically transform and validate any valid date value.
+- `Date` constructor can be used to automatically transform and validate date values.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 <br/>
 
@@ -114,7 +113,7 @@ User.parse('something') // => Error
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
 function isOptionalString(arg: unknown): param is string | undefined {
-  return arg === unknown || typeof arg === 'string';
+  return arg === undefined || typeof arg === 'string';
 }
 ```
 
