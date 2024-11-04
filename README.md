@@ -10,7 +10,7 @@
   - [Global Settings](#global-settings)
   - [Creating Schemas](#creating-schemas)
   - [Schema Options](#schema-options)
-  - [Schema Features](#schema-features)
+  - [Schema APIs](#schema-apis)
     - [.new](#new)
     - [.test](#test)
     - [.pick](#pick)
@@ -216,7 +216,7 @@ Schema options explained:
   - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
 
 
-### Schema Features <a name="schema-features"></a>
+### Schema APIs <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
 > NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
