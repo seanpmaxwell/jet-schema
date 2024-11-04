@@ -17,7 +17,7 @@
   - [Schema Options](#schema-options)
   - [Configuring settings](#configuring-settings)
     - [Global settings](#global-settings)
-    - [Local settings](#global-settings)
+    - [Local settings](#local-settings)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
