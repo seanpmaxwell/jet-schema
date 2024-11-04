@@ -9,12 +9,12 @@
   - [Installation](#installation)
   - [Validator-functions](#validator-functions)
   - [Creating Schemas](#creating-schemas)
-  - [Schema Options](#schema-options)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
     - [.test](#test)
     - [.pick](#pick)
     - [.parse](#parse)
+  - [Schema Options](#schema-options)
   - [Configuring settings](#configuring-settings)
     - [Global settings](#global-settings)
     - [Local settings](#global-settings)
@@ -157,42 +157,6 @@ const TUser = inferType<typeof User>;
 ```
 
 
-### Schema options <a name="schema-options"></a>
-In addition to a schema-object, the `schema` function accepts an additional **options** object parameter:
-```typescript
-const User = schema<TUser>({
-  id: isNum,
-  name: isStr,
-}, /* Pass options here*/);
-```
-
-Schema **options** explained:
-  - `optional`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
-  - `nullable`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
-  - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
-  - `init`: Tells the parent what to do when the parent calls `new`. There are 3 options:
-    - `false`: Skip creating a child-object. The child-object must be `optional`.
-    - `true`: Create a new child-object (Uses the child's `new` function).
-    - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
-  - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
-
-Schema **options** example:
-```typescript
-type TUser = IUser | null | undefined;
-
-const User = schema<TUser>({
-  id: isNum,
-  name: isStr,
-}, {
-  optional: true, // Must be true because TUser is `| undefined`
-  nullable: true, // Must be true because TUser is `| null`
-  nullish: true, // Alternative to { optional: true, nullable: true }
-  init: false, // Can be "null", "false", or "true"
-  id: 'User', // custom string
-});
-```
-
-
 ### Schema APIs <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
@@ -247,6 +211,42 @@ User.parse(); // => Error
 User.parse({ id: 1, name: 'john' }); // => { id: 1, name: 'john' }
 User.parse({ id: 1, name: 'john', foo: 'bar' }); // => { id: 1, name: 'john' }
 User.parse({ id: '1', name: 'john' }); // => Error
+```
+
+
+### Schema options <a name="schema-options"></a>
+In addition to a schema-object, the `schema` function accepts an additional **options** object parameter:
+```typescript
+const User = schema<IUser>({
+  id: isNum,
+  name: isStr,
+}, /* Pass options here*/);
+```
+
+Schema **options** explained:
+  - `optional`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
+  - `nullable`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
+  - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
+  - `init`: Tells the parent what to do when the parent calls `new`. There are 3 options:
+    - `false`: Skip creating a child-object. The child-object must be `optional`.
+    - `true`: Create a new child-object (Uses the child's `new` function).
+    - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
+  - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
+
+Schema **options** example:
+```typescript
+type TUser = IUser | null | undefined;
+
+const User = schema<TUser>({
+  id: isNum,
+  name: isStr,
+}, {
+  optional: true, // Must be true because TUser is `| undefined`
+  nullable: true, // Must be true because TUser is `| null`
+  nullish: true, // Alternative to { optional: true, nullable: true }
+  init: false, // Can be "null", "false", or "true"
+  id: 'User', // custom string
+});
 ```
 
 
