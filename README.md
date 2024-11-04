@@ -106,7 +106,7 @@ User.parse('something') // => Error
 > npm install -s jet-schema
 
 
-### Using validator-functions adding settings to them <a name="validator-functions"></a>
+### Validator-functions and settings-objects <a name="validator-functions"></a>
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
