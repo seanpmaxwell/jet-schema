@@ -282,8 +282,7 @@ User.parse({ id: '1', name: 'john' }); // => Error
 
 
 ### Combining Schemas <a name="combining-schemas"></a>
-If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup a partial schema, then merge it with your full schema later.
-
+If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup a partial schema, then merge it with your full schema later:
 ```typescript
 import schema, { TJetSchema } from 'jet-schema';
 
@@ -347,7 +346,6 @@ const User = schema<IUser>({
 
 ### Creating wrapper functions <a name="creating-wrapper-functions"></a>
 If you need to modify the value of the `.test` function for a property, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
-
 ```typescript
 // models/User.ts
 import { nonNullable } from 'util/validators.ts';
