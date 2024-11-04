@@ -264,7 +264,7 @@ Settings object overview:
 }
 ```
 
-### Global settings <a name="global-settings"></a>
+#### <ins>Global settings</ins> <a name="global-settings"></a>
 
 You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
 ```typescript
@@ -287,7 +287,7 @@ Global settings explained:
   - `onError`: A global error handler, the default error-handler throws an error.
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
 
-### Local settings <a name="local-settings"></a>
+#### <ins>Local settings</ins> <a name="local-settings"></a>
 
 To configure settings at the local-level, use them when creating a schema. All local-settings will override all global ones; if you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
@@ -342,7 +342,7 @@ const User = schema<IUser>({
 })
 ```
 
-#### Child schemas
+#### <ins>Child schemas</ins>
 As mentioned, if a property in a parent is mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added.
 ```typescript
 interface IUser {
