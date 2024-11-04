@@ -174,11 +174,11 @@ Once you have your custom schema setup, you can call the `new`, `test`, `pick`, 
 - `new` allows you to create new instances of your type using partials. If the property is absent, `new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property. Also, if you pass no parameter then a new instance will be created using all the defaults.
 - `test` accepts any unknown value, tests that it's valid, and returns a type-predicate.
 - `pick` allows you to select any property and returns an object with the `test` and `default` functions.
-- `parse` is like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. If you have an incoming unknown value (i.e. an api call) and you want to validate the properties and return a new cleaned instance, use `parse`. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
+- `parse` is like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
 
 
 ### Making schemas optional/nullable <a name="making-schemas-opt-null"></a>
-In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must use the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are parsed.
+In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. The values here are type-checked against the generic (`schema<"The Generic">(...)`) that was passed so you must use the correct values. If your generic is optional/nullable then your are required to pass the object so at runtime the correct values are used.
 ```typescript
 {
   optional?: boolean; // default "false", must be true if generic is optional
@@ -253,7 +253,7 @@ const UserAlt = schema<IUserAlt>({
 
 
 ### Combining Schemas <a name="combining-schemas"></a>
-For whatever reason, your schema may end up existing in multiple places. If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup one, then merge it with your full schema later.
+If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup a partial schema, then merge it with your full schema later.
 
 ```typescript
 import schema, { TJetSchema } from 'jet-schema';
