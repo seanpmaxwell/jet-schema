@@ -117,12 +117,18 @@ function isOptionalString(arg: unknown): param is string | undefined {
 }
 ```
 
+> I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy a bunch of validator-functions from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
+
+
 ### Creating schemas <a name="creating-schemas"></a>
 
-Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a>). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
+Using the `schema` function from `jet-schema` or the function returned from `jetSchema` if you configured global-settings (see the <a href="#global-settings">Global Settings Section</a>), call either one and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring settings</a>). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
+import { schema } from 'jet-schema';
+import { isNum, isStr, isOptionalStr } from 'util/validators.ts';
+
 interface IUser {
   id: number;
   name: string;
@@ -138,6 +144,9 @@ const User = schema<IUser>({
 
 **Option 2:** Create a type using a schema:
 ```typescript
+import { schema } from 'jet-schema';
+import { isNum, isStr, isOptionalStr } from 'util/validators.ts';
+
 const User = schema({
   id: isNum,
   name: isStr,
