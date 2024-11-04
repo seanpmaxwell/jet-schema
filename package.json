@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
+    "clean-install": "rm -rf ./node_modules && rm -r package-lock.json && npm i",
     "test": "NODE_ENV=test vitest",
     "test:pg": "ts-node ./test/playground.ts",
     "test:min:mjs": "node ./test/test-es6-min.mjs",
