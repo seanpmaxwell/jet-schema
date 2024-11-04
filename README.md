@@ -365,13 +365,13 @@ const User = schema<IUser>({
 ## Bonus Features <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` sets the type to be a `Date` object and automatically converts all valid date values (i.e. `string/number`, maybe a `Date` object got stringified in an API call) to a `Date` object. The default value will be a `Date` object with the current datetime. 
 - You can also use an `enum` as a validator. The default value will be the first value in the enum object and validation will make sure it is value of that enum.
-<br>
 
 
 ## Using jet-schema without TypeScript <a name="without-typescript"></a>
 `jet-schema` is built in TypeScript for TypScript but can be used directly with plain JavaScript. There are two minified files you can import if you want to use plain javascript:
   - `dist/index.min.js`: CommonJS
   - `dist/index.min.mjs`: ESM (es6)
+<br>
 
 
 ## Tips <a name="tips"></a>
