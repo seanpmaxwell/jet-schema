@@ -131,14 +131,13 @@ Settings object overview:
 }
 ```
 
-#### Global settings <a name="global-settings"></a>
+#### Global settings: <a name="global-settings"></a>
 
 You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
 ```typescript
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
 
-// Configure global settings here
 export default jetLogger({
   globals?: [
     { vf: isNum, default: 0 },
@@ -155,7 +154,8 @@ Global settings explained:
   - `onError`: A global error handler, the default error-handler throws an error.
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
 
-#### Local settings <a name="local-settings"></a>
+#### Local settings: <a name="local-settings"></a>
+
 To configure settings at the local-level, use them when creating a schema (Note that we haven't covered creating schemas yet, see the <a href="#creating-schemas">Creating schemas section</a> below). All local-settings will override all global ones; if you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
 import { schema } from 'jet-schema'; // Use this if you don't want use global-settings
@@ -173,7 +173,7 @@ const User = schema<IUser>({
 ```
 
 
-### Creating schemas <a name="creating-schemas"></a>
+### Creating schemas: <a name="creating-schemas"></a>
 
 Using the function returned from `jetSchema` or the `schema` function from the library, call either one and pass it an object with a key for each property you are trying to validate, with the value being a validator-function or a settings-object. For handling a schema's type, you can enforce a schema from a type or infere a type from a schema.
 
