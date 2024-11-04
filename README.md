@@ -9,6 +9,7 @@
   - [Getting Started](#getting-started)
   - [Global Settings](#global-settings)
   - [Creating Schemas](#creating-schemas)
+  - [Schema Features](#schema-features)
     - [.new](#new)
     - [.test](#test)
     - [.pick](#pick)
@@ -185,8 +186,9 @@ const User = schema({
 
 const TUser = inferType<typeof User>;
 ```
-<br/>
 
+
+### Schema Features <a name="schema-features"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
 > NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
