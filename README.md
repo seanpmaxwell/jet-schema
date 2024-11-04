@@ -106,6 +106,7 @@ User.parse('something') // => Error
 ### Installation <a name="installation"></a>
 
 > npm install -s jet-schema
+<br/>
 
 
 ### Validator-functions <a name="validator-functions"></a>
