@@ -93,7 +93,7 @@ User.new({ id: 5, age: '50' })
 
 User.test('asdf')) // => "false"
 User.pick('address').pick('zip').test(123) // => "true"
-User.parse('something') // **ERROR**
+User.parse('something') // => Error
 ```
 <br/>
 
