@@ -34,7 +34,7 @@
 - Less complex than nearly every other schema-validation library.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new`, `test`, `parse` functions provided automatically on every new schema.
-- Setting defaults and transforming values can be set globally on initial setup or at the schema-level.
+- Validator-function settings can be done globally (for every schema) or locally (for each new schema).
 - Works client-side or server-side.
 - Enums can be used for validation.
 - `Date` constructor can be used to automatically transform and validate any valid date value.
