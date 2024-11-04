@@ -9,6 +9,10 @@
   - [Getting Started](#getting-started)
   - [Global Settings](#global-settings)
   - [Creating Schemas](#creating-schemas)
+    - [.new](#new)
+    - [.test](#test)
+    - [.pick](#pick)
+    - [.parse](#parse)
   - [Schema Options](#schema-options)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
@@ -87,8 +91,8 @@ User.new({ id: 5 }) // =>
 // }
 
 User.test('asdf')) // => "false"
-console.log(User.pick('address').pick('zip').test(123)) // => "true"
-console.log(User.parse('something')) // **ERROR**
+User.pick('address').pick('zip').test(123) // => "true"
+User.parse('something') // **ERROR**
 ```
 <br/>
 
@@ -99,7 +103,7 @@ console.log(User.parse('something')) // **ERROR**
 
 > npm install -s jet-schema
 
-Validator-functions can be passed directly or within a settings-object, so you can do more than just validate an object property. Validator-functions settings can be done at the **global-level**, so you don't have to configure them for every new schema or when a schema is initialized **local-level**.  
+Validator-functions can be passed directly or within a settings-object, so you can do more than just validate an object property. Validator-function settings can be done at the **global-level**, so you don't have to configure them for every new schema or when a schema is initialized (**local-level**).  
 
 A settings object (NOTE validator-functions must return type-predicates):
 ```typescript
@@ -111,7 +115,7 @@ A settings object (NOTE validator-functions must return type-predicates):
 }
 ```
 
-Settings object in use:
+Settings object example:
 ```typescript
 const User = schema<IUser>({
   id: {
@@ -126,7 +130,7 @@ const User = schema<IUser>({
 
 
 ### Global Settings <a name="global-settings"></a>
-You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global-settings saved. If you don't want to use global settings you can import the `schema` function directly from `jet-schema`.
+You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved. If you don't want to use global settings you can import the `schema` function directly from `jet-schema`.
 
 ```typescript
 import jetSchema, {
@@ -183,10 +187,12 @@ const TUser = inferType<typeof User>;
 ```
 <br/>
 
-Once you have your custom schema setup, you can call the `new`, `test`, `pick`, and `parse` functions. NOTE the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
+Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
-#### .new
-Allows you to create new instances of your type using partials. If the property is absent, `new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
+> NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`.
+
+#### .new <a name="new"></a>
+Allows you to create new instances of your type using partials. If the property is absent, `.new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
 ```typescript
 User.new(); // => { id: 0, name: '' }
 User.new({ id: 5 }); // => { id: 5, name: '' }
@@ -194,23 +200,47 @@ User.new({ name: 'john' }); // => { id: 0, name: 'john' }
 User.new({ id: 1, name: 'a', email: 'b@b' }); // => { id: 1, name: 'a', email: 'b@b' }
 ```
 
-#### .test
+#### .test <a name="test"></a>
 Accepts any unknown value, tests that it's valid, and returns a type-predicate:
 ```typescript
-User.test(); // => throws Error
-User.test({ id: 5, name: 'john' }); // => arg is IUser
-User.new({ name: 'john' }); // => throws Error
-User.new({ id: 1, name: 'a', email: 'b@b' }); // => arg is IUser
+User.test(); // => Error
+User.test({ id: 5, name: 'john' }); // => param is IUser
+User.test({ name: 'john' }); // => Error
+User.test({ id: 1, name: 'a', email: 'b@b' }); // => param is IUser
 ```
 
-#### .pick
-Selects a property and returns an object with the `test` and `default` functions.
+#### .pick <a name="test"></a>
+Selects a property and returns an object with the `.test` and `.default` functions. If you use `.pick` on a child schema, you can also use the schema functions (`.new`, `.pick` etc), in addition to `.default`. Note that for a child-schema, `.default` could return a different value from `.new` if the default value is set to `null` or `undefined` (see the `init:` setting the <a name="schema-options">Schema Options Section</a>).
 ```typescript
-  // pick up here, explain child schema stuff
+const User = schema<IUser>({
+  id: isNum,
+  address: schema<IUser['address'>({
+    street: isStr,
+    city: isStr,
+  }, { init: null }),
+});
+
+User.pick('id').default(); // => "0"
+User.pick('id').test(0); // => "true"
+User.pick('id').test('asdf'); // => "false"
+User.pick('address').new(); // => { street: '', city: '' }
+User.pick('address').default(); // => "null"
+User.pick('address').pick('city').test('asdf'); // => "true"
 ```
 
-#### .parse
-Like a combination of `new` and `test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `parse` function, even if a schema is nullish, `null/undefined` values will not pass.
+#### .parse <a name="parse"></a>
+Like a combination of `.new` and `.test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `.parse` function, even if a schema is nullish, `null/undefined` values will not pass.
+```typescript
+const User = schema<IUser>({
+  id: isNum,
+  name: isStr,
+});
+
+User.parse(); // => Error
+User.parse({ id: 1, name: 'john' }); // => { id: 1, name: 'john' }
+User.parse({ id: 1, name: 'john', foo: 'bar' }); // => { id: 1, name: 'john' }
+User.parse({ id: '1', name: 'john' }); // => Error
+```
 
 
 ### Schema options <a name="schema-options"></a>
@@ -230,7 +260,7 @@ const User = schema<TUser>({
 });
 ```
 
-Schema options in detail:
+Schema options explained:
   - `optional`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
   - `nullable`: Default `false`, must be set to true if generic is optional (or can be `undefined`).
   - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
@@ -265,7 +295,7 @@ console.log(FullSchema.new());
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
 **Validator functions**<br/>
-If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `arg is string` will still work. However a if a type predicate returns `arg is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`.
+If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `param is string` will still work. However a if a type predicate returns `param is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`.
 ```typescript
 interface IUser {
   id: string;
@@ -305,8 +335,12 @@ const User = schema<IUser>({
 
 ## Tips <a name="tips"></a>
 
+### Organizing your code <a name="organizing-code"></a>
+In nearly all projects I've done, there's been a `utils/` folder where shareable functions are put. What  // pick up here
+
+
 ### Creating wrapper functions <a name="creating-wrapper-functions"></a>
-If you need to modify the value of the `test` function for a property, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
+If you need to modify the value of the `.test` function for a property, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
 
 ```typescript
 // models/User.ts
@@ -335,7 +369,6 @@ export default {
 ### Recommended Global Settings <a name="recommended-global-settings"></a>
 I highly recommend you set these default values for each of your basic primitive validator functions, unless of course your application has some other specific need.
 ```typescript
-// util/schema.ts
 import { isNum, isStr, isBool } from 'util/validators.ts';
 
 export default jetLogger({
