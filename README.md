@@ -78,12 +78,11 @@ const User = schema<IUser>({
   }, { optional: true }),
 });
 
-User.new({ id: 5 }) // => 
-// {
+User.new({ id: 5, age: '50' }) // => {
 //   id: 5,
 //   name: '',
 //   email: 'x@x.com',
-//   age: 0,
+//   age: 50,
 //   created: 2024-11-04T04:43:33.072Z,
 //   address: {
 //     street: '',
