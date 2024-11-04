@@ -181,7 +181,7 @@ User.test({ id: 1, name: 'a', email: 'b@b' }); // => param is IUser
 ```
 
 ### `.pick` <a name="pick"></a>
-Selects a property and returns an object with the `.test` and `.default` functions. If you use `.pick` on a child schema, you can also use the schema functions (`.new`, `.pick` etc), in addition to `.default`. Note that for a child-schema, `.default` could return a different value from `.new` if the default value is set to `null` or `undefined` (see the `init:` setting the <a href="#schema-options">Schema Options</a> section).
+Selects a property and returns an object with the `.test` and `.default` functions. If you use `.pick` on a child schema, you can also use the schema functions (`.new`, `.pick` etc), in addition to `.default`. Note that for a child-schema, `.default` could return a different value from `.new` if the default value is set to `null` or `undefined` (see the `init:` setting in the <a href="#schema-options">Schema Options</a> section).
 ```typescript
 const User = schema<IUser>({
   id: isNum,
