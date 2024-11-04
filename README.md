@@ -189,20 +189,12 @@ const TUser = inferType<typeof User>;
 
 
 ### Schema options <a name="schema-options"></a>
-In addition to a schema-object, the `schema` function accepts an additional **options** object parameter. If you set
+In addition to a schema-object, the `schema` function accepts an additional **options** object parameter:
 ```typescript
-type TUser = IUser | null | undefined;
-
 const User = schema<TUser>({
   id: isNum,
   name: isStr,
-}, {
-  optional?: boolean;
-  nullable?: boolean;
-  nullish?: true;
-  init?: boolean | null;
-  id?: string;
-});
+}, /* Pass options here*/);
 ```
 
 Schema options explained:
@@ -214,6 +206,21 @@ Schema options explained:
     - `true`: Create a new child-object (Uses the child's `new` function).
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
   - `id`: A unique-identifier for the schema (I use this if I'm debugging a bunch of schemas at once).
+
+```typescript
+type TUser = IUser | null | undefined;
+
+const User = schema<TUser>({
+  id: isNum,
+  name: isStr,
+}, {
+  optional: true, // Must be true because TUser is `| undefined`
+  nullable: true, // Must be true because TUser is `| null`
+  nullish: true, // Alternative to { optional: true, nullable: true }
+  init: false, // Can be "null", "false", or "true"
+  id: 'User', // custom string
+});
+```
 
 
 ### Schema APIs <a name="schema-apis"></a>
