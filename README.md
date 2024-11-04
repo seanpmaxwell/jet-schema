@@ -213,7 +213,6 @@ User.parse({ id: 1, name: 'john' }); // => { id: 1, name: 'john' }
 User.parse({ id: 1, name: 'john', foo: 'bar' }); // => { id: 1, name: 'john' }
 User.parse({ id: '1', name: 'john' }); // => Error
 ```
-<br/>
 
 
 ## Schema options <a name="schema-options"></a>
@@ -325,7 +324,6 @@ const FullSchema = schema<{ id: number, name: string, e: boolean }>({
 
 console.log(FullSchema.new());
 ```
-<br/>
 
 
 ## TypeScript Caveats <a name="typescript-caveats"></a>
