@@ -103,12 +103,12 @@ User.parse('something') // => Error
 
 ## Guide <a name="guide"></a>
 
-### <h3 style="border-bottom: 1px solid grey;">Installation</h3> <a name="installation"></a>
+### Installation <a name="installation"></a>
 
 > npm install -s jet-schema
 
 
-### <h3 style="border-bottom: 1px solid grey;">Validator-functions</h3> <a name="validator-functions"></a>
+## <h3>Validator-functions</h3> <a name="validator-functions"></a>
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
@@ -361,7 +361,7 @@ const User = schema<IUser>({
 > If you know of a way to enforce typesafety on child-object without requiring a generic please make a pull-request because I couldn't figure out a way.
 
 
-### <h3 class="guide-section">Bonus Features</h3> <a name="bonus-features"></a>
+### <h3 style="border-bottom: 1px solid grey;">Bonus Features</h3> <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` sets the type to be a `Date` object and automatically converts all valid date values (i.e. `string/number`, maybe a `Date` object got stringified in an API call) to a `Date` object. The default value will be a `Date` object with the current datetime. 
 - You can also use an `enum` as a validator. The default value will be the first value in the enum object and validation will make sure it is value of that enum.
 <br>
