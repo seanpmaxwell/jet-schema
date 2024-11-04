@@ -117,7 +117,7 @@ function isOptionalString(arg: unknown): param is string | undefined {
 }
 ```
 
-### Configurating settings <a name="configuring-settings"></a>
+### Configuring settings <a name="configuring-settings"></a>
 
 Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
 
@@ -158,8 +158,8 @@ Global settings explained:
 #### Local settings <a name="local-settings"></a>
 To configure settings at the local-level, use them when creating a schema. Note that we haven't covered creating schemas yet (see the <a href="#creating-schemas">Creating schemas section</a> below) All local-settings will override all global ones. If you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
-import { schema } from 'jet-schema'; // Use this if you don't want use global-settings.
-import schemaAlt from 'util/schema.ts'; // Where you configured the global-settings
+import { schema } from 'jet-schema'; // Use this if you don't want use global-settings
+import schemaAlt from 'util/schema.ts'; // or this if you configured global-settings
 
 const User = schema<IUser>({
   id: {
