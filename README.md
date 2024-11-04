@@ -7,7 +7,8 @@
 - [Quick Glance](#quick-glance)
 - [Guide](#guide)
   - [Installation](#installation)
-  - [Validator-functions and settings-objects](#validator-functions)
+  - [Validator-functions](#validator-functions)
+  - [Configuring settings](#configuring-settings)
     - [Global settings](#global-settings)
     - [Local settings](#global-settings)
   - [Creating Schemas](#creating-schemas)
@@ -107,7 +108,7 @@ User.parse('something') // => Error
 > npm install -s jet-schema
 
 
-### Validator-functions and settings-objects <a name="validator-functions"></a>
+### Validator-functions <a name="validator-functions"></a>
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
@@ -115,6 +116,8 @@ function isOptionalString(arg: unknown): param is string | undefined {
   return arg === unknown || typeof arg === 'string';
 }
 ```
+
+### Configurating settings <a name="configuring-settings"></a>
 
 Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
 
@@ -132,9 +135,7 @@ Settings object overview:
 
 You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
 ```typescript
-import jetSchema, {
-  schema, // Use this if you don't want configure global settings.
-} from 'jet-schema';
+import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
 
 // Configure global settings here
