@@ -22,6 +22,7 @@
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
   - [Using jet-schema without TypeScript](#without-typescript)
+  - [Combining jet-schema with parse from ts-validators](#parse-from-ts-validators)
 - [Tips](#tips)
   - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Global Settings](#recommended-global-settings)
@@ -414,6 +415,33 @@ export default jetLogger({
   ],
 });
 ```
+
+### Combining jet-schema with `parse` from ts-validators <a name="parse-from-ts-validators"></a>
+The before mentioned repo <a href="https://github.com/seanpmaxwell/ts-validators/blob/master">ts-validators</a> contains a function called `parse` (not to be confused with the jet-schema function `.parse`) which is handy for doing lots of little validations on objects where setting up a full stand-alone schema isn't really practical. For instance, maybe you have a backend webserver with many different APIs where every `request` object coming in needs to have one or a couple of properties validated on it before continuing the api call.<br/>
+
+**ts-validators**'s `parse` function also works by receiving a schema filled with validator-functions and returns another validator-function to check if the object satisfies the schema. Using `parse` alone is trivial for doing simple primitive checks but can be very powerful if you have an object which contains both a combination of primitives and complex models that were setup with `jet-schema`.
+```typescript
+import { Request, Response } from 'express';
+import { parse, isNum } from 'util/validators.ts'; // standalone .parse function
+import User from 'models/User.ts' // This was setup with jet-schema
+
+const validateReqBody = parse({
+  userId: isNum,
+  address: User.pick('address').test,
+})
+
+/**
+ * parse checks req.body and makes sure .userId is a number with the isNum
+ * validator-function and that the .address is a valid User['address'] object 
+ * using the "User" schema setup by jet-schema.
+ */
+function updateUsersAddr(req: Request, res: Response) {
+  const { userId, address } = validateReqBody(req.body);
+  ...do stuff
+}
+```
+
+> See this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master/src/routes">template</a> for a full example.
 <br/>
 
 
