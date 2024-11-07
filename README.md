@@ -39,7 +39,7 @@
 ### Reasons to use Jet-Schema 😎
 - Focus is on using your own validator-functions to validate object properties.
 - TypeScript first!
-- Fast, terse, simple, small (this library only exports 2 functions and 2 types, minified size is **4.56 KB**).
+- Fast, terse, small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
 - Less complex than nearly every other schema-validation library.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
 - `new`, `test`, `parse` functions provided automatically on every new schema.
