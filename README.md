@@ -168,6 +168,7 @@ Allows you to create new instances of your type using partials. If the property 
 ```typescript
 User.new(); // => { id: 0, name: '' }
 User.new({ id: 5 }); // => { id: 5, name: '' }
+User.new({ id: 'asdf' }); // => Error
 User.new({ name: 'john' }); // => { id: 0, name: 'john' }
 User.new({ id: 1, name: 'a', email: 'b@b' }); // => { id: 1, name: 'a', email: 'b@b' }
 ```
