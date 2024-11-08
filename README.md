@@ -238,6 +238,9 @@ Settings object overview:
 }
 ```
 
+> The `moreDetails:` parameter will return the full original stringified error message when passed to the global error handler, but returns various error strings when overriding local error functions, such as in what schema function (i.e. `.new`) the error happened.
+
+
 ### Global settings <a name="global-settings"></a>
 
 You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
