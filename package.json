@@ -8,8 +8,8 @@
     "clean-install": "rm -rf ./node_modules && rm -r package-lock.json && npm i",
     "test": "NODE_ENV=test vitest",
     "test:pg": "ts-node ./test/playground.ts",
-    "test:min:mjs": "node ./test/test-es6-min.mjs",
-    "test:min:cjs": "node ./test/test-cjs-min.js",
+    "test:min-mjs": "node ./test/test-es6-min.mjs",
+    "test:min-cjs": "node ./test/test-cjs-min.js",
     "build": "rm -rf ./dist && tsc -p tsconfig.build.json && npm run bundle",
     "bundle": "rollup --bundleConfigAsCjs --config rollup.config.ts --configPlugin typescript",
     "lint": "eslint --flag unstable_ts_config"
