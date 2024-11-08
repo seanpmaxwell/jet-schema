@@ -238,8 +238,6 @@ Settings object overview:
 }
 ```
 
-> The `moreDetails:` parameter will return the full original stringified error message when passed to the global error handler, but returns various error strings when overriding local error functions, such as in what schema function (i.e. `.new`) the error happened.
-
 
 ### Global settings <a name="global-settings"></a>
 
@@ -263,6 +261,8 @@ Global settings explained:
   - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
   - `onError`: A global error handler, the default error-handler throws an error.
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
+
+> The `moreDetails:` parameter will return the full original stringified error message when passed to the global `onError` handler, but returns various error strings when overriding error functions for an individual validator-functions, such as in what schema function (i.e. `.new`) the error happened.
 
 ### Local settings <a name="local-settings"></a>
 
