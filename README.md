@@ -54,49 +54,21 @@
 ## Quick Glance <a name="quick-glance"></a>
 ```typescript
 import schema from 'utils/schema';
-import { isRelKey, isString, isNumber, isOptionalStr } from 'utils/validators';
+import { isString, isNumber } from 'utils/validators';
 
 interface IUser {
   id: number;
   name: string;
-  email: string;
-  age: number;
-  created: Date;
-  address?: {
-    street: string;
-    zip: number;
-    country?: string;
-  };
 }
 
 const User = schema<IUser>({
   id: isNumber,
   name: isString,
-  email: { vf: isEmail, default: 'x@x.com' },
-  age: { vf: isNumber, transform: Number },
-  created: Date,
-  address: schema<IUser['address']>({
-    street: isString,
-    zip: isNumber,
-    country: isOptionalStr,
-  }, { optional: true }),
 });
 
-User.new({ id: 5, age: '50' })
-// Line above outputs => {
-//   id: 5,
-//   name: '',
-//   email: 'x@x.com',
-//   age: 50,
-//   created: 2024-11-04T04:43:33.072Z,
-//   address: {
-//     street: '',
-//     zip: 0,
-//   }
-// }
-
-User.test('asdf')) // => "false"
-User.pick('address').pick('zip').test(123) // => "true"
+User.new({ id: 5, name: 'joe' }) // => { id: 5, name: 'joe' }
+User.test('asdf') // => false
+User.pick('name').test('john') // => true
 User.parse('something') // => Error
 ```
 <br/>
