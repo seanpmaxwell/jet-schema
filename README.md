@@ -259,7 +259,7 @@ Validator-functions can be used alone or within a **settings-object**, which ena
 Settings object overview:
 ```typescript
 {
-  vf: <T>(arg: unknown) => arg is T; // a "vf" => "validator function", 
+  vf: <T>(arg: unknown) => arg is T; // "vf" => "validator function", 
   default?: T; // the default value for the validator-function
   transform?: (arg: unknown) => T; // modify the value before calling the validator-function
   onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
