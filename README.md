@@ -268,18 +268,25 @@ Global settings explained:
 
 To configure settings at the local-level, use them when creating a schema. All local-settings will override all global ones; if you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
-import { schema } from 'jet-schema'; // Use this if you don't want use global-settings
-import schemaAlt from 'util/schema.ts'; // or this (where we setup "jetSchema()") if you configured global-settings
+ // Use this if you don't want use global-settings
+// import { schema } from 'jet-schema';
 
-const User = schema<IUser>({
+ // Where we set our global settings
+import schema from 'util/schema.ts';
+
+const User = schema({
   id: {
-    vf: (arg: unknown) => isNum(arg) && arg > -1,
+    vf: isNum,
     transform: (arg: unknown) => Number(arg),
     default: -1,
     onError: (prop: string, value: unknown) => `Property "id" was not a number. Value: ${value}.`
   },
-  name: isString,
+  name: isStr,
 });
+
+// Local setting overwrote -1 as default for isNum whose global setting was 0, 
+// empty-string remains default for isStr
+User.new() // => { id: -1, name: '' }
 ```
 
 
