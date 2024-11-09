@@ -14,7 +14,6 @@
     "bundle": "rollup --bundleConfigAsCjs --config rollup.config.ts --configPlugin typescript",
     "lint": "eslint --flag unstable_ts_config",
     "pre-publish": "mv README.md README-git && mv README-npm README.md",
-    "publish": "npm run pre-publish && npm publish && npm run post-publish",
     "post-publish": "mv README.md README-npm && mv README-git README.md"
   },
   "repository": {
