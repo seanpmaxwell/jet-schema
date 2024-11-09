@@ -11,3 +11,4 @@ node_modules
 tsconfig.json
 tsconfig.build.json
 eslint.config.ts
+README.md
