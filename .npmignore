@@ -11,5 +11,6 @@ node_modules
 tsconfig.json
 tsconfig.build.json
 eslint.config.ts
-README.md
+README.npm.md
+gitREADME
 rollup.config.ts
