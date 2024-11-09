@@ -12,7 +12,9 @@
     "test:min-cjs": "node ./test/test-cjs-min.js",
     "build": "rm -rf ./dist && tsc -p tsconfig.build.json && npm run bundle",
     "bundle": "rollup --bundleConfigAsCjs --config rollup.config.ts --configPlugin typescript",
-    "lint": "eslint --flag unstable_ts_config"
+    "lint": "eslint --flag unstable_ts_config",
+    "pre-publish": "mv 'README.md' 'git.README.md' && mv 'npm.README.md' 'README.md'",
+    "post-publish": "mv 'README.md' 'npm.README.md' && mv 'git.README.md' 'README.md'"
   },
   "repository": {
     "type": "git",
