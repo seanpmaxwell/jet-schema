@@ -42,7 +42,7 @@
 - Fast, terse, small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
 - Less complex than nearly every other schema-validation library.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
-- `new`, `test`, `parse` functions provided automatically on every new schema.
+- `.new`, `.test`, `.parse` functions provided automatically on every new schema.
 - Validator-function settings can be done globally (for every schema) or locally (for each new schema).
 - Works client-side or server-side.
 - Enums can be used for validation.
