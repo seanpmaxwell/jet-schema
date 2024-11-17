@@ -41,6 +41,7 @@
 - Fast, terse, small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
 - Create new instances of your schema-objects using partials and default values.
+- Easy to extract logic for nested schemas.
 - Works client-side or server-side.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 <br/>
