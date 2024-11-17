@@ -40,7 +40,7 @@
 - Focus is on using your own validator-functions to validate object properties.
 - TypeScript first!
 - Fast, terse, small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
-- Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
+- Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
 - Create new instances of your schemas using partials.
 - Works client-side or server-side.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
