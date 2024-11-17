@@ -40,13 +40,9 @@
 - Focus is on using your own validator-functions to validate object properties.
 - TypeScript first!
 - Fast, terse, small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
-- Less complex than nearly every other schema-validation library.
 - Typesafety works both ways, you can either force a schema structure using a pre-defined type OR you can infer a type from a schema.
-- `.new`, `.test`, `.parse` functions provided automatically on every new schema.
-- Validator-function settings can be done globally (for every schema) or locally (for each new schema).
+- Create new instances of your schemas using partials.
 - Works client-side or server-side.
-- Enums can be used for validation.
-- `Date` constructor can be used to automatically transform and validate date values.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 <br/>
 
@@ -85,8 +81,16 @@ User.parse('something') // => Error
 
 Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
 ```typescript
-function isOptionalString(arg: unknown): param is string | undefined {
-  return arg === undefined || typeof arg === 'string';
+function isNullishString(arg: unknown): param is string | undefined | null {
+  return arg === undefined || arg === null || typeof arg === 'string';
+}
+
+function isValidFirstName(arg: unknown): boolean {
+  return isNullishString(arg);
+}
+
+function isValidCountryCode(arg: unknown): boolean {
+  return isNullishString(arg);
 }
 ```
 
