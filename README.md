@@ -1,13 +1,13 @@
 # Jet-Schema ✈️
-> Simple, zero-dependency, typescript-first schema validation tool, with a focus on using your own custom validator functions.
+> Simple, zero-dependency, typescript-first schema validation tool, with zero-overhead when it comes to custom validation.
 
 
 ## Table of contents
 - [Introduction](#introduction)
 - [Quick Glance](#quick-glance)
+- [Comparison to other schema validation libraries](#comparison-to-others)
 - [Guide](#guide)
   - [Installation](#installation)
-  - [Validator functions](#init-validator-functions)
   - [Creating Schemas](#creating-schemas)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
@@ -26,7 +26,6 @@
 - [Tips](#tips)
   - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Global Settings](#recommended-global-settings)
-- [Author's Notes](#authors-notes)
 <br/>
 
 
@@ -41,7 +40,7 @@
 - TypeScript first!
 - Fast, terse, small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
-- Create new instances of your schemas using partials.
+- Create new instances of your schema-objects using partials and default values.
 - Works client-side or server-side.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 <br/>
@@ -70,21 +69,17 @@ User.parse('something') // => Error
 <br/>
 
 
-## Guide <a name="guide"></a>
+## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
-### Installation <a name="installation"></a>
-
-> npm install -s jet-schema
-
-
-## Validator functions <a name="init-validator-functions"></a>
-
-Validator-functions are functions which receive an `unknown` value and return a type-predicate if the value satisfies the given logic:
+Let's first touch on what a *validator-function* is. A validator-functions is a function which performs both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a type-predicate if the value satisfies the given logic:
 ```typescript
 function isNullishString(arg: unknown): param is string | undefined | null {
   return arg === undefined || arg === null || typeof arg === 'string';
 }
+```
 
+Defining your own validator-functions is handy because it will save you a lot of boilerplate code when doing boolean logic throughout your application. With the above function we can do this: 
+```typescript
 function isValidFirstName(arg: unknown): boolean {
   return isNullishString(arg);
 }
@@ -94,7 +89,81 @@ function isValidCountryCode(arg: unknown): boolean {
 }
 ```
 
+Instead of having to do this:
+```typescript
+function isValidFirstName(arg: unknown): boolean {
+  return arg === undefined || arg === null || typeof arg === 'string';
+}
+
+function isValidCountryCode(arg: unknown): boolean {
+  return arg === undefined || arg === null || typeof arg === 'string';
+}
+```
+
 > I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
+
+
+
+
+
+<!-- Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I already have a lot of my own custom validation functions specific for each of my applications that I also like to copy-n-paste a lot and modify as needed (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties?
+<br/>
+
+I know some libraries like `zod` have functions such as `.refine` which allow you to integrate custom validation logic. But this isn't quite the same because you could still chain additional validation logic onto `.refine` and you still have to look through the documentation to see how to do it. I wanted a library that allowed me to just slap in validator-functions that were not tied to any specific schema-validation library.
+<br/>
+
+If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe you use another datetime handling library other than JavasScript's `Date` object (i.e. `DayJs`). Instead of of having to dig into the library's features to accept `dayjs` objects as valid-objects, with **jet-schema** you can just drop in `dayjs.isValid`.
+<br/> -->
+
+```typescript
+interface IUser {
+  id: number;
+  name: string;
+  email: string;
+  age: number;
+  created: Date;
+  address?: {
+    street: string;
+    zip: number;
+    country?: string;
+  };
+}
+
+// "zod"
+const User: z.ZodType<IUser> = z.object({
+  id: z.number().default(-1).min(-1),
+  name: z.string().default(''),
+  email: z.string().email().or(z.literal('')).default('x@x.x'),
+  age: z.preprocess(Number, z.number()),
+  created: z.preprocess((arg => arg === undefined ? new Date() : arg), z.coerce.date()),
+  address: z.object({ 
+    street: z.string(),
+    zip: z.number(),
+    country: z.string().optional(),
+  }).optional(),
+});
+
+// "jet-schema"
+const User = schema<IUser>({
+  id: isRelationalKey,
+  name: isString,
+  email: { vf: isEmail, default: 'x@x.x' },
+  age: { vf: isNumber, transform: Number },
+  created: Date,
+  address: schema<IUser['address'>({
+    street: isString,
+    zip: isNumber,
+    country: isOptionalString,
+  }, { optional: true }),
+});
+```
+
+
+## Guide <a name="guide"></a>
+
+### Installation <a name="installation"></a>
+
+> npm install -s jet-schema
 
 
 ## Creating schemas <a name="creating-schemas"></a>
@@ -429,15 +498,4 @@ function updateUsersAddr(req: Request, res: Response) {
 ```
 
 > See this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master/src/routes">template</a> for a full example.
-<br/>
-
-
-## Author's Notes <a name="authors-notes"></a>
-Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I already have a lot of my own custom validation functions specific for each of my applications that I also like to copy-n-paste a lot and modify as needed (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties?
-<br/>
-
-I know some libraries like `zod` have functions such as `.refine` which allow you to integrate custom validation logic. But this isn't quite the same because you could still chain additional validation logic onto `.refine` and you still have to look through the documentation to see how to do it. I wanted a library that allowed me to just slap in validator-functions that were not tied to any specific schema-validation library.
-<br/>
-
-If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe you use another datetime handling library other than JavasScript's `Date` object (i.e. `DayJs`). Instead of of having to dig into the library's features to accept `dayjs` objects as valid-objects, with **jet-schema** you can just drop in `dayjs.isValid`.
 <br/>
