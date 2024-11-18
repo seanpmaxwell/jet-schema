@@ -16,7 +16,7 @@
     - [.parse](#parse)
   - [Schema Options](#schema-options)
   - [Configuring settings](#configuring-settings)
-    - [Global settings](#global-settings)
+    - [Shared settings](#shared-settings)
     - [Local settings](#local-settings)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
@@ -25,7 +25,6 @@
   - [Combining jet-schema with parse from ts-validators](#parse-from-ts-validators)
 - [Tips](#tips)
   - [Creating wrapper functions](#creating-wrapper-functions)
-  - [Recommended Global Settings](#recommended-global-settings)
 <br/>
 
 
@@ -37,13 +36,14 @@
 
 ### Reasons to use Jet-Schema 😎
 - Focus is on using your own validator-functions to validate object properties.
-- TypeScript first!
-- Fast, terse, small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
-- Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
-- Create new instances of your schema-objects using partials and default values.
-- Easy to extract logic for nested schemas.
-- Works client-side or server-side.
+- Enables extracting logic for nested schemas.
+- Create new instances of your schemas using default values.
+- Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
+- Fast! Checkout these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a> against some other popular validators like zod, valibot, and yup (one's which don't have a compilation-step).
+- Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
+- Works client-side or server-side.
+- TypeScript first!
 <br/>
 
 
@@ -81,41 +81,25 @@ function isNullishString(arg: unknown): param is string | undefined | null {
 
 Defining your own validator-functions is handy because it will save you a lot of boilerplate code when doing boolean logic throughout your application. With the above function we can do this: 
 ```typescript
-function isValidFirstName(arg: unknown): boolean {
-  return isNullishString(arg);
-}
-
-function isValidCountryCode(arg: unknown): boolean {
-  return isNullishString(arg);
+if (isNullishString(someValue)) {
+  // continue your logic...
+} else {
+  throw new Error('...')
 }
 ```
 
 Instead of having to do this:
 ```typescript
-function isValidFirstName(arg: unknown): boolean {
-  return arg === undefined || arg === null || typeof arg === 'string';
-}
-
-function isValidCountryCode(arg: unknown): boolean {
-  return arg === undefined || arg === null || typeof arg === 'string';
+if (someValue === undefined || someValue === null || typeof someValue === 'string') {
+  // continue your logic...
+} else {
+  throw new Error('...')
 }
 ```
 
 > I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
 
-
-
-
-
-<!-- Most schema validation libraries have fancy functions for validating objects and their properties, but the problem is I already have a lot of my own custom validation functions specific for each of my applications that I also like to copy-n-paste a lot and modify as needed (i.e. functions to check primitive-types, regexes for validating strings etc). The only thing that was making me use schema-validation libraries was trying to validate an object. So I thought, why not figure out a way to integrate my all the functions I had already written with something that can validate them against object properties?
-<br/>
-
-I know some libraries like `zod` have functions such as `.refine` which allow you to integrate custom validation logic. But this isn't quite the same because you could still chain additional validation logic onto `.refine` and you still have to look through the documentation to see how to do it. I wanted a library that allowed me to just slap in validator-functions that were not tied to any specific schema-validation library.
-<br/>
-
-If you want a library that includes all kinds of special functions for validating things other than objects, **jet-schema** is probably not for you. However, the vast majority of projects I've worked on have involved implementing lots of type-checking functions specific to the needs of that project. For example, maybe you use another datetime handling library other than JavasScript's `Date` object (i.e. `DayJs`). Instead of of having to dig into the library's features to accept `dayjs` objects as valid-objects, with **jet-schema** you can just drop in `dayjs.isValid`.
-<br/> -->
-
+With most validation-libraries, if we wanted to use our `isNullishString` function above we'd have to refer to the library's documentation and typically wrap in some custom-handler function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function. This not only saves time but also makes your schema definitions way more terse. Let's looks at a some code where we setup a schema in `zod` and then again in `jet-schema`:
 ```typescript
 interface IUser {
   id: number;
@@ -134,7 +118,11 @@ interface IUser {
 const User: z.ZodType<IUser> = z.object({
   id: z.number().default(-1).min(-1),
   name: z.string().default(''),
+
   email: z.string().email().or(z.literal('')).default('x@x.x'),
+  // OR if we had our own "isEmail" validator-function
+  email: z.string().refine(val => isEmail(val)).default('x@x.x'),
+
   age: z.preprocess(Number, z.number()),
   created: z.preprocess((arg => arg === undefined ? new Date() : arg), z.coerce.date()),
   address: z.object({ 
@@ -159,6 +147,9 @@ const User = schema<IUser>({
 });
 ```
 
+One final note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefined these functions. 
+<br/>
+
 
 ## Guide <a name="guide"></a>
 
@@ -169,7 +160,7 @@ const User = schema<IUser>({
 
 ## Creating schemas <a name="creating-schemas"></a>
 
-Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured global-settings (see the <a href="#global-settings">Global Settings</a> section), call the function and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
+Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured shared-settings (see the <a href="#shared-settings">Shared Settings</a> section), call the function and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
@@ -300,7 +291,7 @@ const User = schema<TUser>({
 
 ## Configuring settings <a name="configuring-settings"></a>
 
-Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **global-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
+Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **shared-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
 
 Settings object overview:
 ```typescript
@@ -313,9 +304,9 @@ Settings object overview:
 ```
 
 
-### Global settings <a name="global-settings"></a>
+### Shared settings <a name="shared-settings"></a>
 
-You can configure global settings by importing and calling the `jetSchema` function which returns a function with your global settings saved:
+You can configure shared settings by importing and calling the `jetSchema` function which returns a function with your shared-settings saved:
 ```typescript
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
@@ -330,8 +321,8 @@ export default jetLogger({
 });
 ```
 
-Global settings explained:
-  - `globals`: An array of settings-objects, which map certain global settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
+Shared settings explained:
+  - `globals`: An array of settings-objects, which map certain shared settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
   - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
   - `onError`: A global error handler, the default error-handler throws an error.
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
@@ -340,12 +331,12 @@ Global settings explained:
 
 ### Local settings <a name="local-settings"></a>
 
-To configure settings at the local-level, use them when creating a schema. All local-settings will override all global ones; if you don't need the schema to have any global settings you can import the `schema` function directly from `jet-schema`:
+To configure settings at the local-level, use them when creating a schema. All local-settings will override all shared ones; if you don't need the schema to have any shared settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
- // Use this if you don't want use global-settings
+// Use this if you don't want use shared-settings
 // import { schema } from 'jet-schema';
 
- // Where we set our global settings
+// Where we set our shared settings
 import schema from 'util/schema.ts';
 
 const User = schema({
@@ -358,7 +349,7 @@ const User = schema({
   name: isStr,
 });
 
-// Local setting overwrote -1 as default for isNum whose global setting was 0, 
+// Local setting overwrote -1 as default for isNum whose shared setting was 0, 
 // empty-string remains default for isStr
 User.new() // => { id: -1, name: '' }
 ```
@@ -459,7 +450,7 @@ export default {
 }
 ```
 
-### Recommended Global Settings <a name="recommended-global-settings"></a>
+### Recommended Shared Settings <a name="recommended-shared-settings"></a>
 I highly recommend you set these default values for each of your basic primitive validator functions, unless of course your application has some other specific need.
 ```typescript
 import { isNum, isStr, isBool } from 'util/validators.ts';
