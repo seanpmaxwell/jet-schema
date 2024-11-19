@@ -10,7 +10,7 @@ import { isNum, isStr } from '../src/util';
 /**
  * Test defaults
  */
-test('test User all default values', () => {
+test('User all default values', () => {
 
   const user = User.new();
 
@@ -47,7 +47,7 @@ test('test User all default values', () => {
 /**
  * Override each default
  */
-test('test User override each default value', () => {
+test('User override each default value', () => {
 
   const EPOCH_PAST_TIME = new Date('2022-1-1').getTime();
 
@@ -118,7 +118,7 @@ test('test User override each default value', () => {
 /**
  * Test pick function.
  */
-test('test User pick() function', () => {
+test('User pick() function', () => {
 
   const EPOCH_PAST_TIME = new Date('2022-1-2').getTime();
 
@@ -174,7 +174,7 @@ test('test User.pick("child schema").schema() function', () => {
 /**
  * Test safety
  */
-test('different schema "safety:" options', () => {
+test('different schema "safety" options', () => {
 
   // Set "parent" settings
   const parentSchemaFn = jetSchema({

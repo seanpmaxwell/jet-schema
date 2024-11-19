@@ -273,6 +273,7 @@ const User = schema<IUser>({
     - `loose`: Properties not in the schema will be filtered out but not trigger errors.
     - `pass`: Properties not in the schema will not be filtered out.
     - `strict`: Properties not in the schema will trigger errors.
+    - **NOTE:** `safety` only applies to the `.test` and `.parse` functions, it does not affect `.new`. 
 
 **options** example:
 ```typescript

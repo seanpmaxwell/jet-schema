@@ -1,3 +1,6 @@
+import { TModel } from './jetSchema';
+
+
 // **** Types **** //
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -5,9 +8,10 @@ export type TFunc = (...args: any[]) => any;
 export type TBasicObj = Record<string, unknown>;
 export type TEnum = Record<string, string | number>;
 
-export type TValidatorFn<T> = (
+export type TValidatorFn<T = unknown> = (
   arg: unknown,
-  cb?: ((transformedVal: T) => void)
+  parentObj?: TModel,
+  key?: string,
 ) => arg is T;
 
 export interface IValidatorObj<T> {
@@ -156,19 +160,3 @@ export function isBasicObj(arg: unknown): arg is TBasicObj {
 export const isDate = (val: unknown): val is Date => {
   return (val instanceof Date) && !isNaN(new Date(val).getTime());
 };
-
-/**
- * Transform a value before checking it.
- */
-export function transform<T>(
-  transFn: TFunc,
-  vldt: ((arg: unknown) => arg is T),
-): TValidatorFn<T> {
-  return (arg: unknown, cb?: (arg: T) => void): arg is T => {
-    if (arg !== undefined) {
-      arg = transFn(arg);
-    }
-    cb?.(arg as T);
-    return vldt(arg);
-  };
-}

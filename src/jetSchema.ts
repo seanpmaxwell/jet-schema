@@ -12,7 +12,6 @@ import {
   isEnum,
   IValidatorObj,
   TValidatorFn,
-  transform,
 } from './util';
 
 
@@ -51,16 +50,17 @@ type IsStaticObj<P, Prop = NonNullable<P>> = (
 // **** Utility types **** //
 
 type NotUndef<T> = Exclude<T, undefined>;
-type TModel = Record<string | number | symbol, unknown>;
+export type TModel = Record<string | number | symbol, unknown>;
 type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
 type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
 
-type TGlobalsMap = Map<TValidatorFn<unknown>, Pick<IValidatorObj<unknown>, 'default' | 'transform' | 'onError'>>;
+type TGlobalsMap = Map<TValidatorFn, Pick<IValidatorObj<unknown>, 'default' | 'transform' | 'onError'>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
 type TOnError = (property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;
 
 type TAllVldtrsObj = Record<string, {
-  vf: TValidatorFn<unknown>,
+  vf: TValidatorFn,
+  transform?: TFunc,
   default: TFunc,
   onError?: IValidatorObj<unknown>['onError'],
 }>;
@@ -124,7 +124,7 @@ interface IJetOptions<M> {
 
 type TGlobalsArr<M> = {
   [K in keyof M]: {
-    vf: TValidatorFn<unknown>,
+    vf: TValidatorFn,
   } & ('vf' extends keyof M[K] ? {
     default?: GetTypePredicate<M[K]['vf']>,
     transform?: TFunc,
@@ -262,11 +262,20 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
       test: testFn,
       pick: <K extends keyof U>(p: K) => {
         const prop = schemaFnObjArg[p],
-          key = p as string;
+          key = p as string,
+          vldrObj = ret.allVldtrsHolder[key],
+          transformFn = vldrObj.transform;
+        let testFn: TFunc = vldrObj.vf;
+        if (!!transformFn) {
+          testFn = (val: unknown) => {
+            val = transformFn(val);
+            return vldrObj.vf(val);
+          };
+        }
         if (!!prop) {
           return {
-            default: ret.allVldtrsHolder[key].default,
-            test: ret.allVldtrsHolder[key].vf,
+            default: vldrObj.default,
+            test: testFn,
             ...(_isSchemaObj(prop) ? {
               pick: prop.pick,
               new: ret.childSchemaNewFns[key],
@@ -296,28 +305,28 @@ function _setupAllVldtrsHolder<T>(
 } {
   const allVldtrsHolder: TAllVldtrsObj = {},
     childSchemaNewFns: Record<string, TFunc> = {};
+  // Start loop
   for (const key in schemaArgObj) {
-    const schemaArgProp = schemaArgObj[key];
-    allVldtrsHolder[key] = {
+    // Init the validator-holder-object
+    const vldrHolderObj: TAllVldtrsObj[keyof TAllVldtrsObj] = {
       vf: (arg: unknown): arg is boolean  => false,
-      default: () => false,
+      default: () => undefined,
     };
     // Is validator function or object
+    const schemaArgProp = schemaArgObj[key];
     if (schemaArgProp === Date) {
-      allVldtrsHolder[key] = {
-        vf: transform((arg: Date) => new Date(arg), isDate),
-        default: () => new Date(),
-      };
-    // Is nested schema
+      vldrHolderObj.vf = isDate;
+      vldrHolderObj.transform = (arg: Date) => new Date(arg);
+      vldrHolderObj.default = () => new Date();
+    // Is a validator-function or validator-object
     } else if (
       (typeof schemaArgProp === 'function') ||
       _isValidatorObj(schemaArgProp)
     ) {
       // Check local validator-object
-      let vdlrFn: TValidatorFn<unknown>,
+      let vdlrFn: TValidatorFn,
         defaultVal,
-        hasLocalDefault = false,
-        hasLocalTransform = false;
+        hasLocalDefault = false;
       // Check local validator-objects
       if (_isValidatorObj(schemaArgProp)) {
         const localObj = schemaArgProp;
@@ -327,18 +336,17 @@ function _setupAllVldtrsHolder<T>(
           hasLocalDefault = true;
         }
         if (!!localObj.transform) {
-          vdlrFn = transform(localObj.transform, vdlrFn);
-          hasLocalTransform = true;
+          vldrHolderObj.transform = localObj.transform;
         }
         if (!!localObj.onError) {
           let customErr = localObj.onError;
           if (!!schemaId) {
             customErr = _wrapErrorWithSchemaId(customErr, schemaId);
           }
-          allVldtrsHolder[key].onError = customErr;
+          vldrHolderObj.onError = customErr;
         }
       } else {
-        vdlrFn = schemaArgProp as TValidatorFn<unknown>;
+        vdlrFn = schemaArgProp as TValidatorFn;
       }
       // Check global validator-object
       const globalsObj = globalsMap.get(vdlrFn);
@@ -346,58 +354,60 @@ function _setupAllVldtrsHolder<T>(
         if (!hasLocalDefault && 'default' in globalsObj) {
           defaultVal = globalsObj.default;
         }
-        if (!hasLocalTransform && globalsObj.transform) {
-          vdlrFn = transform(globalsObj.transform, vdlrFn);
+        if (!vldrHolderObj.transform && !!globalsObj.transform) {
+          vldrHolderObj.transform = globalsObj.transform;
         }
         if (!!globalsObj.onError) {
           let customErr = globalsObj.onError;
           if (!!schemaId) {
             customErr = _wrapErrorWithSchemaId(customErr, schemaId);
           }
-          allVldtrsHolder[key].onError = customErr;
+          vldrHolderObj.onError = customErr;
         }
       }
       // Set the default
       if (!isUndef(defaultVal)) {
         const defaultF = cloneFn(defaultVal);
-        allVldtrsHolder[key].default = () => defaultF;
+        vldrHolderObj.default = () => defaultF;
       } else {
-        allVldtrsHolder[key].default = () => undefined;
+        vldrHolderObj.default = () => undefined;
       }
       // Set the validator function
-      allVldtrsHolder[key].vf = vdlrFn;
-    // Nest schema
+      vldrHolderObj.vf = vdlrFn;
+    // Nested schema
     } else if (_isSchemaObj(schemaArgProp)) {
       const childSchema = schemaArgProp,
         dflt = childSchema._schemaOptions.init;
       if (dflt === true) {
-        allVldtrsHolder[key].default = () => childSchema.new();
+        vldrHolderObj.default = () => childSchema.new();
       } else if (dflt === null) {
-        allVldtrsHolder[key].default = () => null;
+        vldrHolderObj.default = () => null;
       } else {
-        allVldtrsHolder[key].default = () => undefined;
+        vldrHolderObj.default = () => undefined;
       }
       childSchemaNewFns[key] = () => childSchema.new();
-      allVldtrsHolder[key].vf = childSchema.test;
+      vldrHolderObj.vf = childSchema.test;
     // Enum
     } else if (isEnum(schemaArgProp)) {
       const [ dflt, vldr ] = processEnum(schemaArgProp);
-      allVldtrsHolder[key].default = () => cloneFn(dflt);
-      allVldtrsHolder[key].vf = vldr as TValidatorFn<unknown>;
+      vldrHolderObj.default = () => cloneFn(dflt);
+      vldrHolderObj.vf = vldr as TValidatorFn;
     // Error
     } else {
       onError(key, '', Errors.Validator);
     }
     // Make sure the default is a valid value
-    const vldr = allVldtrsHolder[key].vf,
-      dfltVal: unknown = allVldtrsHolder[key].default();
+    const vldr = vldrHolderObj.vf,
+      dfltVal: unknown = vldrHolderObj.default();
     if (!vldr(dfltVal)) {
-      if (!!allVldtrsHolder[key].onError) {
-        allVldtrsHolder[key].onError(key, dfltVal, Errors.Default);
+      if (!!vldrHolderObj.onError) {
+        vldrHolderObj.onError(key, dfltVal, Errors.Default);
       } else {
         onError(key, dfltVal, Errors.Default);
       }
     }
+    // Set the validator-object
+    allVldtrsHolder[key] = vldrHolderObj;
   }
   // Return
   return {
@@ -440,19 +450,22 @@ function _setupNewFn(
     // Get values from partial
     for (const key in partial) {
       const vldrObj = allVldtrsHolder[key];
-      if (!vldrObj) { // purge extras
+      if (!vldrObj) { // Filter extras
         continue;
       }
+      // Run transform
       let val = partial[key];
-      if (vldrObj.vf(val, (transVal => val = transVal))) {
-        retVal[key] = cloneFn(val);
-      } else {
+      if (!!vldrObj.transform) {
+        val = vldrObj.transform(val);
+      }
+      retVal[key] = cloneFn(val);
+      // Run validator-function
+      if (!vldrObj.vf(val)) {
         if (!!vldrObj.onError) {
           vldrObj.onError(key, val, Errors.NewFn);
         } else {
           onError(key, val, Errors.NewFn);
         }
-        retVal[key] = '**ERROR**';
       }
     }
     // Return
@@ -470,6 +483,7 @@ function _setupTestFn(
   safety: IFullOptions['safety'] = 'filter',
   onError: TOnError,
 ): (arg: unknown) => arg is TModel {
+  const vldrEntries = Object.entries(allVldtrsHolder);
   return (arg: unknown): arg is TModel => {
     // Check null/undefined;
     if (isUndef(arg)) {
@@ -492,30 +506,37 @@ function _setupTestFn(
       return false;
     }
     // Run validators
-    for (const key in arg) {
-      const vldrObj = allVldtrsHolder[key];
+    const argCopy: TModel = { ...arg };
+    for (const [key, vldrObj] of vldrEntries) {
+      // Run transform
       let val = (arg as TModel)[key];
-      // Check "safety"
-      if (!vldrObj) {
-        if (safety === 'strict') {
-          onError(key, val, Errors.StrictMode);
-          return false;
-        } else if (safety !== 'pass') {
-          Reflect.deleteProperty(arg, key);
-        }
-        continue;
+      if (!!vldrObj.transform) {
+        val = vldrObj.transform(val);
+        (arg as TModel)[key] = val;
       }
       // Run validator-function
-      if (!vldrObj.vf(val, (transVal => {
-        val = transVal;
-        Object.defineProperty(arg, key, { value: val });
-      }))) {
+      if (!vldrObj.vf(val)) {
         if (!!vldrObj.onError) {
-          vldrObj.onError(key, val, Errors.TestFn);
+          vldrObj.onError(key, val, Errors.ParseFn);
         } else {
-          onError(key, val, Errors.TestFn);
+          onError(key, val, Errors.ParseFn);
         }
         return false;
+      }
+      // Check safety
+      if (safety !== 'pass') {
+        Reflect.deleteProperty(argCopy, key);
+      }
+    }
+    // Unless safety = "pass", filter extra keys
+    const extraKeys = Object.keys(argCopy);
+    if (safety !== 'pass' && extraKeys.length > 0) {
+      if (safety === 'strict') {
+        onError('', '', Errors.StrictMode);
+        return false;
+      }
+      for (const key of extraKeys) {
+        Reflect.deleteProperty(arg, key);
       }
     }
     // Return
@@ -531,40 +552,51 @@ function _setupParseFn(
   safety: IFullOptions['safety'] = 'filter',
   onError: TOnError,
 ): (arg: unknown) => unknown {
+  const vldrEntries = Object.entries(allVldtrsHolder);
   return (arg: unknown) => {
     // Must be an object
     if (!isObj(arg)) {
       onError('', arg, Errors.ParseNotAnObj);
       return arg;
     }
-    // Run validators, looping validators will purse extras
-    for (const key in arg) {
-      const vldrObj = allVldtrsHolder[key];
+    // Run validators
+    const argCopy: TModel = { ...arg },
+      filteredCopy: TModel = {};
+    for (const [key, vldrObj] of vldrEntries) {
+      // Run transform
       let val = (arg as TModel)[key];
-      // Check "safety"
-      if (!vldrObj) {
-        if (safety !== 'pass') {
-          Reflect.deleteProperty(arg, key);
-        }
-        if (safety === 'strict') {
-          onError(key, val, Errors.StrictMode);
-        }
-        continue;
+      if (!!vldrObj.transform) {
+        val = vldrObj.transform(val);
+        (arg as TModel)[key] = val;
       }
       // Run validator-function
-      if (!vldrObj.vf(val, (transVal => {
-        val = transVal;
-        Object.defineProperty(arg, key, { value: val });
-      }))) {
+      if (!vldrObj.vf(val)) {
         if (!!vldrObj.onError) {
           vldrObj.onError(key, val, Errors.ParseFn);
         } else {
           onError(key, val, Errors.ParseFn);
         }
       }
+      // Check safety
+      if (safety !== 'pass') {
+        if (key in arg) {
+          filteredCopy[key] = val;
+        }
+        if (safety === 'strict') {
+          Reflect.deleteProperty(argCopy, key);
+        }
+      }
+    }
+    // Check no unknown keys for strict mode
+    if (safety === 'strict' && Object.keys(argCopy).length > 0) {
+      onError('', '', Errors.StrictMode);
     }
     // Return
-    return arg;
+    if (safety !== 'pass') {
+      return filteredCopy;
+    } else {
+      return arg;
+    }
   };
 }
 
