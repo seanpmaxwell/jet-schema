@@ -29,6 +29,7 @@ const Errors = {
   NewFn: 'Failed in the "new" function',
   TestFn: 'Failed in the "test" function',
   ParseFn: 'Failed in the "parse" function',
+  StrictMode: 'Argument had a property which was not in schema, which is not allowed in strict mode',
 } as const;
 
 
@@ -70,6 +71,7 @@ interface IFullOptions {
   init?: boolean | null;
   nullish?: true;
   id?: string;
+  safety?: 'pass' | 'filter' | 'strict';
 }
 
 
@@ -96,6 +98,7 @@ export interface ISchema<T> {
     nullable: boolean;
     init: boolean | null;
     id?: string;
+    safety?: 'pass' | 'filter' | 'strict';
   };
 }
 
@@ -185,41 +188,41 @@ type InferTypesHelper<U> = {
   );
 };
 
-export interface IOptNul {
+interface ISchemaOptionsBase {
+  id?: string;
+  safety?: 'pass' | 'filter' | 'strict';
+}
+
+export interface IOptNul extends ISchemaOptionsBase {
   optional: true;
   nullable: true;
   init?: null | boolean;
   nullish?: undefined
-  id?: string;
 }
 
-export interface IOptNotNul {
+export interface IOptNotNul extends ISchemaOptionsBase {
   optional: true;
   nullable?: false;
   init?: boolean;
-  id?: string;
 }
 
-export interface INotOptButNul {
+export interface INotOptButNul extends ISchemaOptionsBase {
   optional?: false;
   nullable: true;
   init?: null | true;
-  id?: string;
 }
 
-export interface INotOptOrNul {
+export interface INotOptOrNul extends ISchemaOptionsBase {
   optional?: false;
   nullable?: false;
   init?: true;
-  id?: string;
 }
 
-export interface INullish {
+export interface INullish extends ISchemaOptionsBase {
   nullish: true;
   optional?: undefined;
   nullable?: undefined;
   init?: null | boolean;
-  id?: string;
 }
 
 
@@ -251,8 +254,8 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
     // Setup main functions
     const ret = _setupAllVldtrsHolder(schemaFnObjArg, cloneFn, globalsMap, onErrorF, optionsF.id),
       newFn = _setupNewFn(ret.allVldtrsHolder, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.allVldtrsHolder, optionsF.optional!, optionsF.nullable!, onErrorF),
-      parseFn = _setupParseFn(ret.allVldtrsHolder, cloneFn, onErrorF);
+      testFn = _setupTestFn(ret.allVldtrsHolder, optionsF.optional!, optionsF.nullable!, optionsF.safety, onErrorF),
+      parseFn = _setupParseFn(ret.allVldtrsHolder, optionsF.safety, onErrorF);
     // Return
     return {
       new: newFn,
@@ -436,16 +439,16 @@ function _setupNewFn(
     }
     // Get values from partial
     for (const key in partial) {
-      if (!allVldtrsHolder[key]) { // purge extras
+      const vldrObj = allVldtrsHolder[key];
+      if (!vldrObj) { // purge extras
         continue;
       }
-      const testFn = allVldtrsHolder[key].vf;
       let val = partial[key];
-      if (testFn(val, ((transVal) => val = transVal))) {
+      if (vldrObj.vf(val, (transVal => val = transVal))) {
         retVal[key] = cloneFn(val);
       } else {
-        if (!!allVldtrsHolder[key].onError) {
-          allVldtrsHolder[key].onError(key, val, Errors.NewFn);
+        if (!!vldrObj.onError) {
+          vldrObj.onError(key, val, Errors.NewFn);
         } else {
           onError(key, val, Errors.NewFn);
         }
@@ -464,6 +467,7 @@ function _setupTestFn(
   allVldtrsHolder: TAllVldtrsObj,
   isOptional: boolean,
   isNullable: boolean,
+  safety: IFullOptions['safety'] = 'filter',
   onError: TOnError,
 ): (arg: unknown) => arg is TModel {
   return (arg: unknown): arg is TModel => {
@@ -485,23 +489,33 @@ function _setupTestFn(
     }
     // Must be an object
     if (!isObj(arg)) {
-      onError('', arg, Errors.NotAnObj);
       return false;
     }
     // Run validators
-    for (const key in allVldtrsHolder) {
-      const testFn = allVldtrsHolder[key].vf;
+    for (const key in arg) {
+      const vldrObj = allVldtrsHolder[key];
       let val = (arg as TModel)[key];
-      if (!testFn(val, ((transVal) => val = transVal))) {
-        if (!!allVldtrsHolder[key].onError) {
-          allVldtrsHolder[key].onError(key, val, Errors.TestFn);
+      // Check "safety"
+      if (!vldrObj) {
+        if (safety === 'strict') {
+          onError(key, val, Errors.StrictMode);
+          return false;
+        } else if (safety !== 'pass') {
+          Reflect.deleteProperty(arg, key);
+        }
+        continue;
+      }
+      // Run validator-function
+      if (!vldrObj.vf(val, (transVal => {
+        val = transVal;
+        Object.defineProperty(arg, key, { value: val });
+      }))) {
+        if (!!vldrObj.onError) {
+          vldrObj.onError(key, val, Errors.TestFn);
         } else {
           onError(key, val, Errors.TestFn);
         }
         return false;
-      }
-      if (key in arg) {
-        (arg as TModel)[key] = val;
       }
     }
     // Return
@@ -514,34 +528,43 @@ function _setupTestFn(
  */
 function _setupParseFn(
   allVldtrsHolder: TAllVldtrsObj,
-  cloneFn: TFunc,
+  safety: IFullOptions['safety'] = 'filter',
   onError: TOnError,
-): (arg: unknown) => TModel {
+): (arg: unknown) => unknown {
   return (arg: unknown) => {
     // Must be an object
-    const retVal: TModel = {};
     if (!isObj(arg)) {
       onError('', arg, Errors.ParseNotAnObj);
-      return retVal;
+      return arg;
     }
     // Run validators, looping validators will purse extras
-    for (const key in allVldtrsHolder) {
-      const testFn = allVldtrsHolder[key].vf;
+    for (const key in arg) {
+      const vldrObj = allVldtrsHolder[key];
       let val = (arg as TModel)[key];
-      if (!testFn(val, ((transVal) => val = transVal))) {
-        if (!!allVldtrsHolder[key].onError) {
-          allVldtrsHolder[key].onError(key, val, Errors.ParseFn);
+      // Check "safety"
+      if (!vldrObj) {
+        if (safety !== 'pass') {
+          Reflect.deleteProperty(arg, key);
+        }
+        if (safety === 'strict') {
+          onError(key, val, Errors.StrictMode);
+        }
+        continue;
+      }
+      // Run validator-function
+      if (!vldrObj.vf(val, (transVal => {
+        val = transVal;
+        Object.defineProperty(arg, key, { value: val });
+      }))) {
+        if (!!vldrObj.onError) {
+          vldrObj.onError(key, val, Errors.ParseFn);
         } else {
           onError(key, val, Errors.ParseFn);
         }
-        retVal[key] = '**ERROR**';
-      }
-      if (key in arg) {
-        retVal[key] = cloneFn(val);
       }
     }
     // Return
-    return retVal;
+    return arg;
   };
 }
 
@@ -561,12 +584,15 @@ function _setupGlobalsMap(globalsArr: IValidatorObj<unknown>[]): TGlobalsMap {
  * Setup options based on object passed by the user.
  */
 function _processOptions(options: IFullOptions | undefined) {
-  let base: IFullOptions = { init: true };
+  let base: IFullOptions = { init: true, safety: 'filter' };
   if (!isUndef(options?.init)) {
     base.init = options.init;
   }
   if (!!options?.id) {
     base.id = options?.id;
+  }
+  if (!!options?.safety) {
+    base.safety = options.safety;
   }
   if (!options?.nullish) {
     base = {

@@ -16,7 +16,7 @@
     - [.parse](#parse)
   - [Schema Options](#schema-options)
   - [Configuring settings](#configuring-settings)
-    - [Shared settings](#shared-settings)
+    - [Parent settings](#parent-settings)
     - [Local settings](#local-settings)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
@@ -160,7 +160,7 @@ One final note, not only does creating a list of validator-functions save boiler
 
 ## Creating schemas <a name="creating-schemas"></a>
 
-Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured shared-settings (see the <a href="#shared-settings">Shared Settings</a> section), call the function and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
+Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured parent settings (see the <a href="#parent-settings">Parent Settings</a> section), call the function and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
@@ -271,6 +271,10 @@ const User = schema<IUser>({
     - `true`: Create a new child-object (Uses the child's `.new` function).
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
   - `id`: A unique-identifier for the schema (useful if debugging a bunch of schemas at once).
+  - `safety`: Value can be `'loose' (default), 'pass', or 'strict'`.
+    - `loose`: Properties not in the schema will be filtered out but not trigger errors.
+    - `pass`: Properties not in the schema will not be filtered out.
+    - `strict`: Properties not in the schema will trigger errors.
 
 **options** example:
 ```typescript
@@ -284,14 +288,15 @@ const User = schema<TUser>({
   nullable: true, // Must be true because TUser is `| null`
   nullish: true, // Alternative to { optional: true, nullable: true }
   init: false, // Can be "null", "false", or "true"
-  id: 'User', // custom string
+  id: 'User',
+  safety: 'loose'
 });
 ```
 
 
 ## Configuring settings <a name="configuring-settings"></a>
 
-Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **shared-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
+Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **parent-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
 
 Settings object overview:
 ```typescript
@@ -304,9 +309,9 @@ Settings object overview:
 ```
 
 
-### Shared settings <a name="shared-settings"></a>
+### Parent settings <a name="parent-settings"></a>
 
-You can configure shared settings by importing and calling the `jetSchema` function which returns a function with your shared-settings saved:
+You can configure parent settings by importing and calling the `jetSchema` function which returns a function with your parent-settings saved:
 ```typescript
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
@@ -321,8 +326,8 @@ export default jetLogger({
 });
 ```
 
-Shared settings explained:
-  - `globals`: An array of settings-objects, which map certain shared settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
+Parent settings explained:
+  - `globals`: An array of settings-objects, which map certain parent settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
   - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
   - `onError`: A global error handler, the default error-handler throws an error.
     - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
@@ -331,12 +336,12 @@ Shared settings explained:
 
 ### Local settings <a name="local-settings"></a>
 
-To configure settings at the local-level, use them when creating a schema. All local-settings will override all shared ones; if you don't need the schema to have any shared settings you can import the `schema` function directly from `jet-schema`:
+To configure settings at the local-level, use them when creating a schema. All local-settings will override all parent ones; if you don't need the schema to have any parent settings you can import the `schema` function directly from `jet-schema`:
 ```typescript
-// Use this if you don't want use shared-settings
+// Use this if you don't want use parent settings
 // import { schema } from 'jet-schema';
 
-// Where we set our shared settings
+// Where we set our parent settings
 import schema from 'util/schema.ts';
 
 const User = schema({
@@ -349,7 +354,7 @@ const User = schema({
   name: isStr,
 });
 
-// Local setting overwrote -1 as default for isNum whose shared setting was 0, 
+// Local setting overwrote -1 as the default value for isNum whose parent default value was 0, 
 // empty-string remains default for isStr
 User.new() // => { id: -1, name: '' }
 ```
@@ -450,7 +455,7 @@ export default {
 }
 ```
 
-### Recommended Shared Settings <a name="recommended-shared-settings"></a>
+### Recommended Parent Settings <a name="recommended-parent-settings"></a>
 I highly recommend you set these default values for each of your basic primitive validator functions, unless of course your application has some other specific need.
 ```typescript
 import { isNum, isStr, isBool } from 'util/validators.ts';

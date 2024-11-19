@@ -2,6 +2,7 @@
 import { expect, test } from 'vitest';
 
 import schema from './util/schema';
+import jetSchema from '../src';
 import User, { IUser } from './models/User';
 import { isNum, isStr } from '../src/util';
 
@@ -146,8 +147,10 @@ test('test User pick() function', () => {
 });
 
 
+/**
+ * Test nested schema function
+ */
 test('test User.pick("child schema").schema() function', () => {
-
 
   interface IUserAlt {
     id: number;
@@ -165,4 +168,70 @@ test('test User.pick("child schema").schema() function', () => {
     fileName: '',
     data: 'base64:str;',
   });
+});
+
+
+/**
+ * Test safety
+ */
+test('different schema "safety:" options', () => {
+
+  // Set "parent" settings
+  const parentSchemaFn = jetSchema({
+    globals: [
+      { vf: isNum, default: 0 },
+      { vf: isStr, default: '' },
+    ],
+    onError: () => ({}),
+  });
+
+  // Test default
+  const schemaDefault = parentSchemaFn({
+    id: isNum,
+    name: isStr,
+  });
+  const testResult1 = schemaDefault.test({ id: 1, name: 'joe', foo: 'bar' }),
+    parseResult1 = schemaDefault.parse({ id: 1, name: 'joe', foo: 'bar' }),
+    failResult1 = schemaDefault.test({ id: 1, name: 1234 });
+  expect(testResult1).toStrictEqual(true);
+  expect(parseResult1).toStrictEqual({ id: 1, name: 'joe' });
+  expect(failResult1).toStrictEqual(false);
+
+  // Test filter (default = "filter")
+  const schemaFilter = parentSchemaFn({
+    id: isNum,
+    name: isStr,
+  }, { safety: 'filter' });
+  const testResult2 = schemaFilter.test({ id: 1, name: 'joe', foo: 'bar' }),
+    parseResult2 = schemaFilter.parse({ id: 1, name: 'joe', foo: 'bar' }),
+    failResult2 = schemaDefault.test({ id: 1, name: 1234 });
+  expect(testResult2).toStrictEqual(true);
+  expect(parseResult2).toStrictEqual({ id: 1, name: 'joe' });
+  expect(failResult2).toStrictEqual(false);
+
+  // Test "pass"
+  const schemaPass = parentSchemaFn({
+    id: isNum,
+    name: isStr,
+  }, { safety: 'pass' });
+  const testResult3 = schemaPass.test({ id: 1, name: 'joe', foo: 'bar' }),
+    parseResult3 = schemaPass.parse({ id: 1, name: 'joe', foo: 'bar' }),
+    failResult3 = schemaPass.test({ id: 1, name: 1234 });
+  expect(testResult3).toStrictEqual(true);
+  expect(parseResult3).toStrictEqual({ id: 1, name: 'joe', foo: 'bar' });
+  expect(failResult3).toStrictEqual(false);
+
+  // Test "pass"
+  const schemaStrict = parentSchemaFn({
+    id: isNum,
+    name: isStr,
+  }, { safety: 'strict' });
+  const testResult4 = schemaStrict.test({ id: 1, name: 'joe' }),
+    parseResult4 = schemaStrict.parse({ id: 1, name: 'joe' }),
+    failResult4 = schemaStrict.test({ id: 1, name: 'joe',  foo: 'bar' }),
+    failParseResult4 = schemaStrict.parse({ id: 1, name: 'joe', foo: 'bar' });
+  expect(testResult4).toStrictEqual(true);
+  expect(parseResult4).toStrictEqual({ id: 1, name: 'joe' });
+  expect(failResult4).toStrictEqual(false);
+  expect(failParseResult4).toStrictEqual({ id: 1, name: 'joe' });
 });
