@@ -118,11 +118,9 @@ interface IUser {
 const User: z.ZodType<IUser> = z.object({
   id: z.number().default(-1).min(-1),
   name: z.string().default(''),
-
   email: z.string().email().or(z.literal('')).default('x@x.x'),
   // OR if we had our own "isEmail" validator-function
   email: z.string().refine(val => isEmail(val)).default('x@x.x'),
-
   age: z.preprocess(Number, z.number()),
   created: z.preprocess((arg => arg === undefined ? new Date() : arg), z.coerce.date()),
   address: z.object({ 
@@ -148,7 +146,7 @@ const User = schema<IUser>({
 ```
 
 One final note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefined these functions. 
-<br/>
+<br/><br/>
 
 
 ## Guide <a name="guide"></a>
@@ -160,7 +158,7 @@ One final note, not only does creating a list of validator-functions save boiler
 
 ## Creating schemas <a name="creating-schemas"></a>
 
-Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured parent settings (see the <a href="#parent-settings">Parent Settings</a> section), call the function and pass it an object with a key for each property you are trying to validate: with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
+Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured parent settings (see the <a href="#parent-settings">Parent Settings</a> section), call the function and pass it an object with a key for each property you are trying to validate with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
