@@ -1,6 +1,3 @@
-import { TModel } from './jetSchema';
-
-
 // **** Types **** //
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -8,25 +5,6 @@ export type TFunc = (...args: any[]) => any;
 export type TBasicObj = Record<string, unknown>;
 export type TEnum = Record<string, string | number>;
 
-export type TValidatorFn<T = unknown> = (
-  arg: unknown,
-  parentObj?: TModel,
-  key?: string,
-) => arg is T;
-
-export interface IValidatorObj<T> {
-  vf: TValidatorFn<T>,
-  default?: T,
-  transform?: TFunc,
-  onError?: (
-    property: string,
-    value?: unknown,
-    moreDetails?: string,
-    schemaId?: string,
-  ) => void;
-}
-
-export type IValidatorFnOrObj<T> = TValidatorFn<T> | IValidatorObj<T>;
 
 
 // **** Functions **** //
@@ -98,7 +76,7 @@ export function processEnum(arg: unknown): [ unknown, TFunc ] {
  */
 export function isEnum(arg: unknown): arg is TEnum {
   // Check is non-array object
-  if (!(isObj(arg) && !Array.isArray(arg))) {
+  if (!isObj(arg) || Array.isArray(arg)) {
     return false;
   }
   // Check if string or number enum
@@ -160,3 +138,17 @@ export function isBasicObj(arg: unknown): arg is TBasicObj {
 export const isDate = (val: unknown): val is Date => {
   return (val instanceof Date) && !isNaN(new Date(val).getTime());
 };
+
+/**
+ * Clone Function
+ */
+export function defaultCloneFn(arg: unknown): unknown {
+  if (arg instanceof Date) {
+    return new Date(arg);
+  } else if (isObj(arg)) {
+    // eslint-disable-next-line n/no-unsupported-features/node-builtins
+    return structuredClone(arg);
+  } else {
+    return arg;
+  }
+}

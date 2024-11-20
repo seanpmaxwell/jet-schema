@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable max-len */
+
+import { IError } from '../../src';
 import schema from '../util/schema';
 
 import {
@@ -136,14 +136,9 @@ const User = schema<IUser>({
   pastIds: isNumberArray,
   single: {
     vf: isOptionalBoolean,
-    onError: (_: string, value: unknown, moreDetails?: string, schemaId?: string) => {
-      const message = JSON.stringify({
-        message: 'Property "single" must be a boolean or undefined.',
-        value: JSON.stringify(value),
-        ['more-details']: moreDetails || '--',
-        ['schema-id']: schemaId || '--',
-      });
-      console.error(message);
+    formatError(error: IError) {
+      console.error(JSON.stringify(error));
+      return error;
     },
   },
 }, { id: 'User' });

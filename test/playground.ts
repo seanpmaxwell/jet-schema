@@ -87,7 +87,6 @@ if (other.test(val)) {
   console.log('Tother', val?.data);
 }
 
-
 const post = Post.new();
 console.log(post.image);
 console.log(post.imageNullish);

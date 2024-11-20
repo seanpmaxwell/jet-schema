@@ -303,7 +303,18 @@ Settings object overview:
   vf: <T>(arg: unknown) => arg is T; // "vf" => "validator function", 
   default?: T; // the default value for the validator-function
   transform?: (arg: unknown) => T; // modify the value before calling the validator-function
-  onError?: (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => void; // Custom error message for the function
+  formatError?: (error: IError) => void; // Customize the error message for the function
+}
+```
+
+Error format:
+```typescript
+{
+  property?: string;
+  value?: unknown;
+  message?: string;
+  location?: string; // function which is throwing the error
+  schemaId?: string;
 }
 ```
 
@@ -321,17 +332,14 @@ export default jetSchema({
     { vf: isStr, default: '' },
   ],
   cloneFn?: () => ... // use a custom clone-function
-  onError?: () => ... // pass a custom error-handler,
+  onError?: (errors?: IError[]) => ... // pass a custom error-handler,
 });
 ```
 
 Parent settings explained:
   - `globals`: An array of settings-objects, which map certain parent settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
   - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
-  - `onError`: A global error handler, the default error-handler throws an error.
-    - Format is: `(property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;`.
-
-> The `moreDetails/origMessage` parameter for `onError` will return the full original stringified error message when passed to the global `onError` handler, but returns various error strings when overriding error functions for an individual validator-function, such as in what schema function (i.e. `.new`) the error happened.
+  - `onError`: Set what happens when the length of the errors array is greater than one.
 
 ### Local settings <a name="local-settings"></a>
 

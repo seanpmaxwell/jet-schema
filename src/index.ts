@@ -7,6 +7,9 @@ export type {
   PublicInferType as inferType,
 } from './jetSchema';
 
+export { IError, TErrArg } from './error-stuff';
+
+
 // Export functions
 export const schema = jetSchema();
 export default jetSchema;

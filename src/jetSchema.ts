@@ -1,4 +1,3 @@
-/* eslint-disable n/no-unsupported-features/node-builtins */
 /* eslint-disable max-len */
 
 import {
@@ -7,29 +6,19 @@ import {
   isObj,
   isUndef,
   TFunc,
-  IValidatorFnOrObj,
   TEnum,
   isEnum,
-  IValidatorObj,
-  TValidatorFn,
+  defaultCloneFn,
 } from './util';
 
-
-// **** Variables ****
-
-const Errors = {
-  Init: '"init" must be true if schema is not optional.',
-  Default: 'This validation failed when setting up defaults.',
-  Validator: 'Setup error: validator must be a function, enum, schema, or Date constructor.',
-  Undef: 'schema.test failed: value was undefined but not optional.',
-  Null: 'schema.test failed: value was null but not nullable.',
-  NotAnObj: 'schema.test failed: value was neither undefined nor null but not an object.',
-  ParseNotAnObj: 'schema.parse failed: value must be an object.',
-  NewFn: 'Failed in the "new" function',
-  TestFn: 'Failed in the "test" function',
-  ParseFn: 'Failed in the "parse" function',
-  StrictMode: 'Argument had a property which was not in schema, which is not allowed in strict mode',
-} as const;
+import {
+  defaultOnError,
+  Errors,
+  getErrObj,
+  IError,
+  TFormatError,
+  TOnError,
+} from './error-stuff';
 
 
 // **** Fancy Composite Types **** //
@@ -50,28 +39,44 @@ type IsStaticObj<P, Prop = NonNullable<P>> = (
 // **** Utility types **** //
 
 type NotUndef<T> = Exclude<T, undefined>;
-export type TModel = Record<string | number | symbol, unknown>;
+type TModel = Record<string | number | symbol, unknown>;
 type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
 type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
-
-type TGlobalsMap = Map<TValidatorFn, Pick<IValidatorObj<unknown>, 'default' | 'transform' | 'onError'>>;
 type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
-type TOnError = (property: string, value?: unknown, origMessage?: string, schemaId?: string) => void;
+
+
+// **** Misc **** //
+
+type TValidatorFn<T = unknown> = (
+  arg: unknown,
+  parentObj?: TModel,
+  key?: string,
+) => arg is T;
+
+interface IValidatorObj<T = unknown> {
+  vf: TValidatorFn<T>,
+  default?: T,
+  transform?: TFunc,
+  formatError?: TFormatError;
+}
+
+type IValidatorFnOrObj<T> = TValidatorFn<T> | IValidatorObj<T>;
+type TGlobalsMap = Map<TValidatorFn, Pick<IValidatorObj, 'default' | 'transform' | 'formatError'>>;
+type TCloneFn = typeof defaultCloneFn;
 
 type TAllVldtrsObj = Record<string, {
   vf: TValidatorFn,
-  transform?: TFunc,
   default: TFunc,
-  onError?: IValidatorObj<unknown>['onError'],
+  formatError: TFormatError,
+  transform?: TFunc,
 }>;
 
 interface IFullOptions {
-  optional?: boolean;
-  nullable?: boolean;
-  init?: boolean | null;
-  nullish?: true;
-  id?: string;
-  safety?: 'pass' | 'filter' | 'strict';
+  optional: boolean;
+  nullable: boolean;
+  init: boolean | null;
+  schemaId?: string;
+  safety: 'pass' | 'filter' | 'strict';
 }
 
 
@@ -88,7 +93,7 @@ type TPickRetVal<T, NnT = NonNullable<T>> = {
 } : unknown);
 
 // Value returned by the "schema" function
-export interface ISchema<T> {
+interface ISchema<T = unknown> {
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
@@ -115,9 +120,8 @@ export type TSchemaFnObjArg<T> = Required<{
   );
 }>;
 
-// "Jet Options"
 interface IJetOptions<M> {
-  globals?: M extends IValidatorObj<unknown>[] ? M : never,
+  globals?: M extends IValidatorObj[] ? M : never,
   cloneFn?: (value: unknown) => unknown,
   onError?: TOnError,
 }
@@ -128,12 +132,12 @@ type TGlobalsArr<M> = {
   } & ('vf' extends keyof M[K] ? {
     default?: GetTypePredicate<M[K]['vf']>,
     transform?: TFunc,
-    onError?: IValidatorObj<unknown>['onError'],
+    formatError?: TFormatError,
   } : never)
 };
 
 // Need to restrict parameters based on if "T" is null or undefined.
-type TSchemaOptions<T> = (
+type TSchemaOptions<T = unknown> = (
   unknown extends T 
   ? (IOptNul | IOptNotNul | INotOptButNul | INotOptOrNul | INullish) 
   : (undefined extends T 
@@ -141,6 +145,43 @@ type TSchemaOptions<T> = (
       : (null extends T ? INotOptButNul : INotOptOrNul)
     )
 );
+
+interface ISchemaOptionsBase {
+  id?: string;
+  safety?: 'pass' | 'filter' | 'strict';
+}
+
+export interface IOptNul extends ISchemaOptionsBase {
+  optional: true;
+  nullable: true;
+  init?: null | boolean;
+  nullish?: undefined
+}
+
+export interface IOptNotNul extends ISchemaOptionsBase {
+  optional: true;
+  nullable?: false;
+  init?: boolean;
+}
+
+export interface INotOptButNul extends ISchemaOptionsBase {
+  optional?: false;
+  nullable: true;
+  init?: null | true;
+}
+
+export interface INotOptOrNul extends ISchemaOptionsBase {
+  optional?: false;
+  nullable?: false;
+  init?: true;
+}
+
+export interface INullish extends ISchemaOptionsBase {
+  nullish: true;
+  optional?: undefined;
+  nullable?: undefined;
+  init?: null | boolean;
+}
 
 // If not optional or nullable, make this an optional parameter
 type TSchemaOptionsHelper<T, R> = (
@@ -188,43 +229,6 @@ type InferTypesHelper<U> = {
   );
 };
 
-interface ISchemaOptionsBase {
-  id?: string;
-  safety?: 'pass' | 'filter' | 'strict';
-}
-
-export interface IOptNul extends ISchemaOptionsBase {
-  optional: true;
-  nullable: true;
-  init?: null | boolean;
-  nullish?: undefined
-}
-
-export interface IOptNotNul extends ISchemaOptionsBase {
-  optional: true;
-  nullable?: false;
-  init?: boolean;
-}
-
-export interface INotOptButNul extends ISchemaOptionsBase {
-  optional?: false;
-  nullable: true;
-  init?: null | true;
-}
-
-export interface INotOptOrNul extends ISchemaOptionsBase {
-  optional?: false;
-  nullable?: false;
-  init?: true;
-}
-
-export interface INullish extends ISchemaOptionsBase {
-  nullish: true;
-  optional?: undefined;
-  nullable?: undefined;
-  init?: null | boolean;
-}
-
 
 // **** Functions **** //
 
@@ -234,28 +238,26 @@ export interface INullish extends ISchemaOptionsBase {
 function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
   // Setup default values map
   const globalsMap = _setupGlobalsMap(options?.globals ?? []),
-    cloneFn = (options?.cloneFn ? options.cloneFn : _defaultClone),
-    onError = (options?.onError ? _wrapCustomError(options.onError) : _defaultOnErr);
+    cloneFn = (options?.cloneFn ?? defaultCloneFn),
+    onError = (options?.onError ?? defaultOnError);
   // Return the "schema" function
   return <T,
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
     R extends TSchemaOptions<T> = TSchemaOptions<T>,
   >(schemaFnObjArg: U, ...options: TSchemaOptionsHelper<T, R>) => {
     // Setup options
-    const [ schemaOptions ] = options;
-    const optionsF = _processOptions(schemaOptions);
-    let onErrorF = onError;
-    if (optionsF.id) {
-      onErrorF = _wrapErrorWithSchemaId(onErrorF, optionsF.id);
-    }
+    const [ schemaOptions ] = options,
+      optionsF = _processOptions(schemaOptions);
     if (!optionsF.optional && (optionsF.init === false || isUndef(optionsF.init))) {
-      onErrorF('', '', Errors.Init);
+      const err = getErrObj(Errors.Init, '.schema', optionsF.schemaId);
+      onError(err);
     }
     // Setup main functions
-    const ret = _setupAllVldtrsHolder(schemaFnObjArg, cloneFn, globalsMap, onErrorF, optionsF.id),
-      newFn = _setupNewFn(ret.allVldtrsHolder, cloneFn, onErrorF),
-      testFn = _setupTestFn(ret.allVldtrsHolder, optionsF.optional!, optionsF.nullable!, optionsF.safety, onErrorF),
-      parseFn = _setupParseFn(ret.allVldtrsHolder, optionsF.safety, onErrorF);
+    const ret = _setupAllVldtrsHolder(schemaFnObjArg, globalsMap, cloneFn,
+        onError, optionsF.schemaId),
+      newFn = _setupNewFn(ret.allVldtrsHolder, cloneFn, onError, optionsF.schemaId),
+      testFn = _setupTestFn(ret.allVldtrsHolder, optionsF, onError),
+      parseFn = _setupParseFn(ret.allVldtrsHolder, optionsF, onError);
     // Return
     return {
       new: newFn,
@@ -295,22 +297,24 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
  */
 function _setupAllVldtrsHolder<T>(
   schemaArgObj: TSchemaFnObjArg<T>,
-  cloneFn: typeof _defaultClone,
   globalsMap: TGlobalsMap,
+  cloneFn: TCloneFn,
   onError: TOnError,
-  schemaId = '',
+  schemaId?: string,
 ): {
   childSchemaNewFns: Record<string, TFunc>,
   allVldtrsHolder: TAllVldtrsObj,
 } {
   const allVldtrsHolder: TAllVldtrsObj = {},
-    childSchemaNewFns: Record<string, TFunc> = {};
+    childSchemaNewFns: Record<string, TFunc> = {},
+    errors: (string | IError)[] = [];
   // Start loop
   for (const key in schemaArgObj) {
     // Init the validator-holder-object
     const vldrHolderObj: TAllVldtrsObj[keyof TAllVldtrsObj] = {
-      vf: (arg: unknown): arg is boolean  => false,
+      vf: (arg: unknown): arg is boolean  => !!arg,
       default: () => undefined,
+      formatError: (error: IError) => error,
     };
     // Is validator function or object
     const schemaArgProp = schemaArgObj[key];
@@ -338,12 +342,8 @@ function _setupAllVldtrsHolder<T>(
         if (!!localObj.transform) {
           vldrHolderObj.transform = localObj.transform;
         }
-        if (!!localObj.onError) {
-          let customErr = localObj.onError;
-          if (!!schemaId) {
-            customErr = _wrapErrorWithSchemaId(customErr, schemaId);
-          }
-          vldrHolderObj.onError = customErr;
+        if (!!localObj.formatError) {
+          vldrHolderObj.formatError = localObj.formatError;
         }
       } else {
         vdlrFn = schemaArgProp as TValidatorFn;
@@ -357,12 +357,8 @@ function _setupAllVldtrsHolder<T>(
         if (!vldrHolderObj.transform && !!globalsObj.transform) {
           vldrHolderObj.transform = globalsObj.transform;
         }
-        if (!!globalsObj.onError) {
-          let customErr = globalsObj.onError;
-          if (!!schemaId) {
-            customErr = _wrapErrorWithSchemaId(customErr, schemaId);
-          }
-          vldrHolderObj.onError = customErr;
+        if (!vldrHolderObj.formatError && !!globalsObj.formatError) {
+          vldrHolderObj.formatError = globalsObj.formatError;
         }
       }
       // Set the default
@@ -394,20 +390,24 @@ function _setupAllVldtrsHolder<T>(
       vldrHolderObj.vf = vldr as TValidatorFn;
     // Error
     } else {
-      onError(key, '', Errors.Validator);
+      const errObj = getErrObj(Errors.Init, '._setupAllVldtrsHolder', schemaId, 
+        key);
+      errors.push(errObj);
     }
     // Make sure the default is a valid value
-    const vldr = vldrHolderObj.vf,
-      dfltVal: unknown = vldrHolderObj.default();
-    if (!vldr(dfltVal)) {
-      if (!!vldrHolderObj.onError) {
-        vldrHolderObj.onError(key, dfltVal, Errors.Default);
-      } else {
-        onError(key, dfltVal, Errors.Default);
-      }
+    const dfltVal: unknown = vldrHolderObj.default();
+    if (!vldrHolderObj.vf(dfltVal)) {
+      const errObj = getErrObj(Errors.DefaultVal, '._setupAllVldtrsHolder',
+        schemaId, key, dfltVal);
+      const errFin = vldrHolderObj.formatError(errObj); 
+      errors.push(errFin);
     }
     // Set the validator-object
     allVldtrsHolder[key] = vldrHolderObj;
+  }
+  // Call error function if there are any errors
+  if (errors.length > 0) {
+    onError(errors);
   }
   // Return
   return {
@@ -419,14 +419,14 @@ function _setupAllVldtrsHolder<T>(
 /**
  * See if value is a schema object.
  */
-function _isSchemaObj(arg: unknown): arg is ISchema<unknown> {
+function _isSchemaObj(arg: unknown): arg is ISchema {
   return (isObj(arg) && '_schemaOptions' in arg);
 }
 
 /**
  * Is a validator object
  */
-function _isValidatorObj(arg: unknown): arg is IValidatorObj<unknown> {
+function _isValidatorObj(arg: unknown): arg is IValidatorObj {
   return (isObj(arg) && ('vf' in arg) && typeof arg.vf === 'function');
 }
 
@@ -437,10 +437,12 @@ function _setupNewFn(
   allVldtrsHolder: TAllVldtrsObj,
   cloneFn: TFunc,
   onError: TOnError,
+  schemaId?: string,
 ): (partial?: Partial<TModel>) => TModel {
   return (partial: Partial<TModel> = {}) => {
     // Get default values
-    const retVal: TModel = {};
+    const retVal: TModel = {},
+      errors: (string | IError)[] = [];
     for (const key in allVldtrsHolder) {
       const val: unknown = allVldtrsHolder[key].default();
       if (val !== undefined) {
@@ -461,12 +463,15 @@ function _setupNewFn(
       retVal[key] = cloneFn(val);
       // Run validator-function
       if (!vldrObj.vf(val)) {
-        if (!!vldrObj.onError) {
-          vldrObj.onError(key, val, Errors.NewFn);
-        } else {
-          onError(key, val, Errors.NewFn);
-        }
+        const errObj = getErrObj(Errors.PropValidation, '.new', schemaId, key,
+          val);
+        const errFin = vldrObj.formatError(errObj); 
+        errors.push(errFin);
       }
+    }
+    // Call error function if there are any errors
+    if (errors.length > 0) {
+      onError(errors);
     }
     // Return
     return retVal;
@@ -478,26 +483,31 @@ function _setupNewFn(
  */
 function _setupTestFn(
   allVldtrsHolder: TAllVldtrsObj,
-  isOptional: boolean,
-  isNullable: boolean,
-  safety: IFullOptions['safety'] = 'filter',
+  options: IFullOptions,
   onError: TOnError,
 ): (arg: unknown) => arg is TModel {
-  const vldrEntries = Object.entries(allVldtrsHolder);
+  // Pre-process some stuff
+  const { schemaId, safety } = options,
+    NotOptErr = getErrObj(Errors.UndefButNotOpt, '.test', schemaId),
+    NullErr = getErrObj(Errors.NullButNotNullable, '.test', schemaId),
+    runValidations = _setupRunValidations(allVldtrsHolder, safety, '.test',
+      schemaId);
+  // Return test function
   return (arg: unknown): arg is TModel => {
-    // Check null/undefined;
+    // Check undefined;
     if (isUndef(arg)) {
-      if (isOptional) {
+      if (options.optional) {
         return true;
       } else {
-        onError('', arg, Errors.Undef);
+        onError(NotOptErr);
         return false;
       }
+    // Check null
     } else if (arg === null) {
-      if (isNullable) {
+      if (options.nullable) {
         return true;
       } else {
-        onError('', arg, Errors.Null);
+        onError(NullErr);
         return false;
       }
     }
@@ -506,40 +516,13 @@ function _setupTestFn(
       return false;
     }
     // Run validators
-    const argCopy: TModel = { ...arg };
-    for (const [key, vldrObj] of vldrEntries) {
-      // Run transform
-      let val = (arg as TModel)[key];
-      if (!!vldrObj.transform) {
-        val = vldrObj.transform(val);
-        (arg as TModel)[key] = val;
-      }
-      // Run validator-function
-      if (!vldrObj.vf(val)) {
-        if (!!vldrObj.onError) {
-          vldrObj.onError(key, val, Errors.ParseFn);
-        } else {
-          onError(key, val, Errors.ParseFn);
-        }
-        return false;
-      }
-      // Check safety
-      if (safety !== 'pass') {
-        Reflect.deleteProperty(argCopy, key);
-      }
+    const errors = runValidations(arg);
+    if (errors.length > 0) {
+      onError(errors);
+      return false;
+    } else {
+      return true;
     }
-    // Unless safety = "pass", filter extra keys
-    if (safety !== 'pass') {
-      for (const key in argCopy) {
-        if (safety === 'strict') {
-          onError(key, argCopy[key], Errors.StrictMode);
-          return false;
-        }
-        Reflect.deleteProperty(arg, key);
-      }
-    }
-    // Return
-    return true;
   };
 }
 
@@ -548,48 +531,24 @@ function _setupTestFn(
  */
 function _setupParseFn(
   allVldtrsHolder: TAllVldtrsObj,
-  safety: IFullOptions['safety'] = 'filter',
+  options: IFullOptions,
   onError: TOnError,
 ): (arg: unknown) => unknown {
-  const vldrEntries = Object.entries(allVldtrsHolder);
+  // Pre-process some stuff
+  const { schemaId, safety } = options,
+    notAnObjErr = getErrObj(Errors.NotAnObj, '.parse', schemaId),
+    runValidations = _setupRunValidations(allVldtrsHolder, safety, '.test',
+      schemaId);
+  // Return parse function
   return (arg: unknown) => {
-    // Must be an object
     if (!isObj(arg)) {
-      onError('', arg, Errors.ParseNotAnObj);
+      onError(notAnObjErr);
       return arg;
     }
     // Run validators
-    const argCopy: TModel = { ...arg };
-    for (const [key, vldrObj] of vldrEntries) {
-      // Run transform
-      let val = (arg as TModel)[key];
-      if (!!vldrObj.transform) {
-        val = vldrObj.transform(val);
-        (arg as TModel)[key] = val;
-      }
-      // Run validator-function
-      if (!vldrObj.vf(val)) {
-        if (!!vldrObj.onError) {
-          vldrObj.onError(key, val, Errors.ParseFn);
-        } else {
-          onError(key, val, Errors.ParseFn);
-        }
-        return arg;
-      }
-      // Check safety
-      if (safety !== 'pass') {
-        Reflect.deleteProperty(argCopy, key);
-      }
-    }
-    // Check no unknown keys for strict mode
-    if (safety !== 'pass') {
-      for (const key in argCopy) {
-        if (safety === 'strict') {
-          onError(key, argCopy[key], Errors.StrictMode);
-          return arg;
-        }
-        Reflect.deleteProperty(arg, key);
-      }
+    const errors = runValidations(arg);
+    if (errors.length > 0) {
+      onError(errors);
     }
     // Return
     return arg;
@@ -599,7 +558,7 @@ function _setupParseFn(
 /**
  * Setup the globals map
  */
-function _setupGlobalsMap(globalsArr: IValidatorObj<unknown>[]): TGlobalsMap {
+function _setupGlobalsMap(globalsArr: IValidatorObj[]): TGlobalsMap {
   const map: TGlobalsMap = new Map();
   for (const obj of globalsArr) {
     const { vf, ...rest } = obj;
@@ -611,113 +570,81 @@ function _setupGlobalsMap(globalsArr: IValidatorObj<unknown>[]): TGlobalsMap {
 /**
  * Setup options based on object passed by the user.
  */
-function _processOptions(options: IFullOptions | undefined) {
-  let base: IFullOptions = { init: true, safety: 'filter' };
-  if (!isUndef(options?.init)) {
-    base.init = options.init;
+function _processOptions(options?: TSchemaOptions): IFullOptions {
+  const retVal: IFullOptions = {
+    optional: false,
+    nullable: false,
+    init: true,
+    safety: 'filter',
+  };
+  if (isUndef(options)) {
+    return retVal;
   }
-  if (!!options?.id) {
-    base.id = options?.id;
+  if (!isUndef(options.init)) {
+    retVal.init = options.init;
   }
-  if (!!options?.safety) {
-    base.safety = options.safety;
+  if (!!options.id) {
+    retVal.schemaId = options.id;
   }
-  if (!options?.nullish) {
-    base = {
-      ...base,
-      optional: !!options?.optional,
-      nullable: !!options?.nullable,
-    };
-  } else {
-    base = {
-      ...base,
-      optional: true,
-      nullable: true,
-    };
+  if (!!options.safety) {
+    retVal.safety = options.safety;
+  }
+  if (!isUndef(options.optional)) {
+    retVal.optional = !!options.optional;
+  }
+  if (!isUndef(options.nullable)) {
+    retVal.nullable = !!options.nullable;
+  }
+  if (('nullish' in options) && !isUndef(options.nullish)) {
+    retVal.optional = options.nullish;
+    retVal.nullable = options.nullish;
   }
   // Return
-  return base;
+  return retVal;
 }
 
 /**
- * Clone Function
+ * Run validator functions for an argument and return an errors array
  */
-function _defaultClone(arg: unknown): unknown {
-  if (arg instanceof Date) {
-    return new Date(arg);
-  } else if (isObj(arg)) {
-    return structuredClone(arg);
-  } else {
-    return arg;
-  }
-}
-
-/**
- * Provide the default error message to the custom function.
- */
-function _wrapErrorWithSchemaId(onError: TOnError, schemaId: string) {
-  return (property: string, value?: unknown, moreDetails?: string) => {
-    return onError(property, value, moreDetails, schemaId);
-  };
-}
-
-/**
- * Provide the default error message to the custom function.
- */
-function _wrapCustomError(onError: TOnError) {
-  return (property: string, value?: unknown, moreDetails?: string, schemaId?: string) => {
-    const origMessage = _getDefaultErrMsg(property, value, moreDetails, schemaId);
-    return onError(property, value, origMessage);
-  };
-}
-
-/**
- * Default function to call when a validation fails.
- */
-function _defaultOnErr(property: string, value?: unknown, moreDetails?: string, schemaId?: string) {
-  const message = _getDefaultErrMsg(property, value, moreDetails, schemaId);
-  throw new Error(message);
-}
-
-/**
- * Get the default error message.
- */
-function _getDefaultErrMsg(
-  property: string,
-  value?: unknown,
-  moreDetails?: string,
-  id?: string,
-) {
-  if (!!property) {
-    property = `The property "${property}" failed to pass validation.`;
-  }
-  let message = '';
-  if (!!property && !value && !moreDetails && !id) {
-    message = property;
-  } else if (!property && !!value && !moreDetails && !id) {
-    message = JSON.stringify(value);
-  } else if (!property && !value && !!moreDetails && !id) {
-    message = moreDetails;
-  } else {
-    let msgObj: TModel;
-    if (!property) {
-      msgObj = {
-        message: moreDetails,
-        value,
-      };
-    } else {
-      msgObj = {
-        message: property,
-        value,
-        ['more-details']: moreDetails,
-      };
+function _setupRunValidations(
+  allVldtrsHolder: TAllVldtrsObj,
+  safety: string,
+  location: string,
+  schemaId?: string,
+): ((arg: object) => (string | IError)[] ) {
+  // Run validations
+  return (arg: object): (string | IError)[] => {
+    const errors: (string | IError)[] = [];
+    for (const key in allVldtrsHolder) {
+      const vldrObj = allVldtrsHolder[key];
+      let val = (arg as TModel)[key];
+      if (!!vldrObj.transform) {
+        val = vldrObj.transform(val);
+        (arg as TModel)[key] = val;
+      }
+      if (!vldrObj.vf(val)) {
+        const errObj = getErrObj(Errors.PropValidation, location, schemaId, key,
+          val);
+        const errFin = vldrObj.formatError(errObj); 
+        errors.push(errFin);
+      }
     }
-    if (!!id) {
-      msgObj['schema-id'] = id;
+    // Unless safety = "pass", filter extra keys
+    if (safety !== 'pass') {
+      for (const key in arg) {
+        if (key in allVldtrsHolder) {
+          continue;
+        } else if (safety === 'strict') {
+          const errObj = getErrObj(Errors.StrictMode, location, schemaId, key);
+          errors.push(errObj);
+        } else if (safety === 'filter') {
+          Reflect.deleteProperty(arg, key);
+        }
+      }
     }
-    message = JSON.stringify(msgObj);
-  }
-  return message;
+    // Return errors
+    return errors;
+  };
 }
 
 
