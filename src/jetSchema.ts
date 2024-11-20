@@ -529,13 +529,12 @@ function _setupTestFn(
       }
     }
     // Unless safety = "pass", filter extra keys
-    const extraKeys = Object.keys(argCopy);
-    if (safety !== 'pass' && extraKeys.length > 0) {
-      if (safety === 'strict') {
-        onError('', '', Errors.StrictMode);
-        return false;
-      }
-      for (const key of extraKeys) {
+    if (safety !== 'pass') {
+      for (const key in argCopy) {
+        if (safety === 'strict') {
+          onError(key, argCopy[key], Errors.StrictMode);
+          return false;
+        }
         Reflect.deleteProperty(arg, key);
       }
     }
@@ -560,8 +559,7 @@ function _setupParseFn(
       return arg;
     }
     // Run validators
-    const argCopy: TModel = { ...arg },
-      filteredCopy: TModel = {};
+    const argCopy: TModel = { ...arg };
     for (const [key, vldrObj] of vldrEntries) {
       // Run transform
       let val = (arg as TModel)[key];
@@ -576,27 +574,25 @@ function _setupParseFn(
         } else {
           onError(key, val, Errors.ParseFn);
         }
+        return arg;
       }
       // Check safety
       if (safety !== 'pass') {
-        if (key in arg) {
-          filteredCopy[key] = val;
-        }
-        if (safety === 'strict') {
-          Reflect.deleteProperty(argCopy, key);
-        }
+        Reflect.deleteProperty(argCopy, key);
       }
     }
     // Check no unknown keys for strict mode
-    if (safety === 'strict' && Object.keys(argCopy).length > 0) {
-      onError('', '', Errors.StrictMode);
+    if (safety !== 'pass') {
+      for (const key in argCopy) {
+        if (safety === 'strict') {
+          onError(key, argCopy[key], Errors.StrictMode);
+          return arg;
+        }
+        Reflect.deleteProperty(arg, key);
+      }
     }
     // Return
-    if (safety !== 'pass') {
-      return filteredCopy;
-    } else {
-      return arg;
-    }
+    return arg;
   };
 }
 

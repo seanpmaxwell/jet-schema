@@ -315,7 +315,7 @@ You can configure parent settings by importing and calling the `jetSchema` funct
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
 
-export default jetLogger({
+export default jetSchema({
   globals?: [
     { vf: isNum, default: 0 },
     { vf: isStr, default: '' },
@@ -459,7 +459,7 @@ I highly recommend you set these default values for each of your basic primitive
 ```typescript
 import { isNum, isStr, isBool } from 'util/validators.ts';
 
-export default jetLogger({
+export default jetSchema({
   globals: [
     { vf: isNum, default: 0 },
     { vf: isStr, default: '' },
