@@ -327,7 +327,7 @@ const User = schema<IUser>({
 }, /* { ...options object... } */); // <-- Pass options here
 ```
 
-**options** explained:
+`options:` explained:
   - `optional`: Default `false`, must be set to true if the generic is optional.
   - `nullable`: Default `false`, must be set to true if the generic is nullable.
   - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
@@ -342,7 +342,7 @@ const User = schema<IUser>({
     - `strict`: Properties not in the schema will be filtered out and raise errors.
     - **NOTE:** `safety` only applies to the `.test` and `.parse` functions, it does not affect `.new`. 
 
-**options** example:
+`options:` example:
 ```typescript
 type TUser = IUser | null | undefined;
 
@@ -441,7 +441,7 @@ console.log(FullSchema.new());
 ### <ins>TypeScript Caveats</ins> <a name="typescript-caveats"></a>
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
-#### `Validator functions:`
+#### `Validator functions`
 If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `param is string` will still work. However a if a type predicate returns `param is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`:
 ```typescript
 interface IUser {
@@ -455,7 +455,7 @@ const User = schema<IUser>({
 })
 ```
 
-#### `Child schemas:`
+#### `Child schemas`
 As mentioned, if a property in a parent-schema is a mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added:
 ```typescript
 interface IUser {
