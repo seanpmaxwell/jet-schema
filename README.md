@@ -14,7 +14,7 @@
     - [The jetSchema() function](#the-jet-schema-function)
     - [jetSchema() additional options](#jet-schema-additional-options)
     - [The schema() function](#the-schema-function)
-    - [Handling the schema's type](#handling-the-schemas-type)
+    - [Handling a schema's type](#handling-the-schemas-type)
     - [The schema() "options" param](#schema-options)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
@@ -282,7 +282,7 @@ const User2 = sharedSchema({
 ```
 
 
-#### ▸ Handling the schema's type <a name="handling-the-schemas-type"></a>
+#### ▸ Handling a schema's type <a name="handling-the-schemas-type"></a>
 For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
