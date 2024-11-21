@@ -246,4 +246,60 @@ test('different schema "safety" options', () => {
   }, { safety: 'strict' });
   const arg = { id: 1, name: 'joe', foo: 'bar' };
   expect(() => schemaStrictAllowErrors.parse(arg)).toThrowError();
+
+  // Test nested object "strict"
+  const schemaNested = parentSchemaFn({
+    id: isNum,
+    name: isStr,
+    nested: parentSchemaFn({
+      nestedCity: isStr,
+      nestedZip: isNum,
+    }, { safety: 'strict' }),
+  }, { safety: 'strict' });
+  const nestedResult = schemaNested.parse({
+    id: -1,
+    name: 'asdf',
+    blah: 'dude', // should be removed
+    nested: {
+      nestedCity: 'asdf',
+      nestedZip: 1234,
+      nestedFoo: 'bar', // should be removed
+    },
+  });
+  expect(nestedResult).toStrictEqual({
+    id: -1,
+    name: 'asdf',
+    nested: {
+      nestedCity: 'asdf',
+      nestedZip: 1234,
+    },
+  });
+
+  // Test nested object
+  const schemaNestedFilter = parentSchemaFn({
+    id: isNum,
+    name: isStr,
+    nested: parentSchemaFn({
+      nestedCity: isStr,
+      nestedZip: isNum,
+    }),
+  });
+  const nestedResultFilter = schemaNestedFilter.parse({
+    id: -1,
+    name: 'asdf',
+    blah: 'dude', // should be removed
+    nested: {
+      nestedCity: 'asdf',
+      nestedZip: 1234,
+      nestedFoo: 'bar', // should be removed
+    },
+  });
+  expect(nestedResultFilter).toStrictEqual({
+    id: -1,
+    name: 'asdf',
+    nested: {
+      nestedCity: 'asdf',
+      nestedZip: 1234,
+    },
+  });
 });

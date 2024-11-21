@@ -43,7 +43,7 @@
 - Create new instances of your schemas using partials.
 - Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **4.7kb** minified).
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
-- Fast! checkout these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a> against some other popular validators like zod, valibot, and yup (one's which don't have a compilation-step).
+- Fast! see these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a>.
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
 - Works client-side or server-side.
 - TypeScript first!
@@ -174,8 +174,8 @@ const User = schema<IUser>({
 - Valibot **35kb**
 - **NOTE:** some of these could change as packages are updated
 
-**Fast** (see these benchmarks here: )
-
+**Fast** (see these benchmarks here: <a href="">)
+Checkout the benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a> and compare jet-schema to some other popular validators (one's which don't require a compilation step) like zod, valibot, and yup, etc. jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests. 
 <br/>
 
 

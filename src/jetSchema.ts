@@ -278,11 +278,11 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
           return {
             default: vldrObj.default,
             test: testFn,
-            ...(_isSchemaObj(prop) ? {
+            ...(_isSchemaObj(prop) && {
               pick: prop.pick,
               new: ret.childSchemaNewFns[key],
               schema: () => ({ ...prop }),
-            } : {}),
+            }),
           };
         }
       },
@@ -637,9 +637,8 @@ function _setupRunValidations(
         } else if (safety === 'strict') {
           const errObj = getErrObj(Errors.StrictMode, location, schemaId, key);
           errors.push(errObj);
-        } else if (safety === 'filter') {
-          Reflect.deleteProperty(arg, key);
         }
+        Reflect.deleteProperty(arg, key);
       }
     }
     // Return errors
