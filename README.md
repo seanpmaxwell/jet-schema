@@ -9,12 +9,13 @@
   - [Installation](#installation)
   - [What is a validator function](#what-is-a-validator-function)
   - [Creating Schemas](#creating-schemas)
-    - [Validator-objects](#validator-objects)
+    - [Passing validator-functions](#passing-validator-functions)
+    - [The IError object](#ierror-object)
     - [The jetSchema() function](#the-jet-schema-function)
     - [jetSchema() additional options](#jet-schema-additional-options)
     - [The schema() function](#the-schema-function)
     - [Handling the schema's type](#handling-the-schemas-type)
-    - [Schema "options" param](#schema-options)
+    - [The schema() "options" param](#schema-options)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
     - [.test](#test)
@@ -185,10 +186,10 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 
 ### <ins>Creating schemas</ins> <a name="creating-schemas"></a>
 
-#### `Validator-objects` <a name="validator-objects"></a>
-Before we create a schema, lets get familiar with what a **validator-object** is. Validator-functions can be passed to schemas directly or within a validator-object. Validator-objects allow us to configure certains settings for a specific validator-function:
+#### `Passing validator-functions` <a name="passing-validator-functions"></a>
+Validator-functions can be passed to schemas directly or within a configuration object. These objects allow us to handle settings for individual validator-functions:
 ```typescript
-// Validator-object format:
+// Passing function through an object:
 {
   vf: <T>(arg: unknown) => arg is T; // vf => validator-function 
   default?: T; // the default value for the validator-function
@@ -199,7 +200,7 @@ Before we create a schema, lets get familiar with what a **validator-object** is
 // Example
 const UserSchema = schema({
   name: isString, // Using a validator-function directly
-  id: {  // Using a validator-object
+  id: {  // Using a configuration object
     vf: isNumber, // the validator-function in the object
     default: 0,
     transform: Number,
@@ -208,7 +209,8 @@ const UserSchema = schema({
 });
 ```
 
-In the snippet above we see the `formatError` function passes and `IError` object. The format for an `IError` object is:
+#### `IError object` <a name="ierror-object"></a>
+In the previous snippet we see the `formatError` function passes an `IError` object. The format for an `IError` object is:
 ```typescript
 {
   property?: string;
@@ -220,9 +222,9 @@ In the snippet above we see the `formatError` function passes and `IError` objec
 ```
 
 #### `The jetSchema() function` <a name="the-jet-schema-function"></a>
-Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
+Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of configuration objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
-The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
+The configuration objects are set in the `globals:` property array. Note that localized settings will overwrite all global ones:
 ```typescript
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators'; 
@@ -240,7 +242,7 @@ const User1 = schema({
 });
 
 const User2 = schema({
-  id: { vf: isNum, default: -1 }, // Localized default setting overwriting global one
+  id: { vf: isNum, default: -1 }, // Localized default setting overwriting a global one
   name: isStr,
 })
 
@@ -249,7 +251,7 @@ User2.new() // => { id: -1, name: '' }
 ```
 
 #### `jetSchema() additional options` <a name="jet-schema-additional-options"></a>
-For the `jetSchema` function, in addition to `globals` there are two additional options we can configure:
+For the `jetSchema` function, in addition to `globals:` there are two additional options we can configure:
 - `cloneFn`: A custom clone-function. When using the `.new` function, all partial values will be cloned. The default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
 - `onError`: Configure what happens when errors are raised. By default, a javascript `Error` is thrown with the array of errors stringified in the error message.
 ```typescript
@@ -322,7 +324,7 @@ const User = schema({
 const TUser = inferType<typeof User>;
 ```
 
-#### `Schema "options" param` <a name="schema-options"></a>
+#### `The schema() "options" param` <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
