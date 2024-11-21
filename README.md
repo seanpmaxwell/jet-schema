@@ -11,7 +11,7 @@
   - [What is a validator function](#what-is-a-validator-function)
   - [Creating Schemas](#creating-schemas)
     - [Validator-objects](#validator-objects)
-    - [The schema and default jetSchema functions](#the-schema-and-default-jet-schema-functions)
+    - [The schema() and default jetSchema() functions](#the-schema-and-default-jet-schema-functions)
     - [Handling the schema's type](#handling-the-schemas-type)
     - [Schema Options](#schema-options)
   - [Schema APIs](#schema-apis)
@@ -181,9 +181,7 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 }
 ```
 
-> I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
-
-One final note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefine these functions. 
+> I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>. One more note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefine these functions. 
 <br/>
 
 
@@ -223,7 +221,7 @@ In the snippet above we see the `formatError` function passes and `IError` objec
 }
 ```
 
-### The `schema` and default `jetSchema` functions <a name="the-schema-and-default-jet-schema-functions"></a>
+### The `schema()` and default `jetSchema()` functions <a name="the-schema-and-default-jet-schema-functions"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
