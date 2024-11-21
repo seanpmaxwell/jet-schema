@@ -13,22 +13,23 @@
 - [Guide](#guide)
   - [Installation](#installation)
   - [Creating Schemas](#creating-schemas)
+    - Validator-objects
+    - The schema and default jetSchema functions
+    - Handling the schema's type
+    - [Schema Options](#schema-options)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
     - [.test](#test)
     - [.pick](#pick)
     - [.parse](#parse)
-  - [Schema Options](#schema-options)
-  - [Configuring settings](#configuring-settings)
-    - [Parent settings](#parent-settings)
-    - [Local settings](#local-settings)
   - [Combining Schemas](#combining-schemas)
   - [TypeScript Caveats](#typescript-caveats)
   - [Bonus Features](#bonus-features)
   - [Using jet-schema without TypeScript](#without-typescript)
-  - [Combining jet-schema with parse from ts-validators](#parse-from-ts-validators)
 - [Tips](#tips)
   - [Creating wrapper functions](#creating-wrapper-functions)
+  - [Recommended Global Settings](#recommended-global-settings)
+  - [Combining jet-schema with parse from ts-validators](#parse-from-ts-validators)
 <br/>
 
 
@@ -42,7 +43,7 @@
 - Focus is on using your own validator-functions to validate object properties.
 - Enables extracting logic for nested schemas.
 - Create new instances of your schemas using partials.
-- Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **4.7kb** minified).
+- Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **4.7kB** minified).
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 - Fast! see these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a>.
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
@@ -165,7 +166,7 @@ const User = schema<IUser>({
 });
 ```
 
-### Create instances with partials: <a name="create-instances-with-partials"></a>
+### Create instances with partials <a name="create-instances-with-partials"></a>
 A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function.<br/><br/>
 Think of `.new` as like what a copy-constructor for classes. You can configure a set of default values for each validator-function, and then pass an partial-type of your schema-object to `.new`. Whichever values are in the partial will be validated and cloned, which values are not in the partial will be set with defaults. See the <a name="new">.new</a> section for more details.
 
@@ -181,8 +182,7 @@ Think of `.new` as like what a copy-constructor for classes. You can configure a
 
 **Fast**:
 - See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
-- Compare jet-schema to some other popular validators (one's which don't require a compilation step) like zod, valibot, and yup, etc.
-- Notice that jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests.
+- Looking at the benchmarks in the link above, compare jet-schema to some other popular validators (one's which don't require a compilation step like zod, valibot, and yup, etc) and notice that jet-schema is roughly 3-4 times as fast as zod and almost twice as fast as valibot on average.
 <br/>
 
 
@@ -195,7 +195,107 @@ Think of `.new` as like what a copy-constructor for classes. You can configure a
 
 ## Creating schemas <a name="creating-schemas"></a>
 
-Using the `schema` function exported from `jet-schema` or the function returned from calling `jetSchema(...)` if you configured parent settings (see the <a href="#parent-settings">Parent Settings</a> section), call the function and pass it an object with a key for each property you are trying to validate with the value being a validator-function or a settings-object (see the <a href="#configuring-settings">Configuring Settings</a> section for how to use settings-objects). For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
+### Validator-objects <a name="validator-objects"></a>
+Before we create a schema, lets get familiar with what a **validator-object** is. Validator-functions can be passed to schemas directly or within a validator-object. Validator-objects allow us to configure certains settings for a specific validator-function:
+```typescript
+// Validator-object format:
+{
+  vf: <T>(arg: unknown) => arg is T; // vf => validator-function 
+  default?: T; // the default value for the validator-function
+  transform?: (arg: unknown) => T; // modify the value before calling the validator-function
+  formatError?: (error: IError) => IError | string; // Customize what's sent to onError() when errors are raised.
+}
+
+// Example
+const UserSchema = schema({
+  name: isString, // Using a validator-function directly
+  id: {  // Using a validator-object
+    vf: isNumber, // the validator-function in the object
+    default: 0,
+    transform: Number,
+    formatError: err => `Property ${err.property} was not a valid number`,
+  },
+});
+```
+
+In the snippet above we see the `formatError` function passes and `IError` object. The format for an `IError` object is:
+```typescript
+{
+  property?: string;
+  value?: unknown;
+  message?: string;
+  location?: string; // function which is throwing the error
+  schemaId?: string;
+}
+```
+
+### The `schema` and default `jetSchema` functions <a name="the-schema-and-default-jet-schema-functions"></a>
+Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
+
+The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
+```typescript
+import jetSchema from 'jet-schema';
+import { isNum, isStr } from './validators'; 
+
+const schema = jetSchema({
+  globals?: [
+    { vf: isNum, default: 0 },
+    { vf: isStr, default: '' },
+  ],
+});
+
+const User1 = schema({
+  id: isNum,
+  name: isStr,
+});
+
+const User2 = schema({
+  id: { vf: isNum, default: -1 }, // Localized default setting overwriting global one
+  name: isStr,
+})
+
+User1.new() // => { id: 0, name: '' }
+User2.new() // => { id: -1, name: '' }
+```
+
+If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
+ ```typescript
+import { schema } from 'jet-schema';
+import { isNum, isStr } from './validators'; 
+
+const User1 = shared({
+  id: { vf: isNum, default: 0 },
+  name: { vf: isStr, default: '' },
+});
+
+const User2 = sharedSchema({
+  id: { vf: isNum, default: 0 },
+  name: isStr, // ERROR: "isStr" does not accept `undefined` as a valid value but no default was value configured for "isStr"
+})
+```
+
+For the `jetSchema` function, in addition to `globals` there are two additional options we can configure:
+- `cloneFn`: A custom clone-function. When using the `.new` function, all partial values will be cloned. The default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
+- `onError`: Configure what happens when errors are raised. By default, a javascript `Error` is thrown with the array of errors stringified in the error message.
+```typescript
+import jetSchema from 'jet-schema';
+import { isNum, isStr } from './validators';
+
+export default jetSchema({
+  globals?: [
+    { vf: isNum, default: 0 },
+    { vf: isStr, default: '' },
+  ],
+  cloneFn?: (val: unknown) => unknown, // use a custom clone-function
+  onError?: (errors: IError[]) => void, // pass a custom error-handler,
+});
+```
+
+> I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
+
+
+### Handling the schema's type <a name="handling-the-schemas-type"></a>
+For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
 ```typescript
@@ -230,10 +330,52 @@ const TUser = inferType<typeof User>;
 ```
 
 
+### Schema options <a name="schema-options"></a>
+In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
+```typescript
+const User = schema<IUser>({
+  id: isNum,
+  name: isStr,
+}, /* { ...options object... } */); // <-- Pass options here
+```
+
+**options** explained:
+  - `optional`: Default `false`, must be set to true if the generic is optional.
+  - `nullable`: Default `false`, must be set to true if the generic is nullable.
+  - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
+  - `init`: Tells the parent what to do when the parent calls `.new`.
+    - `false`: Skip creating a child-object. The child-object must be `optional`.
+    - `true`: Create a new child-object (Uses the child's `.new` function).
+    - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
+  - `id`: A unique-identifier for the schema passed to the `IError` object.
+  - `safety`: Sets how to deal with additional properties. 
+    - `filter (default)`: Properties not in the schema will be filtered out but not raise errors.
+    - `pass`: Properties not in the schema will not be filtered out nor raise errors.
+    - `strict`: Properties not in the schema will be filtered out and raise errors.
+    - **NOTE:** `safety` only applies to the `.test` and `.parse` functions, it does not affect `.new`. 
+
+**options** example:
+```typescript
+type TUser = IUser | null | undefined;
+
+const User = schema<TUser>({
+  id: isNum,
+  name: isStr,
+}, {
+  optional: true, // Must be true because TUser is `| undefined`
+  nullable: true, // Must be true because TUser is `| null`
+  nullish: true, // Alternative to { optional: true, nullable: true }
+  init: false, // Can be "null", "false", or "true"
+  id: 'User',
+  safety: 'loose'
+});
+```
+
+
 ## Schema APIs <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
-> NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, and nothing for `isOptionalStr`. See the <a href="#configuring-settings">Configuring Settings</a> section for how to set default values.
+> NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, nothing for `isOptionalStr`, and `safety` is left at its default `filter` option. See the <a name="creating-schemas">Creating Schemas</a> section for how to set default values and the `safety` option.
 
 ### `.new` <a name="new"></a>
 Allows you to create new instances of your type using partials. If the property is absent, `.new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
@@ -259,7 +401,7 @@ Selects a property and returns an object with the `.test` and `.default` functio
 ```typescript
 const User = schema<IUser>({
   id: isNum,
-  address: schema<IUser['address'>({
+  address: schema<IUser['address']>({
     street: isStr,
     city: isStr,
   }, { init: null }),
@@ -288,138 +430,11 @@ User.parse({ id: '1', name: 'john' }); // => Error
 ```
 
 
-## Schema options <a name="schema-options"></a>
-In addition to a schema-object, the `schema` function accepts an additional **options** object parameter:
-```typescript
-const User = schema<IUser>({
-  id: isNum,
-  name: isStr,
-}, /* { ...options object... } */); // <-- Pass options here
-```
-
-**options** explained:
-  - `optional`: Default `false`, must be set to true if the generic is optional.
-  - `nullable`: Default `false`, must be set to true if the generic is nullable.
-  - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
-  - `init`: Tells the parent what to do when the parent calls `.new`. There are 3 options:
-    - `false`: Skip creating a child-object. The child-object must be `optional`.
-    - `true`: Create a new child-object (Uses the child's `.new` function).
-    - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
-  - `id`: A unique-identifier for the schema (useful if debugging a bunch of schemas at once).
-  - `safety`: Value can be `'filter' (default), 'pass', or 'strict'`.
-    - `filter`: Properties not in the schema will be filtered out but not raise errors.
-    - `pass`: Properties not in the schema will not be filtered out.
-    - `strict`: Properties not in the schema will raise errors.
-    - **NOTE:** `safety` only applies to the `.test` and `.parse` functions, it does not affect `.new`. 
-
-**options** example:
-```typescript
-type TUser = IUser | null | undefined;
-
-const User = schema<TUser>({
-  id: isNum,
-  name: isStr,
-}, {
-  optional: true, // Must be true because TUser is `| undefined`
-  nullable: true, // Must be true because TUser is `| null`
-  nullish: true, // Alternative to { optional: true, nullable: true }
-  init: false, // Can be "null", "false", or "true"
-  id: 'User',
-  safety: 'loose'
-});
-```
-
-
-## Configuring settings <a name="configuring-settings"></a>
-
-Validator-functions can be used alone or within a **settings-object**, which enables you to do more than just validate an object property. Settings can be configured at the **parent-level** (so you don't have to configure them for every new schema) or when a schema is initialized (**local-level**).  
-
-Settings object overview:
-```typescript
-{
-  vf: <T>(arg: unknown) => arg is T; // "vf" => "validator function", 
-  default?: T; // the default value for the validator-function
-  transform?: (arg: unknown) => T; // modify the value before calling the validator-function
-  formatError?: (error: IError) => void; // Customize the error message for the function
-}
-```
-
-Error format:
-```typescript
-{
-  property?: string;
-  value?: unknown;
-  message?: string;
-  location?: string; // function which is throwing the error
-  schemaId?: string;
-}
-```
-
-
-### Parent settings <a name="parent-settings"></a>
-
-You can configure parent settings by importing and calling the `jetSchema` function which returns a function with your parent-settings saved:
-```typescript
-import jetSchema from 'jet-schema';
-import { isNum, isStr } from './validators';
-
-export default jetSchema({
-  globals?: [
-    { vf: isNum, default: 0 },
-    { vf: isStr, default: '' },
-  ],
-  cloneFn?: () => ... // use a custom clone-function
-  onError?: (errors: IError[]) => void // pass a custom error-handler,
-});
-```
-
-Parent settings explained:
-  - `globals`: An array of settings-objects, which map certain parent settings for specific validator-functions. Use this option for frequently used validator-function settings you don't want to configure every time.
-  - `cloneFn`: A custom clone-function, the default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
-  - `onError`: Set what happens when the length of the errors array is greater than one.
-
-### Local settings <a name="local-settings"></a>
-
-To configure settings at the local-level, use them when creating a schema. All local-settings will override all parent ones; if you don't need the schema to have any parent settings you can import the `schema` function directly from `jet-schema`.<br/>
-
-Local settings in detail:
-```typescript
-{
-  vf: (arg: unknown) => arg is T;
-  transform: (arg: unknown) => T;
-  default: T;
-  formatError: (error: IError) => string | IError;
-}
-```
-
-Local settings example:
-```typescript
-// Use this if you don't want use parent settings
-// import { schema } from 'jet-schema';
-
-// Where we set our parent settings
-import schema from 'util/schema.ts';
-
-const User = schema({
-  id: {
-    vf: isNum,
-    transform: (arg: unknown) => Number(arg),
-    default: -1,
-    formatError: (error: IError) => `Property "id" was not a number. Value: ${value}.`
-  },
-  name: isStr,
-});
-
-// Local setting overwrote -1 as the default value for isNum whose parent default value was 0, 
-// empty-string remains default for isStr
-User.new() // => { id: -1, name: '' }
-```
-
-
 ## Combining Schemas <a name="combining-schemas"></a>
 If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup a partial schema, then merge it with your full schema later:
 ```typescript
 import schema, { TJetSchema } from 'jet-schema';
+import { isNumber, isString, isBoolean } from './validators';
 
 const PartOfASchema: TJetSchema<{ id: number, name: string }> = {
   id: isNumber,
@@ -453,7 +468,7 @@ const User = schema<IUser>({
 ```
 
 #### <ins>Child schemas</ins>
-As mentioned, if a property in a parent is a mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added:
+As mentioned, if a property in a parent-schema is a mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added:
 ```typescript
 interface IUser {
   id: number;
@@ -511,8 +526,8 @@ export default {
 }
 ```
 
-### Recommended Parent Settings <a name="recommended-parent-settings"></a>
-I highly recommend you set these default values for each of your basic primitive validator functions, unless of course your application has some other specific need.
+### Recommended Globals Settings <a name="recommended-global-settings"></a>
+I highly recommend you set these default values for each of your basic primitive validator-functions, unless of course your application has some other specific need:
 ```typescript
 import { isNum, isStr, isBool } from 'util/validators.ts';
 
