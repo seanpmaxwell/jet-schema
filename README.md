@@ -81,7 +81,7 @@ User.parse('something') // => Error
 
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
-### Code comparison with zod
+### `Code comparison with zod`
 With most validation-libraries, if we wanted to use our `isNullishString` function above we'd have to refer to the library's documentation and typically wrap in some custom-handler function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function (see the <a name="what-is-a-validator-function">validator-functions</a> section). This not only saves time but also makes your schema setups way more terse. Let's looks at a some code where we setup a schema in `zod` and then again in `jet-schema`:
 ```typescript
 interface IUser {
@@ -128,11 +128,11 @@ const User = schema<IUser>({
 });
 ```
 
-### Create instances with partials
+### `Create instances with partials`
 A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function (see the <a name="new">.new</a> section for more details).<br/><br/>
 Think of `.new` as like what a copy-constructor for classes. You can configure a set of default values for each validator-function, and then pass an partial-type of your schema-object to `.new`. Whichever values are in the partial will be validated and cloned, which values are not in the partial will be set with defaults. See the <a name="new">.new</a> section for more details.
 
-### Size (minified, not zipped):
+### `Size` (minified, not zipped):
 - Jet-Schema **5kB**
 - Zod **57kB**
 - Yup **40kB**
@@ -140,7 +140,7 @@ Think of `.new` as like what a copy-constructor for classes. You can configure a
 - Valibot **35kB**
 - **NOTE:** some of these could change as packages are updated
 
-### Fast (minified, not zipped):
+### `Fast`:
 - See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
 - Looking at the benchmarks in the link above, compare jet-schema to some other popular validators and notice that it is rougly 2-3 times as fast as libraries which don't require a compilation setup (i.e. zod, valibot, yup etc).
 <br/>
@@ -182,9 +182,9 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 > I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>. One more note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefine these functions. 
 
 
-## Creating schemas <a name="creating-schemas"></a>
+### `Creating schemas` <a name="creating-schemas"></a>
 
-### Validator-objects <a name="validator-objects"></a>
+#### Validator-objects <a name="validator-objects"></a>
 Before we create a schema, lets get familiar with what a **validator-object** is. Validator-functions can be passed to schemas directly or within a validator-object. Validator-objects allow us to configure certains settings for a specific validator-function:
 ```typescript
 // Validator-object format:
@@ -218,7 +218,7 @@ In the snippet above we see the `formatError` function passes and `IError` objec
 }
 ```
 
-### The `schema()` and default `jetSchema()` functions <a name="the-schema-and-default-jet-schema-functions"></a>
+#### The `schema()` and default `jetSchema()` functions <a name="the-schema-and-default-jet-schema-functions"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
@@ -283,7 +283,7 @@ export default jetSchema({
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
 
 
-### Handling the schema's type <a name="handling-the-schemas-type"></a>
+#### Handling the schema's type <a name="handling-the-schemas-type"></a>
 For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
@@ -319,7 +319,7 @@ const TUser = inferType<typeof User>;
 ```
 
 
-### Schema options <a name="schema-options"></a>
+### `Schema options` <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
@@ -361,12 +361,12 @@ const User = schema<TUser>({
 ```
 
 
-## Schema APIs <a name="schema-apis"></a>
+### `Schema APIs` <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
 > NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, nothing for `isOptionalStr`, and `safety` is left at its default `filter` option. See the <a name="creating-schemas">Creating Schemas</a> section for how to set default values and the `safety` option.
 
-### `.new` <a name="new"></a>
+#### `.new` <a name="new"></a>
 Allows you to create new instances of your type using partials. If the property is absent, `.new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
 ```typescript
 User.new(); // => { id: 0, name: '' }
@@ -385,7 +385,7 @@ User.test({ name: 'john' }); // => Error
 User.test({ id: 1, name: 'a', email: 'b@b' }); // => param is IUser
 ```
 
-### `.pick` <a name="pick"></a>
+#### `.pick` <a name="pick"></a>
 Selects a property and returns an object with the `.test` and `.default` functions. If you use `.pick` on a child schema, you can also use the schema functions (`.new`, `.pick` etc), in addition to `.default`. Note that for a child-schema, `.default` could return a different value from `.new` if the default value is set to `null` or `undefined` (see the `init:` setting in the <a href="#schema-options">Schema Options</a> section).
 ```typescript
 const User = schema<IUser>({
@@ -404,7 +404,7 @@ User.pick('address').default(); // => "null"
 User.pick('address').pick('city').test('asdf'); // => "true"
 ```
 
-### `.parse` <a name="parse"></a>
+#### `.parse` <a name="parse"></a>
 Like a combination of `.new` and `.test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `.parse` function, even if a schema is nullish, `null/undefined` values will not pass.
 ```typescript
 const User = schema<IUser>({
@@ -419,7 +419,7 @@ User.parse({ id: '1', name: 'john' }); // => Error
 ```
 
 
-## Combining Schemas <a name="combining-schemas"></a>
+### `Combining Schemas` <a name="combining-schemas"></a>
 If you want to declare part of a schema that will be used elsewhere, you can import the `TJetSchema` type and use it to setup a partial schema, then merge it with your full schema later:
 ```typescript
 import schema, { TJetSchema } from 'jet-schema';
@@ -439,10 +439,10 @@ console.log(FullSchema.new());
 ```
 
 
-## TypeScript Caveats <a name="typescript-caveats"></a>
+### `TypeScript Caveats` <a name="typescript-caveats"></a>
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
-#### <ins>Validator functions</ins>
+#### Validator functions
 If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `param is string` will still work. However a if a type predicate returns `param is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`:
 ```typescript
 interface IUser {
@@ -456,7 +456,7 @@ const User = schema<IUser>({
 })
 ```
 
-#### <ins>Child schemas</ins>
+#### Child schemas
 As mentioned, if a property in a parent-schema is a mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added:
 ```typescript
 interface IUser {
@@ -475,12 +475,12 @@ const User = schema<IUser>({
 > If you know of a way to enforce typesafety on child-object without requiring a generic please make a pull-request because I couldn't figure out a way.
 
 
-## Bonus Features <a name="bonus-features"></a>
+### `Bonus Features` <a name="bonus-features"></a>
 - When passing the `Date` constructor, `jet-schema` sets the type to be a `Date` object and automatically converts all valid date values (i.e. `string/number`, maybe a `Date` object got stringified in an API call) to a `Date` object. The default value will be a `Date` object with the current datetime. 
 - You can also use an `enum` as a validator. The default value will be the first value in the enum object and validation will make sure it is value of that enum. **IMPORTANT** this does not work for mixed enums see: `eslint@typescript-eslint/no-mixed-enums`
 
 
-## Using jet-schema without TypeScript <a name="without-typescript"></a>
+### `Using jet-schema without TypeScript` <a name="without-typescript"></a>
 `jet-schema` is built in TypeScript for TypScript but can be used directly with plain JavaScript. There are two minified files you can import if you want to use plain javascript:
   - `dist/index.min.js`: CommonJS
   - `dist/index.min.mjs`: ESM (es6)
@@ -489,7 +489,7 @@ const User = schema<IUser>({
 
 ## Tips <a name="tips"></a>
 
-### Creating wrapper functions <a name="creating-wrapper-functions"></a>
+### `Creating wrapper functions` <a name="creating-wrapper-functions"></a>
 If you need to modify the value of the `.test` function for a property, (like removing `nullables`) then I recommended merging your schema with a new object and adding a wrapper function around that property's test function.
 ```typescript
 // models/User.ts
@@ -515,7 +515,7 @@ export default {
 }
 ```
 
-### Recommended Globals Settings <a name="recommended-global-settings"></a>
+### `Recommended Globals Settings` <a name="recommended-global-settings"></a>
 I highly recommend you set these default values for each of your basic primitive validator-functions, unless of course your application has some other specific need:
 ```typescript
 import { isNum, isStr, isBool } from 'util/validators.ts';
@@ -529,7 +529,7 @@ export default jetSchema({
 });
 ```
 
-### Combining jet-schema with `parse` from ts-validators <a name="parse-from-ts-validators"></a>
+### `Combining jet-schema with parse() from ts-validators` <a name="parse-from-ts-validators"></a>
 The before mentioned repo <a href="https://github.com/seanpmaxwell/ts-validators/blob/master">ts-validators</a> contains a function called `parse` (not to be confused with the jet-schema function `.parse`) which is handy for doing lots of little validations on objects where setting up a full stand-alone schema isn't really practical. For instance, maybe you have a backend webserver with many different APIs where every `request` object coming in needs to have one or a couple of properties validated on it before continuing the api call.<br/>
 
 **ts-validators**'s `parse` function also works by receiving a schema filled with validator-functions and returns another validator-function to check if the object satisfies the schema. Using `parse` alone is trivial for doing simple primitive checks but can be very powerful if you have an object which contains both a combination of primitives and complex models that were setup with `jet-schema`.
