@@ -184,7 +184,7 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 
 ### `Creating schemas` <a name="creating-schemas"></a>
 
-#### Validator-objects <a name="validator-objects"></a>
+#### Validator-objects: <a name="validator-objects"></a>
 Before we create a schema, lets get familiar with what a **validator-object** is. Validator-functions can be passed to schemas directly or within a validator-object. Validator-objects allow us to configure certains settings for a specific validator-function:
 ```typescript
 // Validator-object format:
@@ -218,7 +218,7 @@ In the snippet above we see the `formatError` function passes and `IError` objec
 }
 ```
 
-#### The schema() and default jetSchema() functions <a name="the-schema-and-default-jet-schema-functions"></a>
+#### The schema() and default jetSchema() functions: <a name="the-schema-and-default-jet-schema-functions"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
@@ -283,7 +283,7 @@ export default jetSchema({
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
 
 
-#### Handling the schema's type <a name="handling-the-schemas-type"></a>
+#### Handling the schema's type: <a name="handling-the-schemas-type"></a>
 For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
@@ -318,7 +318,7 @@ const User = schema({
 const TUser = inferType<typeof User>;
 ```
 
-#### Schema options <a name="schema-options"></a>
+#### Schema options: <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
@@ -441,7 +441,7 @@ console.log(FullSchema.new());
 ### `TypeScript Caveats` <a name="typescript-caveats"></a>
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
-#### Validator functions
+#### Validator functions:
 If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `param is string` will still work. However a if a type predicate returns `param is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`:
 ```typescript
 interface IUser {
@@ -455,7 +455,7 @@ const User = schema<IUser>({
 })
 ```
 
-#### Child schemas
+#### Child schemas:
 As mentioned, if a property in a parent-schema is a mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added:
 ```typescript
 interface IUser {
