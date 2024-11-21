@@ -156,7 +156,7 @@ const User = schema<IUser>({
   email: { vf: isEmail, default: 'x@x.x' },
   age: { vf: isNumber, transform: Number },
   created: Date,
-  address: schema<IUser['address']>({
+  address: schema({
     street: isString,
     zip: isNumber,
     country: isOptionalString,
