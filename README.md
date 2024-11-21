@@ -336,9 +336,9 @@ const User = schema<IUser>({
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
   - `id`: A unique-identifier for the schema passed to the `IError` object.
   - `safety`: Sets how to deal with additional properties. 
-    - `filter (default)`: Properties not in the schema will be filtered out but not raise errors.
-    - `pass`: Properties not in the schema will not be filtered out nor raise errors.
-    - `strict`: Properties not in the schema will be filtered out and raise errors.
+    - `'filter' (default)`: Properties not in the schema will be filtered out but not raise errors.
+    - `'pass'`: Properties not in the schema will not be filtered out nor raise errors.
+    - `'strict'`: Properties not in the schema will be filtered out and raise errors.
     - **NOTE:** `safety` only applies to the `.test` and `.parse` functions, it does not affect `.new`. 
 
 `options` example:
@@ -354,7 +354,7 @@ const User = schema<TUser>({
   nullish: true, // Alternative to { optional: true, nullable: true }
   init: false, // Can be "null", "false", or "true"
   id: 'User',
-  safety: 'loose'
+  safety: 'strict'
 });
 ```
 
