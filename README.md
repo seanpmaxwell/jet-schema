@@ -184,7 +184,7 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 
 ### <ins>Creating schemas</ins> <a name="creating-schemas"></a>
 
-#### `Validator-objects:` <a name="validator-objects"></a>
+#### `Validator-objects` <a name="validator-objects"></a>
 Before we create a schema, lets get familiar with what a **validator-object** is. Validator-functions can be passed to schemas directly or within a validator-object. Validator-objects allow us to configure certains settings for a specific validator-function:
 ```typescript
 // Validator-object format:
@@ -218,7 +218,7 @@ In the snippet above we see the `formatError` function passes and `IError` objec
 }
 ```
 
-#### `The schema() and default jetSchema() functions:` <a name="the-schema-and-default-jet-schema-functions"></a>
+#### `The schema() and default jetSchema() functions` <a name="the-schema-and-default-jet-schema-functions"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
@@ -283,7 +283,7 @@ export default jetSchema({
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
 
 
-#### `Handling the schema's type:` <a name="handling-the-schemas-type"></a>
+#### `Handling the schema's type` <a name="handling-the-schemas-type"></a>
 For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
@@ -318,7 +318,7 @@ const User = schema({
 const TUser = inferType<typeof User>;
 ```
 
-#### `Schema options param:` <a name="schema-options"></a>
+#### `Schema options param` <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
