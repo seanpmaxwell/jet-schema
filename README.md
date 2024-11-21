@@ -186,7 +186,7 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 
 ### <ins>Creating schemas</ins> <a name="creating-schemas"></a>
 
-#### ▶ Passing validator-functions <a name="passing-validator-functions"></a>
+#### ▸ Passing validator-functions <a name="passing-validator-functions"></a>
 Validator-functions can be passed to schemas directly or within a configuration object. These objects allow us to handle settings for individual validator-functions:
 ```typescript
 // Passing function through an object:
@@ -209,7 +209,7 @@ const UserSchema = schema({
 });
 ```
 
-#### ▶ IError object <a name="ierror-object"></a>
+#### ▸ IError object <a name="ierror-object"></a>
 In the previous snippet we see the `formatError` function passes an `IError` object. The format for an `IError` object is:
 ```typescript
 {
@@ -221,7 +221,7 @@ In the previous snippet we see the `formatError` function passes an `IError` obj
 }
 ```
 
-#### ▶ The jetSchema() function <a name="the-jet-schema-function"></a>
+#### ▸ The jetSchema() function <a name="the-jet-schema-function"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of configuration objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The configuration objects are set in the `globals:` property array. Note that localized settings will overwrite all global ones:
@@ -250,7 +250,7 @@ User1.new() // => { id: 0, name: '' }
 User2.new() // => { id: -1, name: '' }
 ```
 
-#### ▶ jetSchema() additional options <a name="jet-schema-additional-options"></a>
+#### ▸ jetSchema() additional options <a name="jet-schema-additional-options"></a>
 For the `jetSchema` function, in addition to `globals:` there are two additional options we can configure:
 - `cloneFn`: A custom clone-function. When using the `.new` function, all partial values will be cloned. The default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
 - `onError`: Configure what happens when errors are raised. By default, a javascript `Error` is thrown with the array of errors stringified in the error message.
@@ -271,7 +271,7 @@ export default jetSchema({
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
 
 
-#### ▶ The schema() function <a name="the-schema-function"></a>
+#### ▸ The schema() function <a name="the-schema-function"></a>
 If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
  ```typescript
 import { schema } from 'jet-schema';
@@ -289,7 +289,7 @@ const User2 = sharedSchema({
 ```
 
 
-#### ▶ Handling the schema's type <a name="handling-the-schemas-type"></a>
+#### ▸ Handling the schema's type <a name="handling-the-schemas-type"></a>
 For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
@@ -324,7 +324,7 @@ const User = schema({
 const TUser = inferType<typeof User>;
 ```
 
-#### ▶ The schema() "options" param <a name="schema-options"></a>
+#### ▸ The schema() "options" param <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
@@ -447,7 +447,7 @@ console.log(FullSchema.new());
 ### <ins>TypeScript Caveats</ins> <a name="typescript-caveats"></a>
 Due to how structural-typing works in typescript, there are some limitations with typesafety that you need to be aware of. To put things in perspective, if type `A` has all the properties of type `B`, we can use type `A` for places where type `B` is required, even if `A` has additional properties.
 
-#### ▶ Validator functions
+#### ▸ Validator functions
 If an object property's type can be `string | undefined`, then a validator-function whose type-predicate only returns `param is string` will still work. However a if a type predicate returns `param is string | undefined` we cannot use it for type `string`. This could cause runtime issues if a you pass a validator function like `isString` (when you should have passed `isOptionalString`) to a property whose value ends up being `undefined`:
 ```typescript
 interface IUser {
@@ -461,7 +461,7 @@ const User = schema<IUser>({
 })
 ```
 
-#### ▶ Child schemas
+#### ▸ Child schemas
 As mentioned, if a property in a parent-schema is a mapped-object type (it has a defined set of keys), then you need to call `schema` again for the nested object. If you don't use a generic on the child-schema, typescript will still make sure all the required properties are there; however, because of structural-typing the child could have additional properties. It is highly-recommended that you pass a generic to your child-objects so additional properties don't get added:
 ```typescript
 interface IUser {
