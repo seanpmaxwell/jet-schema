@@ -8,6 +8,7 @@
 - [What is a validator function](#what-is-a-validator-function)
 - [Comparison to other schema validation libraries](#comparison-to-others)
   - [Overview](#comparison-overview)
+  - [Create instances with partials](#create-instances-with-partials)
   - [Other perks](#other-perks)
 - [Guide](#guide)
   - [Installation](#installation)
@@ -164,6 +165,10 @@ const User = schema<IUser>({
 });
 ```
 
+### Create instances with partials: <a name="create-instances-with-partials"></a>
+A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function.<br/>
+Think of `.new` as like what a copy-constructor for classes. You can configure a set of default values for each validator-function, and then pass an partial-type of your schema-object to `.new`. Whichever values are in the partial will be validated and cloned, which values are not in the partial will be set with defaults. See the <a name="new">.new</a> section for more details.
+
 ### Other Perks <a name="other-perks"></a>
 
 **Size** (minified, not zipped):
@@ -177,7 +182,7 @@ const User = schema<IUser>({
 **Fast**:
 - See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
 - Compare jet-schema to some other popular validators (one's which don't require a compilation step) like zod, valibot, and yup, etc.
-- Notice that jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests. 
+- Notice that jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests.
 <br/>
 
 
@@ -301,10 +306,10 @@ const User = schema<IUser>({
     - `true`: Create a new child-object (Uses the child's `.new` function).
     - `null`: Set the child object's value to `null` (`nullable` must be true for the child).
   - `id`: A unique-identifier for the schema (useful if debugging a bunch of schemas at once).
-  - `safety`: Value can be `'loose' (default), 'pass', or 'strict'`.
-    - `loose`: Properties not in the schema will be filtered out but not trigger errors.
+  - `safety`: Value can be `'filter' (default), 'pass', or 'strict'`.
+    - `filter`: Properties not in the schema will be filtered out but not raise errors.
     - `pass`: Properties not in the schema will not be filtered out.
-    - `strict`: Properties not in the schema will trigger errors.
+    - `strict`: Properties not in the schema will raise errors.
     - **NOTE:** `safety` only applies to the `.test` and `.parse` functions, it does not affect `.new`. 
 
 **options** example:
@@ -381,7 +386,7 @@ Local settings in detail:
 ```typescript
 {
   vf: (arg: unknown) => arg is T;
-  transform: (arg: unknown) => arg is T;
+  transform: (arg: unknown) => T;
   default: T;
   formatError: (error: IError) => string | IError;
 }
