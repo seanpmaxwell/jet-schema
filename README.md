@@ -5,6 +5,7 @@
 ## Table of contents
 - [Introduction](#introduction)
 - [Quick Glance](#quick-glance)
+- [What is a validator function](#what-is-a-validator-function)
 - [Comparison to other schema validation libraries](#comparison-to-others)
 - [Guide](#guide)
   - [Installation](#installation)
@@ -37,8 +38,8 @@
 ### Reasons to use Jet-Schema 😎
 - Focus is on using your own validator-functions to validate object properties.
 - Enables extracting logic for nested schemas.
-- Create new instances of your schemas using default values.
-- Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **2.2 KB** minified + zipped).
+- Create new instances of your schemas using partials.
+- Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **4.7kb** minified).
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 - Fast! Checkout these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a> against some other popular validators like zod, valibot, and yup (one's which don't have a compilation-step).
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
@@ -55,22 +56,31 @@ import { isString, isNumber } from 'utils/validators';
 interface IUser {
   id: number;
   name: string;
+  address: {
+    street: string;
+    zip: number;
+  }
 }
 
 const User = schema<IUser>({
   id: isNumber,
   name: isString,
+  address: schema({
+    street: isString,
+    zip: isNumber,
+  })
 });
 
 User.new({ id: 5, name: 'joe' }) // => { id: 5, name: 'joe' }
 User.test('asdf') // => false
 User.pick('name').test('john') // => true
+User.pick('address').pick('zip').test(234) // => true
 User.parse('something') // => Error
 ```
 <br/>
 
 
-## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
+## What is a validator function <a name="what-is-a-validator-function"></a>
 
 Let's first touch on what a *validator-function* is. A validator-functions is a function which performs both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a type-predicate if the value satisfies the given logic:
 ```typescript
@@ -98,6 +108,12 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 ```
 
 > I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
+
+One final note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefine these functions. 
+<br/>
+
+
+## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
 With most validation-libraries, if we wanted to use our `isNullishString` function above we'd have to refer to the library's documentation and typically wrap in some custom-handler function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function. This not only saves time but also makes your schema definitions way more terse. Let's looks at a some code where we setup a schema in `zod` and then again in `jet-schema`:
 ```typescript
@@ -144,8 +160,6 @@ const User = schema<IUser>({
   }, { optional: true }),
 });
 ```
-
-One final note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefined these functions. 
 <br/><br/>
 
 

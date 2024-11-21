@@ -185,7 +185,7 @@ test('different schema "safety" options', () => {
     onError: () => ({}),
   });
 
-  // Test default
+  // Test "default/filter"
   const schemaDefault = parentSchemaFn({
     id: isNum,
     name: isStr,
@@ -197,7 +197,7 @@ test('different schema "safety" options', () => {
   expect(parseResult1).toStrictEqual({ id: 1, name: 'joe' });
   expect(failResult1).toStrictEqual(false);
 
-  // Test filter (default = "filter")
+  // Test "default/filter" again
   const schemaFilter = parentSchemaFn({
     id: isNum,
     name: isStr,
@@ -221,17 +221,29 @@ test('different schema "safety" options', () => {
   expect(parseResult3).toStrictEqual({ id: 1, name: 'joe', foo: 'bar' });
   expect(failResult3).toStrictEqual(false);
 
-  // Test "pass"
+  // Test "strict"
   const schemaStrict = parentSchemaFn({
     id: isNum,
     name: isStr,
   }, { safety: 'strict' });
   const testResult4 = schemaStrict.test({ id: 1, name: 'joe' }),
     parseResult4 = schemaStrict.parse({ id: 1, name: 'joe' }),
-    failResult4 = schemaStrict.test({ id: 1, name: 'joe',  foo: 'bar' }),
-    failParseResult4 = schemaStrict.parse({ id: 1, name: 'joe', foo: 'bar' });
+    failResult4 = schemaStrict.test({ id: 1, name: 'joe',  foo: 'bar' });
   expect(testResult4).toStrictEqual(true);
   expect(parseResult4).toStrictEqual({ id: 1, name: 'joe' });
   expect(failResult4).toStrictEqual(false);
-  expect(failParseResult4).toStrictEqual({ id: 1, name: 'joe' });
+
+  // Test error throw for "strict"
+  const parentSchemaAllowThrowErrors = jetSchema({
+    globals: [
+      { vf: isNum, default: 0 },
+      { vf: isStr, default: '' },
+    ],
+  });
+  const schemaStrictAllowErrors = parentSchemaAllowThrowErrors({
+    id: isNum,
+    name: isStr,
+  }, { safety: 'strict' });
+  const arg = { id: 1, name: 'joe', foo: 'bar' };
+  expect(() => schemaStrictAllowErrors.parse(arg)).toThrowError();
 });
