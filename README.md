@@ -174,8 +174,10 @@ const User = schema<IUser>({
 - Valibot **35kB**
 - **NOTE:** some of these could change as packages are updated
 
-**Fast** (see these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>):<br/>
-Checkout the benchmarks  and compare jet-schema to some other popular validators (one's which don't require a compilation step) like zod, valibot, and yup, etc. jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests. 
+**Fast**:
+- See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
+- Compare jet-schema to some other popular validators (one's which don't require a compilation step) like zod, valibot, and yup, etc.
+- Notice that jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests. 
 <br/>
 
 
