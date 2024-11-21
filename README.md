@@ -174,8 +174,8 @@ const User = schema<IUser>({
 - Valibot **35kB**
 - **NOTE:** some of these could change as packages are updated
 
-**Fast** (see these benchmarks here: <a href="">)
-Checkout the benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a> and compare jet-schema to some other popular validators (one's which don't require a compilation step) like zod, valibot, and yup, etc. jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests. 
+**Fast** (see these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>):<br/>
+Checkout the benchmarks  and compare jet-schema to some other popular validators (one's which don't require a compilation step) like zod, valibot, and yup, etc. jet-schema is roughly 3 times as fast as zod and twice as fast as valibot for strict parsing tests. 
 <br/>
 
 
@@ -362,7 +362,7 @@ export default jetSchema({
     { vf: isStr, default: '' },
   ],
   cloneFn?: () => ... // use a custom clone-function
-  onError?: (errors?: IError[]) => ... // pass a custom error-handler,
+  onError?: (errors: IError[]) => void // pass a custom error-handler,
 });
 ```
 
@@ -373,7 +373,19 @@ Parent settings explained:
 
 ### Local settings <a name="local-settings"></a>
 
-To configure settings at the local-level, use them when creating a schema. All local-settings will override all parent ones; if you don't need the schema to have any parent settings you can import the `schema` function directly from `jet-schema`:
+To configure settings at the local-level, use them when creating a schema. All local-settings will override all parent ones; if you don't need the schema to have any parent settings you can import the `schema` function directly from `jet-schema`.<br/>
+
+Local settings in detail:
+```typescript
+{
+  vf: (arg: unknown) => arg is T;
+  transform: (arg: unknown) => arg is T;
+  default: T;
+  formatError: (error: IError) => string | IError;
+}
+```
+
+Local settings example:
 ```typescript
 // Use this if you don't want use parent settings
 // import { schema } from 'jet-schema';
@@ -386,7 +398,7 @@ const User = schema({
     vf: isNum,
     transform: (arg: unknown) => Number(arg),
     default: -1,
-    onError: (prop: string, value: unknown) => `Property "id" was not a number. Value: ${value}.`
+    formatError: (error: IError) => `Property "id" was not a number. Value: ${value}.`
   },
   name: isStr,
 });

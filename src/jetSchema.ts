@@ -47,19 +47,14 @@ type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
 
 // **** Misc **** //
 
-type TValidatorFn<T = unknown> = (
-  arg: unknown,
-  parentObj?: TModel,
-  key?: string,
-) => arg is T;
-
 export interface IValidatorObj<T = unknown> {
   vf: TValidatorFn<T>,
   default?: T,
-  transform?: TFunc,
+  transform?: (arg: unknown) => T,
   formatError?: TFormatError;
 }
 
+type TValidatorFn<T = unknown> = (arg: unknown) => arg is T;
 type IValidatorFnOrObj<T> = TValidatorFn<T> | IValidatorObj<T>;
 type TGlobalsMap = Map<TValidatorFn, Pick<IValidatorObj, 'default' | 'transform' | 'formatError'>>;
 type TCloneFn = typeof defaultCloneFn;
@@ -131,7 +126,7 @@ type TGlobalsArr<M> = {
     vf: TValidatorFn,
   } & ('vf' extends keyof M[K] ? {
     default?: GetTypePredicate<M[K]['vf']>,
-    transform?: TFunc,
+    transform?: (arg: unknown) => GetTypePredicate<M[K]['vf']>,
     formatError?: TFormatError,
   } : never)
 };
