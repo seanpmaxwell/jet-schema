@@ -535,9 +535,7 @@ export default jetSchema({
 ```
 
 ### Combining jet-schema with parse() from ts-validators <a name="parse-from-ts-validators"></a>
-The before mentioned repo <a href="https://github.com/seanpmaxwell/ts-validators/blob/master">ts-validators</a> contains a function called `parse` (not to be confused with the jet-schema function `.parse`) which is handy for doing lots of little validations on objects where setting up a full stand-alone schema isn't really practical. For instance, maybe you have a backend webserver with many different APIs where every `request` object coming in needs to have one or a couple of properties validated on it before continuing the api call.<br/>
-
-**ts-validators**'s `parse` function also works by receiving a schema filled with validator-functions and returns another validator-function to check if the object satisfies the schema. Using `parse` alone is trivial for doing simple primitive checks but can be very powerful if you have an object which contains both a combination of primitives and complex models that were setup with `jet-schema`.
+The before mentioned repo <a href="https://github.com/seanpmaxwell/ts-validators/blob/master">ts-validators</a> contains a function called `parse` (not to be confused with the jet-schema function `.parse`) which is handy for doing lots of little validations on objects where setting up a full stand-alone schema isn't really practical:
 ```typescript
 import { Request, Response } from 'express';
 import { parse, isNum } from 'util/validators.ts'; // standalone .parse function
