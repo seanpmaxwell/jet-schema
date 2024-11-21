@@ -218,7 +218,7 @@ In the snippet above we see the `formatError` function passes and `IError` objec
 }
 ```
 
-#### The `schema()` and default `jetSchema()` functions <a name="the-schema-and-default-jet-schema-functions"></a>
+#### The schema() and default jetSchema() functions <a name="the-schema-and-default-jet-schema-functions"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
