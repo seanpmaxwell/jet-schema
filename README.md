@@ -13,9 +13,9 @@
 - [Guide](#guide)
   - [Installation](#installation)
   - [Creating Schemas](#creating-schemas)
-    - Validator-objects
-    - The schema and default jetSchema functions
-    - Handling the schema's type
+    - [Validator-objects](#validator-objects)
+    - [The schema and default jetSchema functions](#the-schema-and-default-jet-schema-functions)
+    - [Handling the schema's type](#handling-the-schemas-type)
     - [Schema Options](#schema-options)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
