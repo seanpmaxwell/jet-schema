@@ -182,7 +182,7 @@ function isNullishString(arg: unknown): param is string | undefined | null {
 #### ▸ Passing validator-functions <a name="passing-validator-functions"></a>
 Validator-functions can be passed to schemas directly or within a configuration object. These objects allow us to handle settings for individual validator-functions:
 ```typescript
-// Passing function through an object:
+// Validator-function configuration object format:
 {
   vf: <T>(arg: unknown) => arg is T; // vf => validator-function 
   default?: T; // the default value for the validator-function
