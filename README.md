@@ -10,9 +10,11 @@
   - [What is a validator function](#what-is-a-validator-function)
   - [Creating Schemas](#creating-schemas)
     - [Validator-objects](#validator-objects)
-    - [The schema() and default jetSchema() functions](#the-schema-and-default-jet-schema-functions)
+    - [The jetSchema() function](#the-jet-schema-function)
+    - [jetSchema() additional options](#jet-schema-additional-options)
+    - [The schema() function](#the-schema-function)
     - [Handling the schema's type](#handling-the-schemas-type)
-    - [Schema Options](#schema-options)
+    - [Schema "options" param](#schema-options)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
     - [.test](#test)
@@ -129,8 +131,7 @@ const User = schema<IUser>({
 ```
 
 ### <ins>Create instances with partials</ins>
-A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function (see the <a name="new">.new</a> section for more details).<br/><br/>
-Think of `.new` as like what a copy-constructor for classes. You can configure a set of default values for each validator-function, and then pass an partial-type of your schema-object to `.new`. Whichever values are in the partial will be validated and cloned, which values are not in the partial will be set with defaults. See the <a name="new">.new</a> section for more details.
+A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function (see the <a name="new">.new</a> section for more details).
 
 ### <ins>Size (minified, not zipped)</ins>
 - Jet-Schema **5kB**
@@ -179,7 +180,7 @@ if (someValue === undefined || someValue === null || typeof someValue === 'strin
 }
 ```
 
-> I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>. One more note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefine these functions. 
+> I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>. One more note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line.
 
 
 ### <ins>Creating schemas</ins> <a name="creating-schemas"></a>
@@ -218,7 +219,7 @@ In the snippet above we see the `formatError` function passes and `IError` objec
 }
 ```
 
-#### `The schema() and default jetSchema() functions` <a name="the-schema-and-default-jet-schema-functions"></a>
+#### `The jetSchema() function` <a name="the-jet-schema-function"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of validator-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The validator-objects array is set in the `globals:` property. Note that localized settings will overwrite all global ones:
@@ -247,22 +248,7 @@ User1.new() // => { id: 0, name: '' }
 User2.new() // => { id: -1, name: '' }
 ```
 
-If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
- ```typescript
-import { schema } from 'jet-schema';
-import { isNum, isStr } from './validators'; 
-
-const User1 = shared({
-  id: { vf: isNum, default: 0 },
-  name: { vf: isStr, default: '' },
-});
-
-const User2 = sharedSchema({
-  id: { vf: isNum, default: 0 },
-  name: isStr, // ERROR: "isStr" does not accept `undefined` as a valid value but no default was value configured for "isStr"
-})
-```
-
+#### `jetSchema() additional options` <a name="jet-schema-additional-options"></a>
 For the `jetSchema` function, in addition to `globals` there are two additional options we can configure:
 - `cloneFn`: A custom clone-function. When using the `.new` function, all partial values will be cloned. The default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
 - `onError`: Configure what happens when errors are raised. By default, a javascript `Error` is thrown with the array of errors stringified in the error message.
@@ -281,6 +267,24 @@ export default jetSchema({
 ```
 
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
+
+
+#### `The schema() function` <a name="the-schema-function"></a>
+If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
+ ```typescript
+import { schema } from 'jet-schema';
+import { isNum, isStr } from './validators'; 
+
+const User1 = shared({
+  id: { vf: isNum, default: 0 },
+  name: { vf: isStr, default: '' },
+});
+
+const User2 = sharedSchema({
+  id: { vf: isNum, default: 0 },
+  name: isStr, // ERROR: "isStr" does not accept `undefined` as a valid value but no default was value configured for "isStr"
+})
+```
 
 
 #### `Handling the schema's type` <a name="handling-the-schemas-type"></a>
