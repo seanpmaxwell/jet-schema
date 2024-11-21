@@ -4,7 +4,6 @@
 
 ## Table of contents
 - [Introduction](#introduction)
-- [Quick Glance](#quick-glance)
 - [Comparison to other schema validation libraries](#comparison-to-others)
 - [Guide](#guide)
   - [Installation](#installation)
@@ -36,7 +35,7 @@
 > If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
 
 
-### Reasons to use Jet-Schema 😎
+### Highlights 😎
 - Focus is on using your own validator-functions to validate object properties.
 - Enables extracting logic for nested schemas.
 - Create new instances of your schemas using partials.
@@ -46,10 +45,9 @@
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
 - Works client-side or server-side.
 - TypeScript first!
-<br/>
 
 
-## Quick Glance <a name="quick-glance"></a>
+### Quick Glance
 ```typescript
 import schema from 'utils/schema';
 import { isString, isNumber } from 'utils/validators';
@@ -155,7 +153,7 @@ Think of `.new` as like what a copy-constructor for classes. You can configure a
 > npm install -s jet-schema
 
 
-## What is a validator function <a name="what-is-a-validator-function"></a>
+### `What is a validator function` <a name="what-is-a-validator-function"></a>
 Let's first touch on what a *validator-function* is. A validator-functions is a function which performs both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a type-predicate if the value satisfies the given logic:
 ```typescript
 function isNullishString(arg: unknown): param is string | undefined | null {
