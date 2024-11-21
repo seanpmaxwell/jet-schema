@@ -5,13 +5,10 @@
 ## Table of contents
 - [Introduction](#introduction)
 - [Quick Glance](#quick-glance)
-- [What is a validator function](#what-is-a-validator-function)
 - [Comparison to other schema validation libraries](#comparison-to-others)
-  - [Overview](#comparison-overview)
-  - [Create instances with partials](#create-instances-with-partials)
-  - [Other perks](#other-perks)
 - [Guide](#guide)
   - [Installation](#installation)
+  - [What is a validator function](#what-is-a-validator-function)
   - [Creating Schemas](#creating-schemas)
     - [Validator-objects](#validator-objects)
     - [The schema and default jetSchema functions](#the-schema-and-default-jet-schema-functions)
@@ -84,43 +81,10 @@ User.parse('something') // => Error
 <br/>
 
 
-## What is a validator function <a name="what-is-a-validator-function"></a>
-
-Let's first touch on what a *validator-function* is. A validator-functions is a function which performs both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a type-predicate if the value satisfies the given logic:
-```typescript
-function isNullishString(arg: unknown): param is string | undefined | null {
-  return arg === undefined || arg === null || typeof arg === 'string';
-}
-```
-
-Defining your own validator-functions is handy because it will save you a lot of boilerplate code when doing boolean logic throughout your application. With the above function we can do this: 
-```typescript
-if (isNullishString(someValue)) {
-  // continue your logic...
-} else {
-  throw new Error('...')
-}
-```
-
-Instead of having to do this:
-```typescript
-if (someValue === undefined || someValue === null || typeof someValue === 'string') {
-  // continue your logic...
-} else {
-  throw new Error('...')
-}
-```
-
-> I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
-
-One final note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefine these functions. 
-<br/>
-
-
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
-### Overview <a name="comparison-overview"></a>
-With most validation-libraries, if we wanted to use our `isNullishString` function above we'd have to refer to the library's documentation and typically wrap in some custom-handler function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function. This not only saves time but also makes your schema definitions way more terse. Let's looks at a some code where we setup a schema in `zod` and then again in `jet-schema`:
+### Code comparison with zod
+With most validation-libraries, if we wanted to use our `isNullishString` function above we'd have to refer to the library's documentation and typically wrap in some custom-handler function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function (see the <a name="what-is-a-validator-function">validator-functions</a> section). This not only saves time but also makes your schema setups way more terse. Let's looks at a some code where we setup a schema in `zod` and then again in `jet-schema`:
 ```typescript
 interface IUser {
   id: number;
@@ -166,13 +130,11 @@ const User = schema<IUser>({
 });
 ```
 
-### Create instances with partials <a name="create-instances-with-partials"></a>
-A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function.<br/><br/>
+### Create instances with partials
+A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function (see the <a name="new">.new</a> section for more details).<br/><br/>
 Think of `.new` as like what a copy-constructor for classes. You can configure a set of default values for each validator-function, and then pass an partial-type of your schema-object to `.new`. Whichever values are in the partial will be validated and cloned, which values are not in the partial will be set with defaults. See the <a name="new">.new</a> section for more details.
 
-### Other Perks <a name="other-perks"></a>
-
-**Size** (minified, not zipped):
+### Size (minified, not zipped):
 - Jet-Schema **5kB**
 - Zod **57kB**
 - Yup **40kB**
@@ -180,9 +142,9 @@ Think of `.new` as like what a copy-constructor for classes. You can configure a
 - Valibot **35kB**
 - **NOTE:** some of these could change as packages are updated
 
-**Fast**:
+### Fast (minified, not zipped):
 - See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
-- Looking at the benchmarks in the link above, compare jet-schema to some other popular validators (one's which don't require a compilation step like zod, valibot, and yup, etc) and notice that jet-schema is roughly 3-4 times as fast as zod and almost twice as fast as valibot on average.
+- Looking at the benchmarks in the link above, compare jet-schema to some other popular validators and notice that it is rougly 2-3 times as fast as libraries which don't require a compilation setup (i.e. zod, valibot, yup etc).
 <br/>
 
 
@@ -191,6 +153,38 @@ Think of `.new` as like what a copy-constructor for classes. You can configure a
 ### Installation <a name="installation"></a>
 
 > npm install -s jet-schema
+
+
+## What is a validator function <a name="what-is-a-validator-function"></a>
+Let's first touch on what a *validator-function* is. A validator-functions is a function which performs both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a type-predicate if the value satisfies the given logic:
+```typescript
+function isNullishString(arg: unknown): param is string | undefined | null {
+  return arg === undefined || arg === null || typeof arg === 'string';
+}
+```
+
+Defining your own validator-functions is handy because it will save you a lot of boilerplate code when doing boolean logic throughout your application. With the above function we can do this: 
+```typescript
+if (isNullishString(someValue)) {
+  // continue your logic...
+} else {
+  throw new Error('...')
+}
+```
+
+Instead of having to do this:
+```typescript
+if (someValue === undefined || someValue === null || typeof someValue === 'string') {
+  // continue your logic...
+} else {
+  throw new Error('...')
+}
+```
+
+> I like to place all my validator-functions in a `util/validators.ts` file. As mentioned in the intro, you can copy some predefined validators from <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
+
+One final note, not only does creating a list of validator-functions save boilerplate code, but growing a list of validator-functions not dependent on any library will make them easy to copy-and-paste between multiple projects, saving you a lot of coding time down the line. For simple primitives like `isString`, `isNumber`, creating validators might seem trivial at first but once applications grow and you need to check if something is let's say `null`, `undefined` or `number[]` (i.e. `isNullishNumberArr`), you'll be glad you don't have to constantly redefine these functions. 
+<br/>
 
 
 ## Creating schemas <a name="creating-schemas"></a>
