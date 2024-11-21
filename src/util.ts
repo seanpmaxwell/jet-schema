@@ -6,7 +6,6 @@ export type TBasicObj = Record<string, unknown>;
 export type TEnum = Record<string, string | number>;
 
 
-
 // **** Functions **** //
 
 /**
@@ -50,8 +49,8 @@ export function isNonArrObj(
  * Get the keys of an enum object.
  */
 export function processEnum(arg: unknown): [ unknown, TFunc ] {
-  if (!isNonArrObj(arg)) {
-    throw Error('"getEnumKeys" must receive a non-array object');
+  if (!isEnum(arg)) {
+    throw Error('"getEnumKeys" must receive an enum object.');
   }
   // Get keys
   let vals = Object.keys(arg).reduce((arr: unknown[], key) => {
@@ -72,7 +71,8 @@ export function processEnum(arg: unknown): [ unknown, TFunc ] {
 }
 
 /**
- * Check if unknown is a valid enum object.
+ * Check if unknown is a valid enum object. NOTE: this does not work for mixed 
+ * enums see: eslint@typescript-eslint/no-mixed-enums
  */
 export function isEnum(arg: unknown): arg is TEnum {
   // Check is non-array object

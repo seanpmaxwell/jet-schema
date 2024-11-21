@@ -146,7 +146,7 @@ type TSchemaOptions<T = unknown> = (
     )
 );
 
-interface ISchemaOptionsBase {
+export interface ISchemaOptionsBase {
   id?: string;
   safety?: 'pass' | 'filter' | 'strict';
 }
