@@ -132,7 +132,7 @@ const User = schema<IUser>({
 A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function (see the <a name="new">.new</a> section for more details).<br/><br/>
 Think of `.new` as like what a copy-constructor for classes. You can configure a set of default values for each validator-function, and then pass an partial-type of your schema-object to `.new`. Whichever values are in the partial will be validated and cloned, which values are not in the partial will be set with defaults. See the <a name="new">.new</a> section for more details.
 
-### <ins>Size</ins> (minified, not zipped)
+### <ins>Size (minified, not zipped)</ins>
 - Jet-Schema **5kB**
 - Zod **57kB**
 - Yup **40kB**
