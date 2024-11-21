@@ -53,7 +53,7 @@ type TValidatorFn<T = unknown> = (
   key?: string,
 ) => arg is T;
 
-interface IValidatorObj<T = unknown> {
+export interface IValidatorObj<T = unknown> {
   vf: TValidatorFn<T>,
   default?: T,
   transform?: TFunc,
@@ -93,7 +93,7 @@ type TPickRetVal<T, NnT = NonNullable<T>> = {
 } : unknown);
 
 // Value returned by the "schema" function
-interface ISchema<T = unknown> {
+export interface ISchema<T = unknown> {
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
@@ -146,7 +146,7 @@ type TSchemaOptions<T = unknown> = (
     )
 );
 
-export interface ISchemaOptionsBase {
+interface ISchemaOptionsBase {
   id?: string;
   safety?: 'pass' | 'filter' | 'strict';
 }
