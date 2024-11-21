@@ -318,7 +318,7 @@ const User = schema({
 const TUser = inferType<typeof User>;
 ```
 
-#### `Schema options` <a name="schema-options"></a>
+#### `Schema options param` <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
