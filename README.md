@@ -283,7 +283,7 @@ export default jetSchema({
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
 
 
-#### `Handling the schema's type` <a name="handling-the-schemas-type"></a>
+#### `• Handling the schema's type` <a name="handling-the-schemas-type"></a>
 For handling a schema's type, you can enforce a schema from a type or infer a type from a schema.
 
 **Option 1:** Create a schema using a type:
@@ -318,7 +318,7 @@ const User = schema({
 const TUser = inferType<typeof User>;
 ```
 
-#### `* [Schema options param]` <a name="schema-options"></a>
+#### `Schema options param` <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
