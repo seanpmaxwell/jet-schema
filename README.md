@@ -35,7 +35,7 @@
 > If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
 
 
-### Highlights 😎
+### `Highlights` 😎
 - Focus is on using your own validator-functions to validate object properties.
 - Enables extracting logic for nested schemas.
 - Create new instances of your schemas using partials.
@@ -47,7 +47,7 @@
 - TypeScript first!
 
 
-### Quick Glance
+### `Quick Glance`
 ```typescript
 import schema from 'utils/schema';
 import { isString, isNumber } from 'utils/validators';
