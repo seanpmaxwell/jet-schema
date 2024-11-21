@@ -167,11 +167,11 @@ const User = schema<IUser>({
 ### Other Perks <a name="other-perks"></a>
 
 **Size** (minified, not zipped):
-- Jet-Schema **5kb**
+- Jet-Schema **5kB**
 - Zod **57kB**
-- Yup **40kb**
-- Joi **150kb**
-- Valibot **35kb**
+- Yup **40kB**
+- Joi **150kB**
+- Valibot **35kB**
 - **NOTE:** some of these could change as packages are updated
 
 **Fast** (see these benchmarks here: <a href="">)
