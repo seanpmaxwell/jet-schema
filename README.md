@@ -15,7 +15,7 @@
     - [jetSchema() additional options](#jet-schema-additional-options)
     - [The schema() function](#the-schema-function)
     - [Handling a schema's type](#handling-the-schemas-type)
-    - [The schema() "options" param](#schema-options)
+    - [The "options" param](#schema-options)
   - [Schema APIs](#schema-apis)
     - [.new](#new)
     - [.test](#test)
@@ -317,7 +317,7 @@ const User = schema({
 const TUser = inferType<typeof User>;
 ```
 
-#### ▸ The schema() "options" param <a name="schema-options"></a>
+#### ▸ The "options" param <a name="schema-options"></a>
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
