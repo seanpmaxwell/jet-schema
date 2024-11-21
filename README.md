@@ -7,6 +7,8 @@
 - [Quick Glance](#quick-glance)
 - [What is a validator function](#what-is-a-validator-function)
 - [Comparison to other schema validation libraries](#comparison-to-others)
+  - [Overview](#comparison-overview)
+  - [Other perks](#other-perks)
 - [Guide](#guide)
   - [Installation](#installation)
   - [Creating Schemas](#creating-schemas)
@@ -41,7 +43,7 @@
 - Create new instances of your schemas using partials.
 - Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **4.7kb** minified).
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
-- Fast! Checkout these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a> against some other popular validators like zod, valibot, and yup (one's which don't have a compilation-step).
+- Fast! checkout these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a> against some other popular validators like zod, valibot, and yup (one's which don't have a compilation-step).
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
 - Works client-side or server-side.
 - TypeScript first!
@@ -115,6 +117,7 @@ One final note, not only does creating a list of validator-functions save boiler
 
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
+### Overview <a name="comparison-overview"></a>
 With most validation-libraries, if we wanted to use our `isNullishString` function above we'd have to refer to the library's documentation and typically wrap in some custom-handler function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function. This not only saves time but also makes your schema definitions way more terse. Let's looks at a some code where we setup a schema in `zod` and then again in `jet-schema`:
 ```typescript
 interface IUser {
@@ -153,14 +156,27 @@ const User = schema<IUser>({
   email: { vf: isEmail, default: 'x@x.x' },
   age: { vf: isNumber, transform: Number },
   created: Date,
-  address: schema<IUser['address'>({
+  address: schema<IUser['address']>({
     street: isString,
     zip: isNumber,
     country: isOptionalString,
   }, { optional: true }),
 });
 ```
-<br/><br/>
+
+### Other Perks <a name="other-perks"></a>
+
+**Size** (minified, not zipped):
+- Jet-Schema **5kb**
+- Zod **57kB**
+- Yup **40kb**
+- Joi **150kb**
+- Valibot **35kb**
+- **NOTE:** some of these could change as packages are updated
+
+**Fast** (see these benchmarks here: )
+
+<br/>
 
 
 ## Guide <a name="guide"></a>
