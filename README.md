@@ -148,7 +148,7 @@ Think of `.new` as like what a copy-constructor for classes. You can configure a
 
 ## Guide <a name="guide"></a>
 
-### Installation <a name="installation"></a>
+### <ins>Installation</ins> <a name="installation"></a>
 
 > npm install -s jet-schema
 
