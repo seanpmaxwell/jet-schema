@@ -48,6 +48,7 @@
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
 - Works client-side or server-side.
 - TypeScript first!
+- Sample project using jet-schema <a href="https://github.com/seanpmaxwell/express5-typescript-template">here</a>.
 
 
 ### Quick Glance
