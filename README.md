@@ -327,7 +327,7 @@ const User = schema<IUser>({
 }, /* { ...options object... } */); // <-- Pass options here
 ```
 
-`options:` explained:
+`options` explained:
   - `optional`: Default `false`, must be set to true if the generic is optional.
   - `nullable`: Default `false`, must be set to true if the generic is nullable.
   - `nullish`: Default `false`, convenient alternative to `{ optional: true, nullable: true; }`
@@ -342,7 +342,7 @@ const User = schema<IUser>({
     - `strict`: Properties not in the schema will be filtered out and raise errors.
     - **NOTE:** `safety` only applies to the `.test` and `.parse` functions, it does not affect `.new`. 
 
-`options:` example:
+`options` example:
 ```typescript
 type TUser = IUser | null | undefined;
 
