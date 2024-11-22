@@ -134,9 +134,6 @@ const User = schema<IUser>({
 });
 ```
 
-### Create instances with partials
-A major reason I created jet-schema was to create multiple instances of my schemas using partials and copies of existing instances when doing edits. This can be done with the `.new` function (see the <a name="new">.new</a> section for more details).
-
 ### Size (minified, not zipped)
 - Jet-Schema **5kB**
 - Zod **57kB**
@@ -148,6 +145,9 @@ A major reason I created jet-schema was to create multiple instances of my schem
 ### Fast
 - See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
 - Looking at the benchmarks in the link above, compare jet-schema to some other popular validators and notice that it is rougly 2-3 times as fast as libraries which don't require a compilation setup (i.e. zod, valibot, yup etc).
+
+### Create instances with partials
+A major reason I created jet-schema was to create multiple instances of my schemas using partials and copies of existing instances when doing edits. This can be done with the `.new` function (see the <a name="new">.new</a> section for more details).
 <br/>
 
 
