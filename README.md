@@ -32,7 +32,7 @@
 
 
 ## Introduction <a name="introduction"></a>
-`jet-schema` is a simple, TypeScript first schema validation tool, which enables you to use your own validator functions against each property in an object. That way you don't have to refer to documentation everytime you want to validate some new object property. It also means you get to grow a list of TypeScript validator functions that aren't tied to a specific library. 
+`jet-schema` is a simple, TypeScript first schema validation tool, which enables you to use your own validator functions against each property in an object.
 
 > If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
 
@@ -96,12 +96,12 @@ function isNullishString(arg: unknown): param is string | undefined | null {
 When validating an individual object's property, there's literally an infinite list of validations that can be done which are specific to that application needs (i.e. different businesses might have different requirements for an email format). So I thought, why not just strip all that away and just make something that allows me to use existing validator-functions to check an object's properties?
 
 Other reasons to keep your own list of validator-functions:
+- Reuse your validators in multiple parts of your code across multiple projects without worrying which library they are tied to.
 - Don't have to repeatedly wrap our specialized logic in a libraries handlers (i.e. zod's `.refine` function).
-- Reuse your validators in multiple parts of your code across multiple projects without worring which library they are tied to.
 - Name your functions however you want (I like to use abbreviations a lot).
 - Makes your code way more terse.
 - `jet-schema` takes a *fire-and-forget* approach where once you setup your schema you almost never have to refer to the libraries documentation again.
-- As mentioned in the intro you can copy-n-paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
+- As mentioned in the intro you can copy-n-paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>. Rename/modify them as you please :)
 
 ### Code comparison with zod and jet-schema
 ```typescript
