@@ -80,7 +80,7 @@ User.pick('name').test('john') // => true
 User.pick('address').pick('zip').test(234) // => true
 User.parse('something') // => Error
 ```
-<br/>
+<br/><br/>
 
 
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
