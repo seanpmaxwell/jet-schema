@@ -105,7 +105,7 @@ function isNullishString(arg: unknown): param is string | undefined | null {
 
 ### Code comparison with zod and jet-schema
 ```typescript
-import { isString, isNumber, isRelationalKey, isEmail } from 'my-custom-validators.ts';
+import { isString, isNumber, isRelationalKey, isEmail, isOptionalString } from 'my-custom-validators.ts';
 
 interface IUser {
   id: number;
