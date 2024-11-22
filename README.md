@@ -100,7 +100,7 @@ function isNullishString(arg: unknown): param is string | undefined | null {
 - Name your functions however you want (I like to use abbreviations a lot).
 - Makes your code way more terse.
 - `jet-schema` takes a *fire-and-forget* approach where once you setup your schema you almost never have to refer to the libraries documentation again.
-- As mentioned in the intro you can copy-and-paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
+- As mentioned in the intro you can copy-n-paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
 
 
 ### Code comparison with zod and jet-schema
@@ -161,10 +161,10 @@ const User = schema<IUser>({
 
 ### Fast
 - See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>.
-- Looking at the benchmarks in the link above, compare jet-schema to some other popular validators and notice that it is rougly 2-3 times as fast as libraries which don't require a compilation setup (i.e. zod, valibot, yup etc).
+- Looking at the benchmarks in the link above, compare jet-schema to some other popular validators and notice that it is rougly 2-3 times as fast as the ones which don't require a compilation setup (i.e. zod, valibot, yup etc).
 
 ### Create instances with partials
-A major reason I created jet-schema was to create multiple instances of my schemas using partials and copies of existing instances when doing edits. This can be done with the `.new` function (see the <a name="new">.new</a> section for more details).
+Another major reason I created jet-schema was to create multiple instances of my schemas using partials and copies of existing instances when doing edits. This can be done with the `.new` function (see the <a name="new">.new</a> section for more details).
 <br/><br/>
 
 
@@ -176,9 +176,9 @@ A major reason I created jet-schema was to create multiple instances of my schem
 ### Creating schemas <a name="creating-schemas"></a>
 
 #### ▸ Passing validator-functions <a name="passing-validator-functions"></a>
-Validator-functions can be passed to schemas directly or within a configuration object. These objects allow us to handle settings for individual validator-functions:
+Validator-functions can be passed to schemas directly or within a *configuration-object*. These objects allow us to handle settings for individual validator-functions:
 ```typescript
-// Validator-function configuration object format:
+// configuration-object format:
 {
   vf: <T>(arg: unknown) => arg is T; // vf => validator-function 
   default?: T; // the default value for the validator-function
@@ -189,7 +189,7 @@ Validator-functions can be passed to schemas directly or within a configuration 
 // Example
 const UserSchema = schema({
   name: isString, // Using a validator-function directly
-  id: {  // Using a configuration object
+  id: {  // Using a configuration-object
     vf: isNumber, // the validator-function in the object
     default: 0,
     transform: Number,
@@ -211,9 +211,9 @@ In the previous snippet we see the `formatError` function passes an `IError` obj
 ```
 
 #### ▸ The jetSchema() function <a name="the-jet-schema-function"></a>
-Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of configuration objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
+Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of configuration-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
-The configuration objects are set in the `globals:` property array. Note that localized settings will overwrite all global ones:
+The configuration-objects are set in the `globals:` property. Note that localized settings will overwrite all global ones:
 ```typescript
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators'; 
@@ -258,7 +258,6 @@ export default jetSchema({
 ```
 
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
-
 
 #### ▸ The schema() function <a name="the-schema-function"></a>
 If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
