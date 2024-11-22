@@ -140,7 +140,7 @@ const User = schema<IUser>({
 - Yup **40kB**
 - Joi **150kB**
 - Valibot **35kB**
-- **NOTE:** some of these could change as packages are updated
+- Note: some of these could change as packages are updated
 
 ### Fast
 - See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
