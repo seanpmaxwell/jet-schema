@@ -41,7 +41,7 @@
 - Focus is on using your own validator-functions to validate object properties.
 - Enables extracting logic for nested schemas.
 - Create new instances of your schemas using partials.
-- Easy-to-learn, terse, and small (this library only exports 2 functions and 2 types, size **4.7kB** minified).
+- Easy-to-learn, terse, and small (this library only exports 2 functions and 3 types, size **4.7kB** minified).
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 - Fast! see these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a>.
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
