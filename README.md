@@ -80,7 +80,7 @@ User.pick('name').test('john') // => true
 User.pick('address').pick('zip').test(234) // => true
 User.parse('something') // => Error
 ```
-<br/><br/>
+<br/>
 
 
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
@@ -148,7 +148,7 @@ const User = schema<IUser>({
 
 ### Create instances with partials
 A major reason I created jet-schema was to create multiple instances of my schemas using partials and copies of existing instances when doing edits. This can be done with the `.new` function (see the <a name="new">.new</a> section for more details).
-<br/>
+<br/><br/>
 
 
 ## Guide <a name="guide"></a>
