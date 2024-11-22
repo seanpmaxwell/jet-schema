@@ -86,7 +86,7 @@ User.parse('something') // => Error
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
 ### Focus is on using your own list of validator-functions
-With most validation-libraries, if we wanted to apply some custom validation, we'd have to refer to the library's documentation and wrap our logic in some handler-function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function (see the <a name="what-is-a-validator-function">validator-functions</a> section). Having a list of validator-functions not only makes your schema setups way more terse but also the rest of your code.
+With most validation libraries, if we wanted to apply some custom validation, we'd have to refer to the library's documentation and wrap our logic in some handler-function (i.e. zod's `.refine`). With jet-schema however, anytime we need to add a new property to your schema, you can just drop in a validator-function (see the <a name="what-is-a-validator-function">validator-functions</a> section). Having a personal list of validator-functions not only makes your schema setups way more terse but also the rest of your code.
 
 ### Code comparison with zod and jet-schema
 ```typescript
@@ -132,19 +132,10 @@ const User = schema<IUser>({
     country: isOptionalString,
   }, { optional: true }),
 });
-
-
-// Reusing the validator functions in
-// some other part of your application.
-if (isString(someVar)) {
-  ...do this
-} else if (isNumber(someVar)) {
-  ...do that
-}
 ```
 
 ### Create instances with partials
-A major reason I created jet-schema was I needed to create lots of instances of my schemas when testing and copies of existing objects (represented by my schemas) when doing edits. I didn't wanted to have to wrap a parsing function everytime I wanted to create a new instance so I added the `.new` function (see the <a name="new">.new</a> section for more details).
+A major reason I created jet-schema was to create multiple instances of my schemas using partials and copies of existing instances when doing edits. This can be done with the `.new` function (see the <a name="new">.new</a> section for more details).
 
 ### Size (minified, not zipped)
 - Jet-Schema **5kB**
