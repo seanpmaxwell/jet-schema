@@ -143,7 +143,7 @@ const User = schema<IUser>({
 - Note: some of these could change as packages are updated
 
 ### Fast
-- See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>:
+- See these benchmarks <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">here</a>.
 - Looking at the benchmarks in the link above, compare jet-schema to some other popular validators and notice that it is rougly 2-3 times as fast as libraries which don't require a compilation setup (i.e. zod, valibot, yup etc).
 
 ### Create instances with partials
@@ -154,9 +154,7 @@ A major reason I created jet-schema was to create multiple instances of my schem
 ## Guide <a name="guide"></a>
 
 ### Installation <a name="installation"></a>
-
 > npm install -s jet-schema
-
 
 ### What is a validator function? <a name="what-is-a-validator-function"></a>
 A validator-function is a TypeScript function which does both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a *type-predicate*:
