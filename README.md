@@ -84,10 +84,7 @@ User.parse('something') // => Error
 
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
-### Focus is on using your own validator-functions
-When validating an individual object's property, there's literally an infinite list of validations that can be done which are specific to that application needs (i.e. different businesses might have different requirements for an email format). So I thought, why not just strip all that away and just make something that allows me to use existing validator-functions to check an object's properties? 
-
-#### ▸ What is a validator function?
+### What is a validator function?
 A validator-function is a TypeScript function which does both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a *type-predicate*:
 ```typescript
 function isNullishString(arg: unknown): param is string | undefined | null {
@@ -95,14 +92,16 @@ function isNullishString(arg: unknown): param is string | undefined | null {
 }
 ```
 
-#### ▸ Why keep your own list of validator-functions?
+### Why keep your own list of validator-functions?
+When validating an individual object's property, there's literally an infinite list of validations that can be done which are specific to that application needs (i.e. different businesses might have different requirements for an email format). So I thought, why not just strip all that away and just make something that allows me to use existing validator-functions to check an object's properties?
+
+Other reasons to keep your own list of validator-functions:
 - Don't have to repeatedly wrap our specialized logic in a libraries handlers (i.e. zod's `.refine` function).
 - Reuse your validators in multiple parts of your code across multiple projects without worring which library they are tied to.
 - Name your functions however you want (I like to use abbreviations a lot).
 - Makes your code way more terse.
 - `jet-schema` takes a *fire-and-forget* approach where once you setup your schema you almost never have to refer to the libraries documentation again.
 - As mentioned in the intro you can copy-n-paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>.
-
 
 ### Code comparison with zod and jet-schema
 ```typescript
