@@ -85,6 +85,7 @@ User.parse('something') // => Error
 ## Comparison to other schema validation libraries <a name="comparison-to-others"></a>
 
 ### Focus is on using your own validator-functions
+When validating an individual object's property, there's literally an infinite list of validations that can be done which are specific to that application needs (i.e. different businesses might have different requirements for an email format). So I thought, why not just strip all that away and just make something that allows me to use existing validator-functions to check an object's properties? 
 
 #### ▸ What is a validator function?
 A validator-function is a TypeScript function which does both *runtime* AND *compile-time* validation. The typical way to define one is to give it a signature which receives an `unknown` value and returns a *type-predicate*:
