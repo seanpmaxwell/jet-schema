@@ -236,7 +236,7 @@ User2.new() // => { id: -1, name: '' }
 #### ▸ jetSchema() additional options <a name="jet-schema-additional-options"></a>
 For the `jetSchema` function, in addition to `globals:` there are two additional options we can configure:
 - `cloneFn`: A custom clone-function. When using the `.new` function, all partial values will be cloned. The default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
-- `onError`: Configure what happens when errors are raised. By default, a javascript `Error` is thrown with the array of errors stringified in the error message.
+- `onError`: Configure what happens when errors are raised. By default, a javascript `new Error()` is thrown with the array of errors stringified in the error message.
 ```typescript
 import jetSchema from 'jet-schema';
 import { isNum, isStr } from './validators';
