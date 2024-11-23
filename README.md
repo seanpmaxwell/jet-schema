@@ -27,7 +27,6 @@
 - [Tips](#tips)
   - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Global Settings](#recommended-global-settings)
-  - [Combining jet-schema with parse from ts-validators](#parse-from-ts-validators)
 <br/>
 
 
