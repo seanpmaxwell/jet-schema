@@ -10,9 +10,9 @@
   - [Creating Schemas](#creating-schemas)
     - [Passing validator-functions](#passing-validator-functions)
     - [The IError object](#ierror-object)
-    - [The jetSchema() function](#the-jet-schema-function)
-    - [jetSchema() additional options](#jet-schema-additional-options)
-    - [The schema() function](#the-schema-function)
+    - [The jetSchema function](#the-jet-schema-function)
+    - [The jetSchema function's additional options](#jet-schema-additional-options)
+    - [The standalone schema function](#the-schema-function)
     - [Handling a schema's type](#handling-the-schemas-type)
     - [The "options" param](#schema-options)
   - [Schema APIs](#schema-apis)
@@ -209,7 +209,7 @@ In the previous snippet we see the `formatError` function passes an `IError` obj
 }
 ```
 
-#### ▸ The jetSchema() function <a name="the-jet-schema-function"></a>
+#### ▸ The jetSchema function <a name="the-jet-schema-function"></a>
 Schemas can be created by importing the `schema` function directly from the `jet-schema` library or importing the default `jetSchema` function. The `jetSchema` function can be passed an array of configuration-objects and returns a new customized `schema` function; that way we don't have to configure validator-function settings for every new schema.
 
 The configuration-objects are set in the `globals:` property. Note that localized settings will overwrite all global ones:
@@ -238,7 +238,7 @@ User1.new() // => { id: 0, name: '' }
 User2.new() // => { id: -1, name: '' }
 ```
 
-#### ▸ jetSchema() additional options <a name="jet-schema-additional-options"></a>
+#### ▸ The jetSchema function's additional options <a name="jet-schema-additional-options"></a>
 For the `jetSchema` function, in addition to `globals:` there are two additional options we can configure:
 - `cloneFn`: A custom clone-function. When using the `.new` function, all partial values will be cloned. The default clone function uses `structuredClone` (I like to use `lodash.cloneDeep`).
 - `onError`: Configure what happens when errors are raised. By default, a javascript `new Error()` is thrown with the array of errors stringified in the error message.
@@ -258,7 +258,7 @@ export default jetSchema({
 
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
 
-#### ▸ The schema() function <a name="the-schema-function"></a>
+#### ▸ The standalone schema function <a name="the-schema-function"></a>
 If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
  ```typescript
 import { schema } from 'jet-schema';
