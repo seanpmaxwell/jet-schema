@@ -521,29 +521,4 @@ export default jetSchema({
   ],
 });
 ```
-
-### Combining jet-schema with parse() from ts-validators <a name="parse-from-ts-validators"></a>
-The before mentioned repo <a href="https://github.com/seanpmaxwell/ts-validators/blob/master">ts-validators</a> contains a function called `parse` (not to be confused with the jet-schema function `.parse`) which is handy for doing lots of little validations on objects where setting up a full stand-alone schema isn't really practical:
-```typescript
-import { Request, Response } from 'express';
-import { parse, isNum } from 'util/validators.ts'; // standalone .parse function
-import User from 'models/User.ts' // This was setup with jet-schema
-
-const validateReqBody = parse({
-  userId: isNum,
-  address: User.pick('address').test,
-})
-
-/**
- * parse checks req.body and makes sure .userId is a number with the isNum
- * validator-function and that the .address is a valid User['address'] object 
- * using the "User" schema setup by jet-schema.
- */
-function updateUsersAddr(req: Request, res: Response) {
-  const { userId, address } = validateReqBody(req.body);
-  ...do stuff
-}
-```
-
-> See this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master/src/routes">template</a> for a full example.
 <br/>
