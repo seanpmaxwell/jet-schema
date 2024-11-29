@@ -31,16 +31,16 @@
 
 
 ## Introduction <a name="introduction"></a>
-`jet-schema` is a simple, TypeScript first schema validation tool, which enables you to use your own validator functions against each property in an object.
+`jet-schema` is a simple, TypeScript-first schema validation tool which enables you to use your own validator functions against each property in an object.
 
-> If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy-n-paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
+> If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy n' paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
 
 
 ### Highlights 😎
-- Focus is on using your own validator-functions to validate object properties.
-- Enables extracting logic for nested schemas.
+- Focus on using your own validator-functions to validate object properties.
+- Enable extracting logic for nested schemas.
 - Create new instances of your schemas using partials.
-- Easy-to-learn, terse, and small (this library only exports 2 functions and 3 types, size **4.7kB** minified).
+- Quickly learn this terse, small library that only exports 2 functions and 3 types, size **4.7kB** minified.
 - Doesn't require a compilation step (so still works with `ts-node`, unlike `typia`).
 - Fast! see these <a href="https://moltar.github.io/typescript-runtime-type-benchmarks/">benchmarks</a>.
 - Typesafety works boths ways, you can infer a type from a schema or force a schema to have certain properties using a generic. 
@@ -92,15 +92,15 @@ function isNullishString(arg: unknown): param is string | undefined | null {
 ```
 
 ### Why keep your own list of validator-functions?
-When validating an individual object's property, there's literally an infinite list of validations that can be done which are specific to that application needs (i.e. different businesses might have different requirements for an email format). So I thought, why not just strip all that away and just make something that allows me to use existing validator-functions to check an object's properties?
+When validating an individual object's property, there's literally an infinite list of validations that can be done which are specific to that application needs (i.e. different businesses might have different requirements for an email format). So I thought, why not just strip all that away and just make something that allows you to use existing validator-functions to check an object's properties?
 
 Other reasons to keep your own list of validator-functions:
-- Reuse your validators in multiple parts of your code across multiple projects without worrying which library they are tied to.
-- Don't have to repeatedly wrap our specialized logic in a libraries handlers (i.e. zod's `.refine` function).
-- Name your functions however you want (I like to use abbreviations a lot).
-- Makes your code way more terse.
-- `jet-schema` takes a *fire-and-forget* approach where once you setup your schema you almost never have to refer to the libraries documentation again.
-- As mentioned in the intro you can copy-n-paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a>. Rename/modify them as you please :)
+- Reuse your validators in multiple parts of your code across multiple projects without worrying about which library they are tied to.
+- Reduce the need to repeatedly wrap your specialized logic in a library's handlers (i.e. zod's `.refine` function).
+- Name your validator-functions however you want (for example: I like to use abbreviations a lot).
+- Make your code substantially more terse.
+- Setup your schema and never refer to the library's documentation again.`jet-schema` takes a *fire-and-forget* approach
+- Copy n' paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a> to skip writing your own.
 
 ### Code comparison with zod and jet-schema
 ```typescript
