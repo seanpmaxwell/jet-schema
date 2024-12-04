@@ -51,7 +51,7 @@
 
 ### Quick Glance
 ```typescript
-import schema from 'utils/schema';
+import schema, { inferType } from 'utils/schema';
 import { isString, isNumber } from 'utils/validators';
 
 const User = schema({
@@ -68,6 +68,7 @@ User.test('asdf') // => false
 User.pick('name').test('john') // => true
 User.pick('address').pick('zip').test(234) // => true
 User.parse('something') // => Error
+type TUser = inferType<User>; // Get the type
 ```
 <br/>
 
