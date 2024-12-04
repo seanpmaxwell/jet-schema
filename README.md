@@ -54,16 +54,7 @@
 import schema from 'utils/schema';
 import { isString, isNumber } from 'utils/validators';
 
-interface IUser {
-  id: number;
-  name: string;
-  address: {
-    street: string;
-    zip: number;
-  }
-}
-
-const User = schema<IUser>({
+const User = schema({
   id: isNumber,
   name: isString,
   address: schema({
@@ -299,7 +290,7 @@ const User = schema<IUser>({
 
 **Option 2:** Create a type using a schema:
 ```typescript
-import { schema } from 'jet-schema';
+import { schema, inferType } from 'jet-schema';
 import { isNum, isStr, isOptionalStr } from 'util/validators.ts';
 
 const User = schema({
