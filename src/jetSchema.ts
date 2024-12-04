@@ -385,14 +385,14 @@ function _setupAllVldtrsHolder<T>(
       vldrHolderObj.vf = vldr as TValidatorFn;
     // Error
     } else {
-      const errObj = getErrObj(Errors.Init, '._setupAllVldtrsHolder', schemaId, 
+      const errObj = getErrObj(Errors.Init, '_setupAllVldtrsHolder', schemaId, 
         key);
       errors.push(errObj);
     }
     // Make sure the default is a valid value
     const dfltVal: unknown = vldrHolderObj.default();
     if (!vldrHolderObj.vf(dfltVal)) {
-      const errObj = getErrObj(Errors.DefaultVal, '._setupAllVldtrsHolder',
+      const errObj = getErrObj(Errors.DefaultVal, '_setupAllVldtrsHolder',
         schemaId, key, dfltVal);
       const errFin = vldrHolderObj.formatError(errObj); 
       errors.push(errFin);
@@ -532,7 +532,7 @@ function _setupParseFn(
   // Pre-process some stuff
   const { schemaId, safety } = options,
     notAnObjErr = getErrObj(Errors.NotAnObj, '.parse', schemaId),
-    runValidations = _setupRunValidations(allVldtrsHolder, safety, '.test',
+    runValidations = _setupRunValidations(allVldtrsHolder, safety, '.parse',
       schemaId);
   // Return parse function
   return (arg: unknown) => {
