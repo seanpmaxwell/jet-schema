@@ -92,7 +92,7 @@ Other reasons to keep your own list of validator-functions:
 - Name your validator-functions however you want (for example: I like to use abbreviations a lot).
 - Make your code substantially more terse.
 - Setup your schema and never refer to the library's documentation again.`jet-schema` takes a *fire-and-forget* approach
-- Copy n' paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a> to skip writing your own.
+- If you want, you can copy n' paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a> to skip writing your own.
 
 ### Code comparison with zod and jet-schema
 ```typescript
