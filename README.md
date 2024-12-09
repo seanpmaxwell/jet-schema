@@ -274,7 +274,7 @@ For handling a schema's type, you can enforce a schema from a type or infer a ty
 **Option 1:** Create a schema using a type:
 ```typescript
 import { schema } from 'jet-schema';
-import { isNumber, isStr, isOptionalStr } from 'util/validators.ts';
+import { isNumber, isStr, isOptionalString } from 'util/validators.ts';
 
 interface IUser {
   id: number;
@@ -285,19 +285,19 @@ interface IUser {
 const User = schema<IUser>({
   id: isNumber,
   name: isStr,
-  email: isOptionalStr,
+  email: isOptionalString,
 });
 ```
 
 **Option 2:** Create a type using a schema:
 ```typescript
 import { schema, inferType } from 'jet-schema';
-import { isNumber, isStr, isOptionalStr } from 'util/validators.ts';
+import { isNumber, isStr, isOptionalString } from 'util/validators.ts';
 
 const User = schema({
   id: isNumber,
   name: isStr,
-  email: isOptionalStr,
+  email: isOptionalString,
 });
 
 const TUser = inferType<typeof User>;
@@ -348,7 +348,7 @@ const User = schema<TUser>({
 ### Schema APIs <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
-> NOTE: the following examples assume you set `0` as the default for `isNumber`, `''` for `isString`, nothing for `isOptionalStr`, and `safety` is left at its default `filter` option. See the <a name="creating-schemas">Creating Schemas</a> section for how to set default values and the `safety` option.
+> NOTE: the following examples assume you set `0` as the default for `isNumber`, `''` for `isString`, nothing for `isOptionalString`, and `safety` is left at its default `filter` option. See the <a name="creating-schemas">Creating Schemas</a> section for how to set default values and the `safety` option.
 
 #### `.new` <a name="new"></a>
 Allows you to create new instances of your type using partials. If the property is absent, `.new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
