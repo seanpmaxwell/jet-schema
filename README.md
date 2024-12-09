@@ -212,18 +212,18 @@ import { isNumber, isString } from './validators';
 const schema = jetSchema({
   globals?: [
     { vf: isNumber, default: 0 },
-    { vf: isStr, default: '' },
+    { vf: isString, default: '' },
   ],
 });
 
 const User1 = schema({
   id: isNumber,
-  name: isStr,
+  name: isString,
 });
 
 const User2 = schema({
   id: { vf: isNumber, default: -1 }, // Localized default setting overwriting a global one
-  name: isStr,
+  name: isString,
 })
 
 User1.new() // => { id: 0, name: '' }
