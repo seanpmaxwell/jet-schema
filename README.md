@@ -207,7 +207,7 @@ Schemas can be created by importing the `schema` function directly from the `jet
 The configuration-objects are set in the `globals:` property. Note that localized settings will overwrite all global ones:
 ```typescript
 import jetSchema from 'jet-schema';
-import { isNumber, isStr } from './validators'; 
+import { isNumber, isString } from './validators'; 
 
 const schema = jetSchema({
   globals?: [
@@ -236,7 +236,7 @@ For the `jetSchema` function, in addition to `globals:` there are two additional
 - `onError`: Configure what happens when errors are raised. By default, a javascript `new Error()` is thrown with the array of errors stringified in the error message.
 ```typescript
 import jetSchema from 'jet-schema';
-import { isNumber, isStr } from './validators';
+import { isNumber, isString } from './validators';
 
 export default jetSchema({
   globals?: [
@@ -254,7 +254,7 @@ export default jetSchema({
 If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
  ```typescript
 import { schema } from 'jet-schema';
-import { isNumber, isStr } from './validators'; 
+import { isNumber, isString } from './validators'; 
 
 const User1 = shared({
   id: { vf: isNumber, default: 0 },
