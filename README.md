@@ -33,7 +33,7 @@
 ## Introduction <a name="introduction"></a>
 `jet-schema` is a simple, TypeScript-first schema validation tool which enables you to use your own validator functions against each property in an object.
 
-> If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you can copy n' paste the file (https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts) into your application and add/remove/edit validators as needed.
+> If you're open to `jet-schema` but think writing your own validator-functions could be a hassle, you install its sister library <a href="https://github.com/seanpmaxwell/jet-validators">jet-validators</a> which includes some predefined validator-functions.
 
 
 ### Highlights 😎
@@ -92,7 +92,7 @@ Other reasons to keep your own list of validator-functions:
 - Name your validator-functions however you want (for example: I like to use abbreviations a lot).
 - Make your code substantially more terse.
 - Setup your schema and never refer to the library's documentation again.`jet-schema` takes a *fire-and-forget* approach
-- If you want, you can copy n' paste a list of predefined validator-functions <a href="https://github.com/seanpmaxwell/ts-validators/blob/master/src/validators.ts">here</a> to skip writing your own.
+- As mentioned in the intro, you can skip having to defined some of the more common ones by installing <a href="https://github.com/seanpmaxwell/jet-validators">jet-validators</a>.
 
 ### Code comparison with zod and jet-schema
 ```typescript
