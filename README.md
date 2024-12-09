@@ -207,22 +207,22 @@ Schemas can be created by importing the `schema` function directly from the `jet
 The configuration-objects are set in the `globals:` property. Note that localized settings will overwrite all global ones:
 ```typescript
 import jetSchema from 'jet-schema';
-import { isNum, isStr } from './validators'; 
+import { isNumber, isStr } from './validators'; 
 
 const schema = jetSchema({
   globals?: [
-    { vf: isNum, default: 0 },
+    { vf: isNumber, default: 0 },
     { vf: isStr, default: '' },
   ],
 });
 
 const User1 = schema({
-  id: isNum,
+  id: isNumber,
   name: isStr,
 });
 
 const User2 = schema({
-  id: { vf: isNum, default: -1 }, // Localized default setting overwriting a global one
+  id: { vf: isNumber, default: -1 }, // Localized default setting overwriting a global one
   name: isStr,
 })
 
@@ -236,11 +236,11 @@ For the `jetSchema` function, in addition to `globals:` there are two additional
 - `onError`: Configure what happens when errors are raised. By default, a javascript `new Error()` is thrown with the array of errors stringified in the error message.
 ```typescript
 import jetSchema from 'jet-schema';
-import { isNum, isStr } from './validators';
+import { isNumber, isStr } from './validators';
 
 export default jetSchema({
   globals?: [
-    { vf: isNum, default: 0 },
+    { vf: isNumber, default: 0 },
     { vf: isStr, default: '' },
   ],
   cloneFn?: (val: unknown) => unknown, // use a custom clone-function
@@ -254,15 +254,15 @@ export default jetSchema({
 If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
  ```typescript
 import { schema } from 'jet-schema';
-import { isNum, isStr } from './validators'; 
+import { isNumber, isStr } from './validators'; 
 
 const User1 = shared({
-  id: { vf: isNum, default: 0 },
+  id: { vf: isNumber, default: 0 },
   name: { vf: isStr, default: '' },
 });
 
 const User2 = sharedSchema({
-  id: { vf: isNum, default: 0 },
+  id: { vf: isNumber, default: 0 },
   name: isStr, // ERROR: "isStr" does not accept `undefined` as a valid value but no default was value configured for "isStr"
 })
 ```
@@ -274,7 +274,7 @@ For handling a schema's type, you can enforce a schema from a type or infer a ty
 **Option 1:** Create a schema using a type:
 ```typescript
 import { schema } from 'jet-schema';
-import { isNum, isStr, isOptionalStr } from 'util/validators.ts';
+import { isNumber, isStr, isOptionalStr } from 'util/validators.ts';
 
 interface IUser {
   id: number;
@@ -283,7 +283,7 @@ interface IUser {
 }
 
 const User = schema<IUser>({
-  id: isNum,
+  id: isNumber,
   name: isStr,
   email: isOptionalStr,
 });
@@ -292,10 +292,10 @@ const User = schema<IUser>({
 **Option 2:** Create a type using a schema:
 ```typescript
 import { schema, inferType } from 'jet-schema';
-import { isNum, isStr, isOptionalStr } from 'util/validators.ts';
+import { isNumber, isStr, isOptionalStr } from 'util/validators.ts';
 
 const User = schema({
-  id: isNum,
+  id: isNumber,
   name: isStr,
   email: isOptionalStr,
 });
@@ -307,8 +307,8 @@ const TUser = inferType<typeof User>;
 In addition to an object with our schema's properties, the `schema` function accepts an additional **options** parameter:
 ```typescript
 const User = schema<IUser>({
-  id: isNum,
-  name: isStr,
+  id: isNumber,
+  name: isString,
 }, /* { ...options object... } */); // <-- Pass options here
 ```
 
@@ -332,8 +332,8 @@ const User = schema<IUser>({
 type TUser = IUser | null | undefined;
 
 const User = schema<TUser>({
-  id: isNum,
-  name: isStr,
+  id: isNumber,
+  name: isString,
 }, {
   optional: true, // Must be true because TUser is `| undefined`
   nullable: true, // Must be true because TUser is `| null`
@@ -348,7 +348,7 @@ const User = schema<TUser>({
 ### Schema APIs <a name="schema-apis"></a>
 Once you have your custom schema setup, you can call the `.new`, `.test`, `.pick`, and `.parse` functions.
 
-> NOTE: the following examples assume you set `0` as the default for `isNum`, `''` for `isStr`, nothing for `isOptionalStr`, and `safety` is left at its default `filter` option. See the <a name="creating-schemas">Creating Schemas</a> section for how to set default values and the `safety` option.
+> NOTE: the following examples assume you set `0` as the default for `isNumber`, `''` for `isString`, nothing for `isOptionalStr`, and `safety` is left at its default `filter` option. See the <a name="creating-schemas">Creating Schemas</a> section for how to set default values and the `safety` option.
 
 #### `.new` <a name="new"></a>
 Allows you to create new instances of your type using partials. If the property is absent, `.new` will use the default supplied. If no default is supplied and the property is optional, then the value will be skipped. Runtime validation will still be done on every incoming property:
@@ -373,10 +373,10 @@ User.test({ id: 1, name: 'a', email: 'b@b' }); // => param is IUser
 Selects a property and returns an object with the `.test` and `.default` functions. If you use `.pick` on a child schema, you can also use the schema functions (`.new`, `.pick` etc), in addition to `.default`. Note that for a child-schema, `.default` could return a different value from `.new` if the default value is set to `null` or `undefined` (see the `init:` setting in the <a href="#schema-options">Schema Options</a> section).
 ```typescript
 const User = schema<IUser>({
-  id: isNum,
+  id: isNumber,
   address: schema<IUser['address']>({
-    street: isStr,
-    city: isStr,
+    street: isString,
+    city: isString,
   }, { init: null }),
 });
 
@@ -392,8 +392,8 @@ User.pick('address').pick('city').test('asdf'); // => "true"
 Like a combination of `.new` and `.test`. It accepts an `unknown` value which is not optional, validates the properties but returns a new instance (while removing an extra ones) instead of a type-predicate. Note: only objects will pass the `.parse` function, even if a schema is nullish, `null/undefined` values will not pass.
 ```typescript
 const User = schema<IUser>({
-  id: isNum,
-  name: isStr,
+  id: isNumber,
+  name: isString,
 });
 
 User.parse(); // => Error
@@ -502,13 +502,13 @@ export default {
 ### Recommended Globals Settings <a name="recommended-global-settings"></a>
 I highly recommend you set these default values for each of your basic primitive validator-functions, unless of course your application has some other specific need:
 ```typescript
-import { isNum, isStr, isBool } from 'util/validators.ts';
+import { isNumber, isString, isBoolean } from 'util/validators.ts';
 
 export default jetSchema({
   globals: [
-    { vf: isNum, default: 0 },
-    { vf: isStr, default: '' },
-    { vf: isBool, default: false },
+    { vf: isNumber, default: 0 },
+    { vf: isString, default: '' },
+    { vf: isBoolean, default: false },
   ],
 });
 ```
