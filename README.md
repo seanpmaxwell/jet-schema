@@ -241,7 +241,7 @@ import { isNumber, isString } from './validators';
 export default jetSchema({
   globals?: [
     { vf: isNumber, default: 0 },
-    { vf: isStr, default: '' },
+    { vf: isString, default: '' },
   ],
   cloneFn?: (val: unknown) => unknown, // use a custom clone-function
   onError?: (errors: IError[]) => void, // pass a custom error-handler,
@@ -258,12 +258,12 @@ import { isNumber, isString } from './validators';
 
 const User1 = shared({
   id: { vf: isNumber, default: 0 },
-  name: { vf: isStr, default: '' },
+  name: { vf: isString, default: '' },
 });
 
 const User2 = sharedSchema({
   id: { vf: isNumber, default: 0 },
-  name: isStr, // ERROR: "isStr" does not accept `undefined` as a valid value but no default was value configured for "isStr"
+  name: isString, // ERROR: "isString" does not accept `undefined` as a valid value but no default was value configured for "isString"
 })
 ```
 
@@ -274,7 +274,7 @@ For handling a schema's type, you can enforce a schema from a type or infer a ty
 **Option 1:** Create a schema using a type:
 ```typescript
 import { schema } from 'jet-schema';
-import { isNumber, isStr, isOptionalString } from 'util/validators.ts';
+import { isNumber, isString, isOptionalString } from 'util/validators.ts';
 
 interface IUser {
   id: number;
@@ -284,7 +284,7 @@ interface IUser {
 
 const User = schema<IUser>({
   id: isNumber,
-  name: isStr,
+  name: isString,
   email: isOptionalString,
 });
 ```
@@ -292,11 +292,11 @@ const User = schema<IUser>({
 **Option 2:** Create a type using a schema:
 ```typescript
 import { schema, inferType } from 'jet-schema';
-import { isNumber, isStr, isOptionalString } from 'util/validators.ts';
+import { isNumber, isString, isOptionalString } from 'util/validators.ts';
 
 const User = schema({
   id: isNumber,
-  name: isStr,
+  name: isString,
   email: isOptionalString,
 });
 
