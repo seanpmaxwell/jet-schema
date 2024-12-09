@@ -27,6 +27,7 @@
 - [Tips](#tips)
   - [Creating wrapper functions](#creating-wrapper-functions)
   - [Recommended Global Settings](#recommended-global-settings)
+  - [jet-validators](#jet-validators)
 <br/>
 
 
@@ -511,5 +512,31 @@ export default jetSchema({
     { vf: isBoolean, default: false },
   ],
 });
+```
+
+### jet-validators <a name="jet-validators"></a>
+<a href="https://github.com/seanpmaxwell/jet-validators">jet-validators</a> is a library which contains a long list of the most commonly needed validator-functions. If you have a large application (such as an enterprise website), I recommended installing **jet-validators** as well to avoid having to define some of the more generic validators.
+
+```typescript
+import { isNumber, isString, isBoolean } from 'jet-validators';
+
+// Your custom validator
+const isRelationalKey = (arg: unknown): arg is number => {
+  return isNumber(arg) && arg >= -1;
+}
+
+const schema = jetSchema({
+  globals: [
+    { vf: isNumber, default: 0 },
+    { vf: isString, default: '' },
+    { vf: isBoolean, default: false },
+    { vf: isRelationalKey, default: -1 },
+  ],
+});
+
+const User = schema({
+  id: isRelationalKey,
+  name: isString,
+})
 ```
 <br/>
