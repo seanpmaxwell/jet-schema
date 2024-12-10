@@ -539,4 +539,8 @@ const User = schema({
   name: isString,
 })
 ```
+
+> If you're wondering when to use jet-schema vs `parseObject` from jet-validators, a good rule of thumb is to use jet-schema for any objects that you are creating multiple instances of which may have predefined types (i.e. an object which represents a database table). For simple objects which just need a few fields validated and you aren't created multiple instances of them or applying to types to them, just use `parseObject`.
+
+
 <br/>
