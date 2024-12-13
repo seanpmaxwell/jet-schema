@@ -64,11 +64,11 @@ const User = schema({
   })
 });
 
-User.new({ id: 5, name: 'joe' }) // => { id: 5, name: 'joe' }
-User.test('asdf') // => false
-User.pick('name').test('john') // => true
-User.pick('address').pick('zip').test(234) // => true
-User.parse('something') // => Error
+User.new({ id: 5, name: 'joe' }); // => { id: 5, name: 'joe' }
+User.test('asdf'); // => false
+User.pick('name').test('john'); // => true
+User.pick('address').pick('zip').test(234); // => true
+User.parse('something'); // => Error
 type TUser = inferType<User>; // Get the type
 ```
 <br/>
@@ -228,7 +228,7 @@ const User2 = schema({
 });
 
 User1.new(); // => { id: 0, name: '' }
-User2.new()' // => { id: -1, name: '' }
+User2.new(); // => { id: -1, name: '' }
 ```
 
 #### ▸ The jetSchema function's additional options <a name="jet-schema-additional-options"></a>
@@ -523,7 +523,7 @@ import { isNumber, isString, isBoolean } from 'jet-validators';
 // Your custom validator
 const isRelationalKey = (arg: unknown): arg is number => {
   return isNumber(arg) && arg >= -1;
-}
+};
 
 const schema = jetSchema({
   globals: [
