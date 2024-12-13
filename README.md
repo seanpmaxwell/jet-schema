@@ -97,7 +97,7 @@ Other reasons to keep your own list of validator-functions:
 
 ### Code comparison with zod and jet-schema
 ```typescript
-import { isString, isNumber, isRelationalKey, isEmail, isOptionalString } from 'my-custom-validators.ts';
+import { isString, isNumber, isRelationalKey, isEmail, isOptionalString } from 'your-validators.ts';
 
 interface IUser {
   id: number;
@@ -225,10 +225,10 @@ const User1 = schema({
 const User2 = schema({
   id: { vf: isNumber, default: -1 }, // Localized default setting overwriting a global one
   name: isString,
-})
+});
 
-User1.new() // => { id: 0, name: '' }
-User2.new() // => { id: -1, name: '' }
+User1.new(); // => { id: 0, name: '' }
+User2.new()' // => { id: -1, name: '' }
 ```
 
 #### ▸ The jetSchema function's additional options <a name="jet-schema-additional-options"></a>
@@ -252,20 +252,20 @@ export default jetSchema({
 > I usually configure the `jetSchema` function once per application and place it in a script called `utils/schema.ts`. From there I import it and use it to configure all individual schemas: take a look at this <a href="https://github.com/seanpmaxwell/express5-typescript-template/tree/master">template</a> for an example.
 
 #### ▸ The standalone schema function <a name="the-schema-function"></a>
-If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be configured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
+If we did not use the `jetSchema` function above and instead used the `schema` function directly, default values would have to be reconfigured everytime. **IMPORTANT** If your validator-function does not accept `undefined` as a valid value, you must set a default value because all defaults will be validated at startup:
  ```typescript
 import { schema } from 'jet-schema';
 import { isNumber, isString } from './validators'; 
 
-const User1 = shared({
+const User1 = schema({
   id: { vf: isNumber, default: 0 },
   name: { vf: isString, default: '' },
 });
 
-const User2 = sharedSchema({
+const User2 = schema({
   id: { vf: isNumber, default: 0 },
-  name: isString, // ERROR: "isString" does not accept `undefined` as a valid value but no default was value configured for "isString"
-})
+  name: isString, // ERROR: "isString" does not accept `undefined` as a valid value but no default value was configured for "isString"
+});
 ```
 
 
@@ -438,7 +438,7 @@ interface IUser {
 const User = schema<IUser>({
   id: isString, // "isOptionalString" will throw type errors
   name: isOptionalString, // "isString" will not throw type errors but will throw runtime errors
-})
+});
 ```
 
 #### ▸ Child schemas
@@ -491,13 +491,13 @@ const User = schema<IUser>({
     street: isString,
     zip: isNumber,
   }, { nullish: true }),
-})
+});
 
 export default {
   // Wrapper function to remove nullables
   checkAddr: nonNullable(User.pick('address').test),
   ...User,
-}
+} as const;
 ```
 
 ### Recommended Globals Settings <a name="recommended-global-settings"></a>
@@ -537,10 +537,7 @@ const schema = jetSchema({
 const User = schema({
   id: isRelationalKey,
   name: isString,
-})
+});
 ```
 
-> If you're wondering when to use jet-schema vs `parseObject` from jet-validators, a good rule of thumb is to use jet-schema for any objects that you are creating multiple instances of which may have predefined types (i.e. an object which represents a database table). For simple objects which just need a few fields validated and you aren't created multiple instances of them or applying to types to them, just use `parseObject`.
-
-
-<br/>
+> If you're wondering when to use jet-schema vs `parseObject` from jet-validators, a good rule of thumb is to use jet-schema for any objects that you are creating multiple instances of which may have predefined types (i.e. an object which represents a database table). For simple objects which just need a few fields validated and you aren't created multiple instances of them or applying types to them, just use `parseObject`.
