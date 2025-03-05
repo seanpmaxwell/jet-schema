@@ -9,6 +9,9 @@ import {
   TEnum,
   isEnum,
   defaultCloneFn,
+  isString,
+  isNumber,
+  isBoolean,
 } from './util';
 
 import {
@@ -41,8 +44,11 @@ type IsStaticObj<P, Prop = NonNullable<P>> = (
 type NotUndef<T> = Exclude<T, undefined>;
 type TModel = Record<string | number | symbol, unknown>;
 type AddNullablesHelper<T, isN> = isN extends true ? NonNullable<T> | null : NonNullable<T>;
-type AddNullables<T, isU, isN> = (isU extends true ? AddNullablesHelper<NotUndef<T>, isN> | undefined : AddNullablesHelper<NotUndef<T>, isN>);
-type GetTypePredicate<T> = T extends (x: unknown) => x is infer U ? U : never;
+type AddNullables<T, isU, isN> = (
+  isU extends true 
+    ? AddNullablesHelper<NotUndef<T>, isN> | undefined 
+    : AddNullablesHelper<NotUndef<T>, isN>
+  );
 
 
 // **** Misc **** //
@@ -56,7 +62,6 @@ export interface IValidatorObj<T = unknown> {
 
 type TValidatorFn<T = unknown> = (arg: unknown) => arg is T;
 type IValidatorFnOrObj<T> = TValidatorFn<T> | IValidatorObj<T>;
-type TGlobalsMap = Map<TValidatorFn, Pick<IValidatorObj, 'default' | 'transform' | 'formatError'>>;
 type TCloneFn = typeof defaultCloneFn;
 
 type TAllVldtrsObj = Record<string, {
@@ -105,31 +110,24 @@ export interface ISchema<T = unknown> {
 // Main argument passed to the schema functions
 export type TSchemaFnObjArg<T> = Required<{
   [K in keyof T]: (
-    T[K] extends (string | number)
-    ? (IValidatorFnOrObj<T[K]> | TEnum)
+    T[K] extends number
+    ? (IValidatorFnOrObj<number> | TEnum | NumberConstructor)
+    : T[K] extends string
+    ? (IValidatorFnOrObj<string> | TEnum | StringConstructor)
+    : T[K] extends boolean
+    ? (IValidatorFnOrObj<boolean> | BooleanConstructor)
     : T[K] extends Date 
-    ? (DateConstructor | IValidatorFnOrObj<T[K]>)
+    ? (IValidatorFnOrObj<Date> | DateConstructor)
     : IsStaticObj<T[K]> extends true
     ? ISchema<T[K]>
     : IValidatorFnOrObj<T[K]>
   );
 }>;
 
-interface IJetOptions<M> {
-  globals?: M extends IValidatorObj[] ? M : never,
+interface IJetOptions {
   cloneFn?: (value: unknown) => unknown,
   onError?: TOnError,
 }
-
-type TGlobalsArr<M> = {
-  [K in keyof M]: {
-    vf: TValidatorFn,
-  } & ('vf' extends keyof M[K] ? {
-    default?: GetTypePredicate<M[K]['vf']>,
-    transform?: (arg: unknown) => GetTypePredicate<M[K]['vf']>,
-    formatError?: TFormatError,
-  } : never)
-};
 
 // Need to restrict parameters based on if "T" is null or undefined.
 type TSchemaOptions<T = unknown> = (
@@ -228,12 +226,11 @@ type InferTypesHelper<U> = {
 // **** Functions **** //
 
 /**
- * Core jetSchema functions
+ * Core initSchemaFn() functions
  */
-function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
+function initSchemaFn(options?: IJetOptions) {
   // Setup default values map
-  const globalsMap = _setupGlobalsMap(options?.globals ?? []),
-    cloneFn = (options?.cloneFn ?? defaultCloneFn),
+  const cloneFn = (options?.cloneFn ?? defaultCloneFn),
     onError = (options?.onError ?? defaultOnError);
   // Return the "schema" function
   return <T,
@@ -248,8 +245,7 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
       onError(err);
     }
     // Setup main functions
-    const ret = _setupAllVldtrsHolder(schemaFnObjArg, globalsMap, cloneFn,
-        onError, optionsF.schemaId),
+    const ret = _setupAllVldtrsHolder(schemaFnObjArg, cloneFn, onError, optionsF.schemaId),
       newFn = _setupNewFn(ret.allVldtrsHolder, cloneFn, onError, optionsF.schemaId),
       testFn = _setupTestFn(ret.allVldtrsHolder, optionsF, onError),
       parseFn = _setupParseFn(ret.allVldtrsHolder, optionsF, onError);
@@ -288,11 +284,10 @@ function jetSchema<M extends TGlobalsArr<M>>(options?: IJetOptions<M>) {
 }
 
 /**
- * Setup the new() function
+ * Setup the _setupAllVldtrsHolder() function
  */
 function _setupAllVldtrsHolder<T>(
   schemaArgObj: TSchemaFnObjArg<T>,
-  globalsMap: TGlobalsMap,
   cloneFn: TCloneFn,
   onError: TOnError,
   schemaId?: string,
@@ -313,26 +308,37 @@ function _setupAllVldtrsHolder<T>(
     };
     // Is validator function or object
     const schemaArgProp = schemaArgObj[key];
+    // Date constructor
     if (schemaArgProp === Date) {
       vldrHolderObj.vf = isDate;
       vldrHolderObj.transform = (arg: Date) => new Date(arg);
       vldrHolderObj.default = () => new Date();
+    // String constructor
+    } else if (schemaArgProp === String) {
+      vldrHolderObj.vf = isString;
+      vldrHolderObj.default = () => '';
+    // Number constructor
+    } else if (schemaArgProp === Number) {
+      vldrHolderObj.vf = isNumber;
+      vldrHolderObj.default = () => 0;
+    // Boolean constructor
+    } else if (schemaArgProp === Boolean) {
+      vldrHolderObj.vf = isBoolean;
+      vldrHolderObj.default = () => false;
     // Is a validator-function or validator-object
     } else if (
-      (typeof schemaArgProp === 'function') ||
+      typeof schemaArgProp === 'function' ||
       _isValidatorObj(schemaArgProp)
     ) {
       // Check local validator-object
-      let vdlrFn: TValidatorFn,
-        defaultVal,
-        hasLocalDefault = false;
+      let vdlrFn = (() => false) as unknown as TValidatorFn,
+        defaultVal;
       // Check local validator-objects
       if (_isValidatorObj(schemaArgProp)) {
         const localObj = schemaArgProp;
         vdlrFn = localObj.vf;
         if ('default' in localObj) {
           defaultVal = localObj.default;
-          hasLocalDefault = true;
         }
         if (!!localObj.transform) {
           vldrHolderObj.transform = localObj.transform;
@@ -340,21 +346,8 @@ function _setupAllVldtrsHolder<T>(
         if (!!localObj.formatError) {
           vldrHolderObj.formatError = localObj.formatError;
         }
-      } else {
+      } else if (typeof schemaArgProp === 'function') {
         vdlrFn = schemaArgProp as TValidatorFn;
-      }
-      // Check global validator-object
-      const globalsObj = globalsMap.get(vdlrFn);
-      if (!!globalsObj) {
-        if (!hasLocalDefault && 'default' in globalsObj) {
-          defaultVal = globalsObj.default;
-        }
-        if (!vldrHolderObj.transform && !!globalsObj.transform) {
-          vldrHolderObj.transform = globalsObj.transform;
-        }
-        if (!vldrHolderObj.formatError && !!globalsObj.formatError) {
-          vldrHolderObj.formatError = globalsObj.formatError;
-        }
       }
       // Set the default
       if (!isUndef(defaultVal)) {
@@ -385,8 +378,7 @@ function _setupAllVldtrsHolder<T>(
       vldrHolderObj.vf = vldr as TValidatorFn;
     // Error
     } else {
-      const errObj = getErrObj(Errors.Init, '_setupAllVldtrsHolder', schemaId, 
-        key);
+      const errObj = getErrObj(Errors.Init, '_setupAllVldtrsHolder', schemaId, key);
       errors.push(errObj);
     }
     // Make sure the default is a valid value
@@ -522,7 +514,7 @@ function _setupTestFn(
 }
 
 /**
- * Setup the new() function
+ * Setup the parse() function
  */
 function _setupParseFn(
   allVldtrsHolder: TAllVldtrsObj,
@@ -548,18 +540,6 @@ function _setupParseFn(
     // Return
     return arg;
   };
-}
-
-/**
- * Setup the globals map
- */
-function _setupGlobalsMap(globalsArr: IValidatorObj[]): TGlobalsMap {
-  const map: TGlobalsMap = new Map();
-  for (const obj of globalsArr) {
-    const { vf, ...rest } = obj;
-    map.set(vf, rest);
-  }
-  return map;
 }
 
 /**
@@ -644,4 +624,4 @@ function _setupRunValidations(
 
 // **** Export default **** //
 
-export default jetSchema;
+export default initSchemaFn;

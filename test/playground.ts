@@ -12,7 +12,7 @@ import {
   nonNullable,
   isString,
   isOptionalString,
-} from './util/validators';
+} from './validators';
 
 
 // **** User Test Stuff (User has an explicit type) **** //

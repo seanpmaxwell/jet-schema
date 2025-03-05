@@ -1,11 +1,14 @@
 /* eslint-disable max-len */
 import { expect, test } from 'vitest';
 
-import schema from './util/schema';
-import jetSchema from '../src';
+import schema, { initSchemaFn } from '../src';
 import User, { IUser } from './models/User';
 import { isNum, isStr } from '../src/util';
 
+
+/******************************************************************************
+                                Tests
+******************************************************************************/
 
 /**
  * Test defaults
@@ -176,17 +179,8 @@ test('test User.pick("child schema").schema() function', () => {
  */
 test('different schema "safety" options', () => {
 
-  // Set "parent" settings
-  const parentSchemaFn = jetSchema({
-    globals: [
-      { vf: isNum, default: 0 },
-      { vf: isStr, default: '' },
-    ],
-    onError: () => ({}),
-  });
-
   // Test "default/filter"
-  const schemaDefault = parentSchemaFn({
+  const schemaDefault = schema({
     id: isNum,
     name: isStr,
   });
@@ -198,7 +192,7 @@ test('different schema "safety" options', () => {
   expect(failResult1).toStrictEqual(false);
 
   // Test "default/filter" again
-  const schemaFilter = parentSchemaFn({
+  const schemaFilter = schema({
     id: isNum,
     name: isStr,
   }, { safety: 'filter' });
@@ -210,7 +204,7 @@ test('different schema "safety" options', () => {
   expect(failResult2).toStrictEqual(false);
 
   // Test "pass"
-  const schemaPass = parentSchemaFn({
+  const schemaPass = schema({
     id: isNum,
     name: isStr,
   }, { safety: 'pass' });
@@ -222,7 +216,7 @@ test('different schema "safety" options', () => {
   expect(failResult3).toStrictEqual(false);
 
   // Test "strict"
-  const schemaStrict = parentSchemaFn({
+  const schemaStrict = schema({
     id: isNum,
     name: isStr,
   }, { safety: 'strict' });
@@ -234,7 +228,7 @@ test('different schema "safety" options', () => {
   expect(failResult4).toStrictEqual(false);
 
   // Test error throw for "strict"
-  const parentSchemaAllowThrowErrors = jetSchema({
+  const parentSchemaAllowThrowErrors = schema({
     globals: [
       { vf: isNum, default: 0 },
       { vf: isStr, default: '' },

@@ -1,13 +1,11 @@
-import { inferType } from '../../src';
-
-import schema from '../util/schema';
+import schema, { inferType } from '../../src';
 
 import {
   isNumber,
   isOptionalString,
   isRelationalKey,
   isString,
-} from '../util/validators';
+} from '../validators';
 
 
 // **** Setup ***** //

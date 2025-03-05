@@ -135,9 +135,30 @@ export function isBasicObj(arg: unknown): arg is TBasicObj {
 /**
  * Not necessarily a Date object but makes sure it is a valid date.
  */
-export const isDate = (val: unknown): val is Date => {
+export function isDate(val: unknown): val is Date {
   return (val instanceof Date) && !isNaN(new Date(val).getTime());
-};
+}
+
+/**
+ * Make sure is string
+ */
+export function isString(val: unknown): val is string  {
+  return typeof val === 'string';
+}
+
+/**
+ * Make sure is number
+ */
+export function isNumber(val: unknown): val is number  {
+  return typeof val === 'number';
+}
+
+/**
+ * Make sure is boolean
+ */
+export function isBoolean(val: unknown): val is boolean  {
+  return typeof val === 'boolean';
+}
 
 /**
  * Clone Function

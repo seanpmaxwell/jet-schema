@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 
-import { IError } from '../../src';
-import schema from '../util/schema';
+import schema, { IError } from '../../src';
 
 import {
   isEmail,
@@ -11,7 +10,7 @@ import {
   isOptionalString,
   isNumberArray,
   isOptionalBoolean,
-} from '../util/validators';
+} from '../validators';
 
 
 // **** Variables **** //
