@@ -4,12 +4,12 @@ import schema, { IError } from '../../src';
 
 import {
   isEmail,
-  isNumber,
-  isRelationalKey,
-  isString,
+  RelationalKey,
   isOptionalString,
   isNumberArray,
   isOptionalBoolean,
+  isNumber,
+  Base64Str,
 } from '../validators';
 
 
@@ -73,60 +73,60 @@ interface IAddress {
 // **** Setup **** //
 
 const User = schema<IUser>({
-  id: isRelationalKey,
-  name: isString,
+  id: RelationalKey,
+  name: String,
   email: { vf: isEmail, default: '' },
   age: { vf: isNumber, transform: Number, default: 0 },
   created: Date,
   lastLogin: Date,
   phone: isOptionalString,
   avatar: schema({
-    fileName: isString,
-    data: { vf: isString, default: 'base64:str;' },
+    fileName: String,
+    data: Base64Str,
     url: isOptionalString,
   }, { optional: true, nullable: true }),
   address: schema({
-    street: isString,
-    city: isString,
-    zip: isNumber,
+    street: String,
+    city: String,
+    zip: Number,
     country: schema({
-      name: isString,
-      code: isNumber,
+      name: String,
+      code: Number,
     }),
   }),
   avatar2: schema({
-    fileName: isString,
-    data: { vf: isString, default: 'base64:str;' },
+    fileName: String,
+    data: Base64Str,
     url: isOptionalString,
   }, { nullable: true }),
   avatar3: schema({
-    fileName: isString,
-    data: { vf: isString, default: 'base64:str;' },
+    fileName: String,
+    data: Base64Str,
     url: isOptionalString,
   }, { optional: true, nullable: true, init: false }),
   avatar4: schema({
-    fileName: isString,
-    data: { vf: isString, default: 'base64:str;' },
+    fileName: String,
+    data: Base64Str,
     url: isOptionalString,
   }, { optional: true, nullable: true, init: null }),
   avatar5: schema({
-    fileName: isString,
-    data: { vf: isString, default: 'base64:str;' },
+    fileName: String,
+    data: Base64Str,
     url: isOptionalString,
   }, { optional: true, init: false }),
   avatar6: schema({
-    fileName: isString,
-    data: { vf: isString, default: 'base64:str;' },
+    fileName: String,
+    data: Base64Str,
     url: isOptionalString,
   }, { nullish: true, init: false }),
   avatar7: schema({
-    fileName: isString,
-    data: isString,
-    url: { vf: isOptionalString, default: 'base64:str;' },
+    fileName: String,
+    data: String,
+    url: Base64Str,
   }, { nullish: true, init: null }),
   avatar8: schema({
-    fileName: isString,
-    data: isString,
+    fileName: String,
+    data: String,
     url: isOptionalString,
     // foo: isString
   }, { nullish: true }),

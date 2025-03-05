@@ -1,10 +1,8 @@
 import schema, { inferType } from '../../src';
 
 import {
-  isNumber,
   isOptionalString,
-  isRelationalKey,
-  isString,
+  RelationalKey,
 } from '../validators';
 
 
@@ -16,34 +14,34 @@ enum Level {
 }
 
 const Post = schema({
-  id: isRelationalKey,
-  mesage: isString,
-  index: isNumber,
+  id: RelationalKey,
+  mesage: String,
+  index: Number,
   created: Date,
   optionalStr: isOptionalString,
   image: schema({
-    fileName: isString,
-    data: isString,
+    fileName: String,
+    data: String,
   }),
   imageOpt: schema({
-    fileName: isString,
-    data: isString,
+    fileName: String,
+    data: String,
   }, { optional: true }),
   imageOptNull: schema({
-    fileName: isString,
-    data: isString,
+    fileName: String,
+    data: String,
   }, { optional: true, nullable: true }),
   imageNull: schema({
-    fileName: isString,
-    data: { vf: isString, default: '' },
+    fileName: String,
+    data: String,
   }, { optional: false, nullable: true }),
   imageReq: schema({
-    fileName: isString,
-    data: isString,
+    fileName: String,
+    data: String,
   }, { optional: false, nullable: false }),
   imageNullish: schema({
-    fileName: isString,
-    data: isString,
+    fileName: String,
+    data: String,
     foo: isOptionalString,
   }, { nullish: true }),
   level: Level,
