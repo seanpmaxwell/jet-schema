@@ -46,9 +46,9 @@ export function isNonArrObj(
 }
 
 /**
- * Get the keys of an enum object.
+ * Get the values of an enum object.
  */
-export function processEnum(arg: unknown): [ unknown, TFunc ] {
+export function getEnumVals(arg: unknown): unknown[] {
   if (!isEnum(arg)) {
     throw Error('"getEnumKeys" must receive an enum object.');
   }
@@ -64,10 +64,7 @@ export function processEnum(arg: unknown): [ unknown, TFunc ] {
     vals = vals.map(item => arg[item as string]);
   }
   // Return
-  return [
-    vals[0],
-    arg => vals.some(val => val === arg),
-  ];
+  return vals;
 }
 
 /**

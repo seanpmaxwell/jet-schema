@@ -1,6 +1,20 @@
 /* eslint-disable max-len */
 // **** Functions **** //
 
+import { IErrorItem, IValidatorObj } from '../src';
+
+
+/******************************************************************************
+                                 Types
+******************************************************************************/
+
+type TEmail = `${string}@${string}`  | '--';
+
+
+/******************************************************************************
+                                Functions
+******************************************************************************/
+
 /**
  * Check if a param is undefined.
  */
@@ -13,13 +27,6 @@ export function isUndefined(param: unknown): param is undefined {
  */
 export function isNumberString(param: unknown): param is string {
   return typeof param === 'string' && !isNaN(Number(param));
-}
-
-/**
- * Is a number array.
- */
-export function isNumberArray(val: unknown): val is number[] {
-  return Array.isArray(val) && !val.some(item => typeof item !== 'number');
 }
 
 /**
@@ -54,7 +61,7 @@ export function isString(param: unknown): param is string {
  * Is the item a relational key. 'undefined' not allowd so we need to set a 
  * default value.
  */
-export const RelationalKey = {
+export const RelationalKey: IValidatorObj<number> = {
   vf: (arg: unknown): arg is number => isNumber(arg) && arg >= -1,
   default: -1,
 } as const;
@@ -62,21 +69,44 @@ export const RelationalKey = {
 /**
  * base64 string data item.
  */
-export const Base64Str = {
+export const Base64Str: IValidatorObj<string> = {
   vf: isString,
   default: 'base64:str;',
 } as const;
 
 /**
- * Is param a valid color.
+ * Is a valid email address.
  */
-export function isEmail(val: unknown): val is string {
-  return (
-    typeof val === 'string' && 
-    (val.length) < 254 &&
-    (val === '' || val.includes('@'))
-  );
-}
+export const Email: IValidatorObj<TEmail> = {
+  vf(arg): arg is TEmail {
+    return (
+      isString(arg) && 
+      (arg.length < 254) &&
+      (arg === '--' || arg.includes('@'))
+    );
+  },
+  default: '--',
+} as const;
+
+/**
+ * Accept a "number[]" or a stringified "number[]"". 
+ */
+export const NumberArray: IValidatorObj<number[]> = {
+  vf(val: unknown): val is number[] {
+    return Array.isArray(val) && val.every(item => isNumber(item));
+  },
+  default: [],
+  transform(arg: unknown) {
+    if (isString(arg)) {
+      return JSON.parse(arg) as number[];
+    } else {
+      return arg as number[];
+    }
+  },
+  formatError(error: IErrorItem) {
+    return `The property "${error.property}" was not a valid number array`;
+  },
+} as const;
 
 /**
  * Allow param to be undefined

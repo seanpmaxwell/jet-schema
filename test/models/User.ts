@@ -1,15 +1,15 @@
 /* eslint-disable no-console */
 
-import schema, { IError } from '../../src';
+import schema, { IErrorItem } from '../../src';
 
 import {
-  isEmail,
   RelationalKey,
   isOptionalString,
-  isNumberArray,
   isOptionalBoolean,
   isNumber,
   Base64Str,
+  Email,
+  NumberArray,
 } from '../validators';
 
 
@@ -75,7 +75,7 @@ interface IAddress {
 const User = schema<IUser>({
   id: RelationalKey,
   name: String,
-  email: { vf: isEmail, default: '' },
+  email: Email,
   age: { vf: isNumber, transform: Number, default: 0 },
   created: Date,
   lastLogin: Date,
@@ -132,10 +132,10 @@ const User = schema<IUser>({
   }, { nullish: true }),
   adminStatus: AdminStatus,
   adminStatusAlt: AdminStatusAlt,
-  pastIds: isNumberArray,
+  pastIds: NumberArray,
   single: {
     vf: isOptionalBoolean,
-    formatError(error: IError) {
+    formatError(error: IErrorItem) {
       console.error(JSON.stringify(error));
       return error;
     },

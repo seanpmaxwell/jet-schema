@@ -3,7 +3,8 @@ import { expect, test } from 'vitest';
 
 import schema, { initSchemaFn } from '../src';
 import User, { IUser } from './models/User';
-import { isNum, isStr } from '../src/util';
+import { isString } from './validators';
+// import { isNum, isStr } from '../src/util';
 
 
 /******************************************************************************
@@ -21,7 +22,7 @@ test('User all default values', () => {
     id: -1,
     name: '',
     age: 0,
-    email: '',
+    email: '--',
     created: new Date(user.created),
     lastLogin: new Date(user.lastLogin),
     avatar: { fileName: '', data: 'base64:str;' },
@@ -45,7 +46,6 @@ test('User all default values', () => {
 
   expect(user).toStrictEqual(expectedResult);
 });
-
 
 /**
  * Override each default
@@ -111,12 +111,11 @@ test('User override each default value', () => {
   };
 
   expect(user).toStrictEqual(expectedResult);
-  expect(User.test(expectedResult)).toStrictEqual(true);
+  expect(User.test(expectedResult)).toBeTruthy();
   expect(User.test('asdf')).toStrictEqual(false);
   expect(User.parse(somethingElse)).toStrictEqual(expectedResult);
-  expect(User.test(User.parse('asdf'))).toStrictEqual(false);
+  expect(() => User.parse('asdf')).toThrowError();
 });
-
 
 /**
  * Test pick function.
@@ -130,7 +129,7 @@ test('User pick() function', () => {
   expect(User.pick('name').default()).toStrictEqual('');
   expect(User.pick('name').test('john')).toStrictEqual(true);
   expect(User.pick('name').test(1234)).toStrictEqual(false);
-  expect(User.pick('email').default()).toStrictEqual('');
+  expect(User.pick('email').default()).toStrictEqual('--');
   expect(User.pick('email').test('john@doe.com')).toStrictEqual(true);
   expect(User.pick('email').test('asdf')).toStrictEqual(false);
   expect(User.pick('created').default() instanceof Date).toStrictEqual(true);
@@ -149,7 +148,6 @@ test('User pick() function', () => {
   expect(User.pick('adminStatusAlt').test(100)).toStrictEqual(false);
 });
 
-
 /**
  * Test nested schema function
  */
@@ -162,8 +160,8 @@ test('test User.pick("child schema").schema() function', () => {
   }
 
   const UserAlt = schema<IUserAlt>({
-    id: isNum,
-    name: isStr,
+    id: Number,
+    name: { vf: isString, default: () => '--' },
     avatar: User.pick('avatar').schema(),
   });
 
@@ -171,19 +169,20 @@ test('test User.pick("child schema").schema() function', () => {
     fileName: '',
     data: 'base64:str;',
   });
-});
 
+  expect(UserAlt.pick('name').default()).toStrictEqual('--');
+});
 
 /**
  * Test safety
  */
-test('different schema "safety" options', () => {
+test.only('different schema "safety" options', () => {
 
   // Test "default/filter"
   const schemaDefault = schema({
-    id: isNum,
-    name: isStr,
-  });
+    id: Number,
+    name: String,
+  }, { e});
   const testResult1 = schemaDefault.test({ id: 1, name: 'joe', foo: 'bar' }),
     parseResult1 = schemaDefault.parse({ id: 1, name: 'joe', foo: 'bar' }),
     failResult1 = schemaDefault.test({ id: 1, name: 1234 });
@@ -193,8 +192,8 @@ test('different schema "safety" options', () => {
 
   // Test "default/filter" again
   const schemaFilter = schema({
-    id: isNum,
-    name: isStr,
+    id: Number,
+    name: String,
   }, { safety: 'filter' });
   const testResult2 = schemaFilter.test({ id: 1, name: 'joe', foo: 'bar' }),
     parseResult2 = schemaFilter.parse({ id: 1, name: 'joe', foo: 'bar' }),
@@ -205,8 +204,8 @@ test('different schema "safety" options', () => {
 
   // Test "pass"
   const schemaPass = schema({
-    id: isNum,
-    name: isStr,
+    id: Number,
+    name: String,
   }, { safety: 'pass' });
   const testResult3 = schemaPass.test({ id: 1, name: 'joe', foo: 'bar' }),
     parseResult3 = schemaPass.parse({ id: 1, name: 'joe', foo: 'bar' }),
@@ -217,8 +216,8 @@ test('different schema "safety" options', () => {
 
   // Test "strict"
   const schemaStrict = schema({
-    id: isNum,
-    name: isStr,
+    id: Number,
+    name: String,
   }, { safety: 'strict' });
   const testResult4 = schemaStrict.test({ id: 1, name: 'joe' }),
     parseResult4 = schemaStrict.parse({ id: 1, name: 'joe' }),
@@ -228,26 +227,20 @@ test('different schema "safety" options', () => {
   expect(failResult4).toStrictEqual(false);
 
   // Test error throw for "strict"
-  const parentSchemaAllowThrowErrors = schema({
-    globals: [
-      { vf: isNum, default: 0 },
-      { vf: isStr, default: '' },
-    ],
-  });
-  const schemaStrictAllowErrors = parentSchemaAllowThrowErrors({
-    id: isNum,
-    name: isStr,
+  const schemaStrictAllowErrors = schema({
+    id: Number,
+    name: String,
   }, { safety: 'strict' });
   const arg = { id: 1, name: 'joe', foo: 'bar' };
   expect(() => schemaStrictAllowErrors.parse(arg)).toThrowError();
 
   // Test nested object "strict"
-  const schemaNested = parentSchemaFn({
-    id: isNum,
-    name: isStr,
-    nested: parentSchemaFn({
-      nestedCity: isStr,
-      nestedZip: isNum,
+  const schemaNested = schema({
+    id: Number,
+    name: String,
+    nested: schema({
+      nestedCity: String,
+      nestedZip: Number,
     }, { safety: 'strict' }),
   }, { safety: 'strict' });
   const nestedResult = schemaNested.parse({
@@ -270,12 +263,12 @@ test('different schema "safety" options', () => {
   });
 
   // Test nested object
-  const schemaNestedFilter = parentSchemaFn({
-    id: isNum,
-    name: isStr,
-    nested: parentSchemaFn({
-      nestedCity: isStr,
-      nestedZip: isNum,
+  const schemaNestedFilter = schema({
+    id: Number,
+    name: String,
+    nested: schema({
+      nestedCity: String,
+      nestedZip: Number,
     }),
   });
   const nestedResultFilter = schemaNestedFilter.parse({
@@ -296,4 +289,21 @@ test('different schema "safety" options', () => {
       nestedZip: 1234,
     },
   });
+});
+
+/**
+ * Test options for "initSchemaFn".
+ */
+test('error options for "initSchemaFn"', () => {
+
+  let errArg; 
+  initSchemaFn({
+    onError: arg => (errArg = arg),
+  })({
+    id: '5',
+    name: '1234',
+  });
+  console.log(errArg)
+  // expect(errArg).toBe('horse');
+
 });

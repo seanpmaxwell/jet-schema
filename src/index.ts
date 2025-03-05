@@ -1,13 +1,16 @@
 import initSchemaFunction from './initSchemaFn';
 
 
-// Export types
 export type {
   TSchemaFnObjArg as TJetSchema,
   PublicInferType as inferType,
+  IValidatorObj,
 } from './initSchemaFn';
 
-export { IError, TErrArg } from './error-stuff';
+export {
+  IErrorItem,
+  TAllErrs as TErrArg,
+} from './error-stuff';
 
 
 // Export functions

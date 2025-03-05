@@ -1,9 +1,9 @@
-import { isStr } from './util';
+import { isObj, isStr } from './util';
 
 
 // **** Variables **** //
 
-export const Errors = {
+export const ERROR_MESSAGES = {
   Init: '"init:" option must be "true" if schema is not optional.',
   DefaultVal: 'Default value did not pass validation.',
   Validator: 'Validator must be a function, enum, nested-schema, or ' + 
@@ -18,11 +18,11 @@ export const Errors = {
 
 // **** Types **** //
 
-export type TErrArg = string | IError | (string | IError)[];
-export type TOnError = (errors: TErrArg) => void;
-export type TFormatError = (error: IError) => IError | string;
+export type TAllErrs = string | IErrorItem | (string | IErrorItem)[];
+export type TOnError = (errors: TAllErrs) => void;
+export type TFormatError = (error: IErrorItem) => IErrorItem | string;
 
-export interface IError {
+export interface IErrorItem {
   property?: string;
   value?: unknown;
   message?: string;
@@ -36,36 +36,23 @@ export interface IError {
 /**
  * Default function to call when a validation fails.
  */
-export function defaultOnError(errors?: TErrArg): void {
-  if (!!errors) {
-    if (Array.isArray(errors) && !(errors.length > 0)) {
-      return;
-    }
-    let errorsF: string;
-    if (!isStr(errors)) {
-      if (Array.isArray(errors) && (errors.length === 1)) {
-        errorsF = JSON.stringify(errors[0]);
-      } else {
-        errorsF = JSON.stringify(errors);
-      }
-    } else {
-      errorsF = errors;
-    }
-    throw new Error(errorsF);
+export function defaultOnError(errors?: TAllErrs): void {
+  if (!!errors && !(Array.isArray(errors) && !errors.length)) {
+    throw new JetSchemaError(errors);
   }
 }
 
 /**
  * Get the default error message.
  */
-export function getErrObj(
+export function setupErrItem(
   message?: string,
   location?: string,
   schemaId?: string,
   property?: string,
   value?: unknown,
-): IError {
-  const error: IError = {};
+): IErrorItem {
+  const error: IErrorItem = {};
   if (!!property) {
     error.property = property;
   }
@@ -82,4 +69,45 @@ export function getErrObj(
     error.schemaId = schemaId;
   }
   return error;
+}
+
+
+// **** Classes **** //
+
+class JetSchemaError extends Error {
+
+  public static MESSAGE = 'One or more schema properties failed validation: ';
+  private errArg: TAllErrs = '';
+
+  public constructor(errArg: TAllErrs) {
+    const errStr = JetSchemaError.SetupErrorString(errArg);
+    super(JetSchemaError.MESSAGE + errStr);
+    this.errArg = JetSchemaError.CopyErrArg(errArg);
+  }
+
+  public static SetupErrorString(errArg: TAllErrs): string {
+    if (!isStr(errArg)) {
+      if (Array.isArray(errArg) && (errArg.length === 1)) {
+        return JSON.stringify(errArg[0]);
+      } else {
+        return JSON.stringify(errArg);
+      }
+    } else {
+      return errArg;
+    }
+  }
+
+  public static CopyErrArg(errArg: TAllErrs): TAllErrs {
+    if (Array.isArray(errArg)) {
+      return [ ...errArg ];
+    } else if (isObj(errArg)) {
+      return { ...errArg };
+    } else {
+      return errArg;
+    }
+  }
+
+  public getErrors(): TAllErrs {
+    return this.errArg;
+  }
 }

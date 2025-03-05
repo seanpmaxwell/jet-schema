@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 import {
-  processEnum,
+  getEnumVals,
   isDate,
   isObj,
   isUndef,
@@ -16,9 +16,9 @@ import {
 
 import {
   defaultOnError,
-  Errors,
-  getErrObj,
-  IError,
+  ERROR_MESSAGES,
+  setupErrItem,
+  IErrorItem,
   TFormatError,
   TOnError,
 } from './error-stuff';
@@ -55,7 +55,7 @@ type AddNullables<T, isU, isN> = (
 
 export interface IValidatorObj<T = unknown> {
   vf: TValidatorFn<T>,
-  default?: T,
+  default?: (T | (() => T)),
   transform?: (arg: unknown) => T,
   formatError?: TFormatError;
 }
@@ -142,6 +142,8 @@ type TSchemaOptions<T = unknown> = (
 interface ISchemaOptionsBase {
   id?: string;
   safety?: 'pass' | 'filter' | 'strict';
+
+  // pick up here, need to allow clone and on error as well
 }
 
 export interface IOptNul extends ISchemaOptionsBase {
@@ -181,9 +183,9 @@ type TSchemaOptionsHelper<T, R> = (
   unknown extends T 
   ? ([] | [R]) 
   : undefined extends T 
-  ? [R] 
-  : null extends T 
-  ? [R] 
+  ? [R]
+  : null extends T
+  ? [R]
   : ([] | [R])
 );
 
@@ -241,7 +243,7 @@ function initSchemaFn(options?: IJetOptions) {
     const [ schemaOptions ] = options,
       optionsF = _processOptions(schemaOptions);
     if (!optionsF.optional && (optionsF.init === false || isUndef(optionsF.init))) {
-      const err = getErrObj(Errors.Init, '.schema', optionsF.schemaId);
+      const err = setupErrItem(ERROR_MESSAGES.Init, '.schema', optionsF.schemaId);
       onError(err);
     }
     // Setup main functions
@@ -297,14 +299,14 @@ function _setupAllVldtrsHolder<T>(
 } {
   const allVldtrsHolder: TAllVldtrsObj = {},
     childSchemaNewFns: Record<string, TFunc> = {},
-    errors: (string | IError)[] = [];
+    errors: (string | IErrorItem)[] = [];
   // Start loop
   for (const key in schemaArgObj) {
     // Init the validator-holder-object
     const vldrHolderObj: TAllVldtrsObj[keyof TAllVldtrsObj] = {
       vf: (arg: unknown): arg is boolean  => !!arg,
       default: () => undefined,
-      formatError: (error: IError) => error,
+      formatError: (error: IErrorItem) => error,
     };
     // Is validator function or object
     const schemaArgProp = schemaArgObj[key];
@@ -325,39 +327,33 @@ function _setupAllVldtrsHolder<T>(
     } else if (schemaArgProp === Boolean) {
       vldrHolderObj.vf = isBoolean;
       vldrHolderObj.default = () => false;
-    // Is a validator-function or validator-object
-    } else if (
-      typeof schemaArgProp === 'function' ||
-      _isValidatorObj(schemaArgProp)
-    ) {
-      // Check local validator-object
-      let vdlrFn = (() => false) as unknown as TValidatorFn,
-        defaultVal;
-      // Check local validator-objects
-      if (_isValidatorObj(schemaArgProp)) {
-        const localObj = schemaArgProp;
-        vdlrFn = localObj.vf;
-        if ('default' in localObj) {
-          defaultVal = localObj.default;
+    // Enum
+    } else if (isEnum(schemaArgProp)) {
+      const vals = getEnumVals(schemaArgProp);
+      vldrHolderObj.default = () => vals[0];
+      const vldr = ((arg: unknown) => vals.some(val => val === arg));
+      vldrHolderObj.vf = vldr as TValidatorFn;
+    // Is a validator-object
+    } else if (_isValidatorObj(schemaArgProp)) {
+      const localObj = schemaArgProp;
+      if ('default' in localObj) {
+        if (typeof localObj.default === 'function') {
+          vldrHolderObj.default = localObj.default as TFunc;
+        } else {
+          const defaultF = cloneFn(localObj.default);
+          vldrHolderObj.default = () => defaultF;
         }
-        if (!!localObj.transform) {
-          vldrHolderObj.transform = localObj.transform;
-        }
-        if (!!localObj.formatError) {
-          vldrHolderObj.formatError = localObj.formatError;
-        }
-      } else if (typeof schemaArgProp === 'function') {
-        vdlrFn = schemaArgProp as TValidatorFn;
       }
-      // Set the default
-      if (!isUndef(defaultVal)) {
-        const defaultF = cloneFn(defaultVal);
-        vldrHolderObj.default = () => defaultF;
-      } else {
-        vldrHolderObj.default = () => undefined;
+      if (!!localObj.transform) {
+        vldrHolderObj.transform = localObj.transform;
       }
-      // Set the validator function
-      vldrHolderObj.vf = vdlrFn;
+      if (!!localObj.formatError) {
+        vldrHolderObj.formatError = localObj.formatError;
+      }
+      vldrHolderObj.vf = localObj.vf;
+    // Is a validator-function
+    } else if (typeof schemaArgProp === 'function') {
+      vldrHolderObj.vf = schemaArgProp as TValidatorFn;
     // Nested schema
     } else if (_isSchemaObj(schemaArgProp)) {
       const childSchema = schemaArgProp,
@@ -371,22 +367,18 @@ function _setupAllVldtrsHolder<T>(
       }
       childSchemaNewFns[key] = () => childSchema.new();
       vldrHolderObj.vf = childSchema.test;
-    // Enum
-    } else if (isEnum(schemaArgProp)) {
-      const [ dflt, vldr ] = processEnum(schemaArgProp);
-      vldrHolderObj.default = () => cloneFn(dflt);
-      vldrHolderObj.vf = vldr as TValidatorFn;
     // Error
     } else {
-      const errObj = getErrObj(Errors.Init, '_setupAllVldtrsHolder', schemaId, key);
-      errors.push(errObj);
+      const errItem = setupErrItem(ERROR_MESSAGES.Init, '_setupAllVldtrsHolder', 
+        schemaId, key);
+      errors.push(errItem);
     }
     // Make sure the default is a valid value
     const dfltVal: unknown = vldrHolderObj.default();
     if (!vldrHolderObj.vf(dfltVal)) {
-      const errObj = getErrObj(Errors.DefaultVal, '_setupAllVldtrsHolder',
+      const errItem = setupErrItem(ERROR_MESSAGES.DefaultVal, '_setupAllVldtrsHolder',
         schemaId, key, dfltVal);
-      const errFin = vldrHolderObj.formatError(errObj); 
+      const errFin = vldrHolderObj.formatError(errItem); 
       errors.push(errFin);
     }
     // Set the validator-object
@@ -429,7 +421,7 @@ function _setupNewFn(
   return (partial: Partial<TModel> = {}) => {
     // Get default values
     const retVal: TModel = {},
-      errors: (string | IError)[] = [];
+      errors: (string | IErrorItem)[] = [];
     for (const key in allVldtrsHolder) {
       const val: unknown = allVldtrsHolder[key].default();
       if (val !== undefined) {
@@ -450,9 +442,9 @@ function _setupNewFn(
       retVal[key] = cloneFn(val);
       // Run validator-function
       if (!vldrObj.vf(val)) {
-        const errObj = getErrObj(Errors.PropValidation, '.new', schemaId, key,
-          val);
-        const errFin = vldrObj.formatError(errObj); 
+        const errItem = setupErrItem(ERROR_MESSAGES.PropValidation, '.new', 
+          schemaId, key, val);
+        const errFin = vldrObj.formatError(errItem); 
         errors.push(errFin);
       }
     }
@@ -475,8 +467,8 @@ function _setupTestFn(
 ): (arg: unknown) => arg is TModel {
   // Pre-process some stuff
   const { schemaId, safety } = options,
-    NotOptErr = getErrObj(Errors.UndefButNotOpt, '.test', schemaId),
-    NullErr = getErrObj(Errors.NullButNotNullable, '.test', schemaId),
+    NotOptErr = setupErrItem(ERROR_MESSAGES.UndefButNotOpt, '.test', schemaId),
+    NullErr = setupErrItem(ERROR_MESSAGES.NullButNotNullable, '.test', schemaId),
     runValidations = _setupRunValidations(allVldtrsHolder, safety, '.test',
       schemaId);
   // Return test function
@@ -523,7 +515,7 @@ function _setupParseFn(
 ): (arg: unknown) => unknown {
   // Pre-process some stuff
   const { schemaId, safety } = options,
-    notAnObjErr = getErrObj(Errors.NotAnObj, '.parse', schemaId),
+    notAnObjErr = setupErrItem(ERROR_MESSAGES.NotAnObj, '.parse', schemaId),
     runValidations = _setupRunValidations(allVldtrsHolder, safety, '.parse',
       schemaId);
   // Return parse function
@@ -586,10 +578,10 @@ function _setupRunValidations(
   safety: string,
   location: string,
   schemaId?: string,
-): ((arg: object) => (string | IError)[] ) {
+): ((arg: object) => (string | IErrorItem)[] ) {
   // Run validations
-  return (arg: object): (string | IError)[] => {
-    const errors: (string | IError)[] = [];
+  return (arg: object): (string | IErrorItem)[] => {
+    const errors: (string | IErrorItem)[] = [];
     for (const key in allVldtrsHolder) {
       const vldrObj = allVldtrsHolder[key];
       let val = (arg as TModel)[key];
@@ -598,9 +590,9 @@ function _setupRunValidations(
         (arg as TModel)[key] = val;
       }
       if (!vldrObj.vf(val)) {
-        const errObj = getErrObj(Errors.PropValidation, location, schemaId, key,
-          val);
-        const errFin = vldrObj.formatError(errObj); 
+        const errItem = setupErrItem(ERROR_MESSAGES.PropValidation, location, 
+          schemaId, key, val);
+        const errFin = vldrObj.formatError(errItem); 
         errors.push(errFin);
       }
     }
@@ -610,8 +602,9 @@ function _setupRunValidations(
         if (key in allVldtrsHolder) {
           continue;
         } else if (safety === 'strict') {
-          const errObj = getErrObj(Errors.StrictMode, location, schemaId, key);
-          errors.push(errObj);
+          const errItem = setupErrItem(ERROR_MESSAGES.StrictMode, location, 
+            schemaId, key);
+          errors.push(errItem);
         }
         Reflect.deleteProperty(arg, key);
       }
