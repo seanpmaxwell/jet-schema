@@ -77,6 +77,8 @@ interface IFullOptions {
   init: boolean | null;
   schemaId?: string;
   safety: 'pass' | 'filter' | 'strict';
+  cloneFn?: TFunc;
+  onError?: TFunc;
 }
 
 
@@ -139,11 +141,9 @@ type TSchemaOptions<T = unknown> = (
     )
 );
 
-interface ISchemaOptionsBase {
+interface ISchemaOptionsBase extends IJetOptions {
   id?: string;
   safety?: 'pass' | 'filter' | 'strict';
-
-  // pick up here, need to allow clone and on error as well
 }
 
 export interface IOptNul extends ISchemaOptionsBase {
@@ -212,6 +212,12 @@ type InferTypesHelper<U> = {
   [K in keyof U]: (
     U[K] extends DateConstructor
     ? Date
+    : U[K] extends StringConstructor
+    ? string
+    : U[K] extends NumberConstructor
+    ? number
+    : U[K] extends BooleanConstructor
+    ? boolean
     : U[K] extends IValidatorFnOrObj<infer X>
     ? X
     : U[K] extends ISchema<infer X>
@@ -232,7 +238,7 @@ type InferTypesHelper<U> = {
  */
 function initSchemaFn(options?: IJetOptions) {
   // Setup default values map
-  const cloneFn = (options?.cloneFn ?? defaultCloneFn),
+  let cloneFn = (options?.cloneFn ?? defaultCloneFn),
     onError = (options?.onError ?? defaultOnError);
   // Return the "schema" function
   return <T,
@@ -245,6 +251,12 @@ function initSchemaFn(options?: IJetOptions) {
     if (!optionsF.optional && (optionsF.init === false || isUndef(optionsF.init))) {
       const err = setupErrItem(ERROR_MESSAGES.Init, '.schema', optionsF.schemaId);
       onError(err);
+    }
+    if (!!optionsF.cloneFn) {
+      cloneFn = optionsF.cloneFn;
+    }
+    if (!!optionsF.onError) {
+      onError = optionsF.onError;
     }
     // Setup main functions
     const ret = _setupAllVldtrsHolder(schemaFnObjArg, cloneFn, onError, optionsF.schemaId),

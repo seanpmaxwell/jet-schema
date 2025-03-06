@@ -53,18 +53,17 @@
 ### Quick Glance
 ```typescript
 import schema, { inferType } from 'utils/schema';
-import { isString, isNumber } from 'utils/validators';
 
 const User = schema({
-  id: isNumber,
-  name: isString,
+  id: Number,
+  name: String,
   address: schema({
-    street: isString,
-    zip: isNumber,
-  })
+    street: String,
+    zip: Number,
+  }, { init: false })
 });
 
-User.new({ id: 5, name: 'joe' }) // => { id: 5, name: 'joe' }
+User.new({ name: 'joe' }) // => { id: 0, name: 'joe' }
 User.test('asdf') // => false
 User.pick('name').test('john') // => true
 User.pick('address').pick('zip').test(234) // => true
@@ -97,7 +96,7 @@ Other reasons to keep your own list of validator-functions:
 
 ### Code comparison with zod and jet-schema
 ```typescript
-import { isString, isNumber, isRelationalKey, isEmail, isOptionalString } from 'my-custom-validators.ts';
+import { isNumber, isRelationalKey, isEmail, isOptionalString } from 'your-custom-validators.ts';
 
 interface IUser {
   id: number;
@@ -130,14 +129,14 @@ const User: z.ZodType<IUser> = z.object({
 
 // "jet-schema"
 const User = schema<IUser>({
-  id: isRelationalKey,
-  name: isString,
+  id: { vf: isRelationalKey, default: -1 },
+  name: String,
   email: { vf: isEmail, default: 'x@x.x' },
   age: { vf: isNumber, transform: Number },
   created: Date,
   address: schema({
-    street: isString,
-    zip: isNumber,
+    street: String,
+    zip: Number,
     country: isOptionalString,
   }, { optional: true }),
 });

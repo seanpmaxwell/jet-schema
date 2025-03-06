@@ -18,6 +18,7 @@ const Post = schema({
   mesage: String,
   index: Number,
   created: Date,
+  ass: { dog: 'as' },
   optionalStr: isOptionalString,
   image: schema({
     fileName: String,

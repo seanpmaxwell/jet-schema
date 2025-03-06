@@ -182,7 +182,7 @@ test.only('different schema "safety" options', () => {
   const schemaDefault = schema({
     id: Number,
     name: String,
-  }, { e});
+  });
   const testResult1 = schemaDefault.test({ id: 1, name: 'joe', foo: 'bar' }),
     parseResult1 = schemaDefault.parse({ id: 1, name: 'joe', foo: 'bar' }),
     failResult1 = schemaDefault.test({ id: 1, name: 1234 });
@@ -292,18 +292,23 @@ test.only('different schema "safety" options', () => {
 });
 
 /**
- * Test options for "initSchemaFn".
+ * Test different "onError" and "clone" options at different levels.
  */
-test('error options for "initSchemaFn"', () => {
+test.only('different "onError" and "clone" options at different levels', () => {
 
   let errArg; 
-  initSchemaFn({
+  const schemaFn = initSchemaFn({
     onError: arg => (errArg = arg),
-  })({
-    id: '5',
+  });
+  const parse = schemaFn({
+    id: { vff: 'asdf' },
     name: '1234',
   });
+
+
   console.log(errArg)
-  // expect(errArg).toBe('horse');
+  // pick up here
+  expect(errArg).toBe('horse');
+
 
 });
