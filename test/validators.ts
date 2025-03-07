@@ -5,13 +5,6 @@ import { IErrorItem, IValidatorObj } from '../src';
 
 
 /******************************************************************************
-                                 Types
-******************************************************************************/
-
-type TEmail = `${string}@${string}`  | '--';
-
-
-/******************************************************************************
                                 Functions
 ******************************************************************************/
 
@@ -58,34 +51,19 @@ export function isString(param: unknown): param is string {
 }
 
 /**
+ * Is a valid boolean.
+ */
+export function isBoolean(param: unknown): param is boolean {
+  return typeof param === 'boolean';
+}
+
+/**
  * Is the item a relational key. 'undefined' not allowd so we need to set a 
  * default value.
  */
 export const RelationalKey: IValidatorObj<number> = {
   vf: (arg: unknown): arg is number => isNumber(arg) && arg >= -1,
   default: -1,
-} as const;
-
-/**
- * base64 string data item.
- */
-export const Base64Str: IValidatorObj<string> = {
-  vf: isString,
-  default: 'base64:str;',
-} as const;
-
-/**
- * Is a valid email address.
- */
-export const Email: IValidatorObj<TEmail> = {
-  vf(arg): arg is TEmail {
-    return (
-      isString(arg) && 
-      (arg.length < 254) &&
-      (arg === '--' || arg.includes('@'))
-    );
-  },
-  default: '--',
 } as const;
 
 /**

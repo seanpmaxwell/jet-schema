@@ -1,18 +1,11 @@
 /* eslint-disable max-len */
 /* eslint-disable no-console */
 
-import { inferType, TJetSchema } from '../src';
+import schema, { inferType, TJetSchema } from '../src';
 
 import User from './models/User';
 import Post, { IPost } from './models/Post';
-import schema from './util/schema';
-
-import {
-  isBoolean,
-  nonNullable,
-  isString,
-  isOptionalString,
-} from './validators';
+import { nonNullable, isOptionalString } from './validators';
 
 
 // **** User Test Stuff (User has an explicit type) **** //
@@ -50,8 +43,12 @@ if (User.pick('avatar').test(blah)) {
 
 const customPost: IPost = {
   id: -1,
-  mesage: '123',
+  message: '123',
   index: 0,
+  animals: 'hhh',
+  // These should throw runtime errors
+  // animals2: 'fido',
+  // animals3: 1234,
   created: new Date(),
   image: {
     data: '',
@@ -75,8 +72,8 @@ const customPost: IPost = {
 console.log('foo', customPost.imageNullish?.foo);
 
 const other = schema({
-  fileName: isString,
-  data: isString,
+  fileName: String,
+  data: String,
   foo: { vf: isOptionalString, default: '' },
 }, { nullish: true, init: true });
 
@@ -99,24 +96,62 @@ console.log(post.imageNull);
 
 const PartialSchema: TJetSchema<{ idddd: number, name: string }> = {
   idddd: (arg: unknown) => typeof arg === 'number', // should return error cause no default set,
-  name: isString,
+  name: String,
 } as const;
 
 const FullSchema = schema<{ idddd: number, name: string, foo: boolean }>({
   ...PartialSchema,
-  foo: isBoolean,
-}, { id: 'FullSchema' });
+  foo: Boolean,
+}, { id: 'FullSchema', onError: arg => console.log(arg) });
+
 
 console.log(FullSchema.new({ foo: 'horse' as unknown as boolean}));
 
 
+
 // **** Test Global Overrides ***** //
 
-User.new({ pastIds: '[1, 2, 3]' as unknown as number[] }); // should not print error
-User.new({ pastIds: '[1, 2, "horse"]' as unknown as number[] }); // should print error
-
+try {
+  User.new({ pastIds: '[1, 2, 3]' as unknown as number[] }); // should not print error
+  User.new({ pastIds: '[1, 2, "horse"]' as unknown as number[] }); // should print error
+} catch (err) {
+  if (err instanceof Error) {
+    console.log(err.message);
+  }
+}
 
 // **** Test Local Overrides ***** //
 
-User.new({ single: undefined }); // should not print error
-User.new({ single: 'true' as unknown as boolean }); // should print error
+try {
+  User.new({ single: undefined }); // should not print error
+  User.new({ single: 'true' as unknown as boolean }); // should print error
+} catch (err) {
+  if (err instanceof Error) {
+    console.log(err.message);
+  }
+}
+
+
+// **** Test Enum Hacks using objects instead **** //
+
+enum AnimalTypes {
+  Cat,
+  Dog,
+}
+
+enum AnimalTypes2 {
+  Cow = 3,
+  Pig = 5,
+}
+
+interface IAnimal {
+  id: number;
+  types: AnimalTypes;
+}
+
+const Animal = schema<IAnimal>({
+  id: Number,
+  types: AnimalTypes2, // Wrong enum passed here, no type or runtime errors though 
+}, { id: 'Animal', onError: arg => console.log(arg) });
+
+Animal.parse('asdf');

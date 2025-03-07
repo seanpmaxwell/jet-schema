@@ -1,19 +1,20 @@
 /* eslint-disable no-console */
 
-import schema, { IErrorItem } from '../../src';
+import schema, { IErrorItem, IValidatorObj } from '../../src';
 
 import {
   RelationalKey,
   isOptionalString,
   isOptionalBoolean,
   isNumber,
-  Base64Str,
-  Email,
   NumberArray,
+  isString,
 } from '../validators';
 
 
-// **** Variables **** //
+/******************************************************************************
+                                Variables
+******************************************************************************/
 
 enum AdminStatus {
   Basic = 'basic',
@@ -27,7 +28,29 @@ enum AdminStatusAlt {
   High,
 }
 
-// **** Types ***** //
+const Base64Str: IValidatorObj<string> = {
+  vf: isString,
+  default: 'base64:str;',
+} as const;
+
+const Email: IValidatorObj<TEmail> = {
+  vf(arg): arg is TEmail {
+    return (
+      isString(arg) && 
+      (arg.length <= 254) && 
+      (arg.length >= 3) && 
+      arg.includes('@')
+    );
+  },
+  default: '.@.',
+} as const;
+
+
+/******************************************************************************
+                                    Types
+******************************************************************************/
+
+type TEmail = `${string}@${string}`;
 
 export interface IUser {
   id: number; // pk
@@ -70,7 +93,9 @@ interface IAddress {
 }
 
 
-// **** Setup **** //
+/******************************************************************************
+                                    Setup
+******************************************************************************/
 
 const User = schema<IUser>({
   id: RelationalKey,

@@ -15,10 +15,13 @@ enum Level {
 
 const Post = schema({
   id: RelationalKey,
-  mesage: String,
+  message: String,
   index: Number,
   created: Date,
-  ass: { dog: 'as' },
+  animals: { dog: 'asdf' }, // Hack
+  // These should throw runtime errors
+  // animals2: { dog: 'fido', cat: 1234 } as const,
+  // animals3: { cat: 1234 },
   optionalStr: isOptionalString,
   image: schema({
     fileName: String,

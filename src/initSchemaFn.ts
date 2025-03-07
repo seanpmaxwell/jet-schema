@@ -6,7 +6,6 @@ import {
   isObj,
   isUndef,
   TFunc,
-  TEnum,
   isEnum,
   defaultCloneFn,
   isString,
@@ -77,8 +76,6 @@ interface IFullOptions {
   init: boolean | null;
   schemaId?: string;
   safety: 'pass' | 'filter' | 'strict';
-  cloneFn?: TFunc;
-  onError?: TFunc;
 }
 
 
@@ -109,13 +106,12 @@ export interface ISchema<T = unknown> {
   };
 }
 
-// Main argument passed to the schema functions
 export type TSchemaFnObjArg<T> = Required<{
   [K in keyof T]: (
     T[K] extends number
-    ? (IValidatorFnOrObj<number> | TEnum | NumberConstructor)
+    ? (IValidatorFnOrObj<number> | NumberConstructor | Record<string, number | string>)
     : T[K] extends string
-    ? (IValidatorFnOrObj<string> | TEnum | StringConstructor)
+    ? (IValidatorFnOrObj<string> | StringConstructor | Record<string, string>)
     : T[K] extends boolean
     ? (IValidatorFnOrObj<boolean> | BooleanConstructor)
     : T[K] extends Date 
@@ -203,6 +199,7 @@ type InferTypes<U, R, Schema = MakeKeysOptIfUndef<InferTypesHelper<U>>> = (
   >
 );
 
+// If the validator allows undefined, make sure the key can be optional
 type MakeKeysOptIfUndef<T> = { [K in keyof T]-?:
   (x: undefined extends T[K] ? Partial<Record<K, T[K]>> : Record<K, T[K]>) => void
 }[keyof T] extends (x: infer I) => void ?
@@ -224,7 +221,7 @@ type InferTypesHelper<U> = {
     ? X
     : U[K] extends unknown[] // Don't let arrays get mixed with enums
     ? never
-    : U[K] extends TEnum
+    : U[K] extends Record<string, string | number>
     ? U[K][keyof U[K]]
     : never
   );
@@ -237,10 +234,8 @@ type InferTypesHelper<U> = {
  * Core initSchemaFn() functions
  */
 function initSchemaFn(options?: IJetOptions) {
-  // Setup default values map
   let cloneFn = (options?.cloneFn ?? defaultCloneFn),
     onError = (options?.onError ?? defaultOnError);
-  // Return the "schema" function
   return <T,
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
     R extends TSchemaOptions<T> = TSchemaOptions<T>,
@@ -252,11 +247,11 @@ function initSchemaFn(options?: IJetOptions) {
       const err = setupErrItem(ERROR_MESSAGES.Init, '.schema', optionsF.schemaId);
       onError(err);
     }
-    if (!!optionsF.cloneFn) {
-      cloneFn = optionsF.cloneFn;
+    if (!!schemaOptions?.cloneFn) {
+      cloneFn = schemaOptions.cloneFn;
     }
-    if (!!optionsF.onError) {
-      onError = optionsF.onError;
+    if (!!schemaOptions?.onError) {
+      onError = schemaOptions.onError;
     }
     // Setup main functions
     const ret = _setupAllVldtrsHolder(schemaFnObjArg, cloneFn, onError, optionsF.schemaId),
@@ -320,8 +315,9 @@ function _setupAllVldtrsHolder<T>(
       default: () => undefined,
       formatError: (error: IErrorItem) => error,
     };
-    // Is validator function or object
+    // Validate the schema props
     const schemaArgProp = schemaArgObj[key];
+    let isSchemaPropValid = true;
     // Date constructor
     if (schemaArgProp === Date) {
       vldrHolderObj.vf = isDate;
@@ -381,20 +377,22 @@ function _setupAllVldtrsHolder<T>(
       vldrHolderObj.vf = childSchema.test;
     // Error
     } else {
-      const errItem = setupErrItem(ERROR_MESSAGES.Init, '_setupAllVldtrsHolder', 
+      const errItem = setupErrItem(ERROR_MESSAGES.Validator, '_setupAllVldtrsHolder', 
         schemaId, key);
       errors.push(errItem);
+      isSchemaPropValid = false;
     }
-    // Make sure the default is a valid value
-    const dfltVal: unknown = vldrHolderObj.default();
-    if (!vldrHolderObj.vf(dfltVal)) {
-      const errItem = setupErrItem(ERROR_MESSAGES.DefaultVal, '_setupAllVldtrsHolder',
-        schemaId, key, dfltVal);
-      const errFin = vldrHolderObj.formatError(errItem); 
-      errors.push(errFin);
+    // Test Default and add the validator key if passed
+    if (isSchemaPropValid) {
+      const dfltVal: unknown = vldrHolderObj.default();
+      if (!vldrHolderObj.vf(dfltVal)) {
+        const errItem = setupErrItem(ERROR_MESSAGES.DefaultVal, '_setupAllVldtrsHolder',
+          schemaId, key, dfltVal);
+        const errFin = vldrHolderObj.formatError(errItem); 
+        errors.push(errFin);
+      }
+      allVldtrsHolder[key] = vldrHolderObj;
     }
-    // Set the validator-object
-    allVldtrsHolder[key] = vldrHolderObj;
   }
   // Call error function if there are any errors
   if (errors.length > 0) {

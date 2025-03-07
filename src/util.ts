@@ -3,7 +3,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
 export type TBasicObj = Record<string, unknown>;
-export type TEnum = Record<string, string | number>;
 
 
 // **** Functions **** //
@@ -71,7 +70,7 @@ export function getEnumVals(arg: unknown): unknown[] {
  * Check if unknown is a valid enum object. NOTE: this does not work for mixed 
  * enums see: eslint@typescript-eslint/no-mixed-enums
  */
-export function isEnum(arg: unknown): arg is TEnum {
+export function isEnum(arg: unknown): arg is Record<string, string | number> {
   // Check is non-array object
   if (!isObj(arg) || Array.isArray(arg)) {
     return false;
@@ -82,9 +81,12 @@ export function isEnum(arg: unknown): arg is TEnum {
     middle = Math.floor(keys.length / 2);
   // ** String Enum ** //
   if (!isNum(param[keys[middle]])) {
-    return checkObjEntries(arg, (key, val) => {
-      return isStr(key) && isStr(val);
-    });
+    for (const key in param) {
+      if (!isStr(key) || !isStr(param[key])) {
+        return false;
+      }
+    }
+    return true;
   }
   // ** Number Enum ** //
   // Enum key length will always be even
@@ -102,23 +104,6 @@ export function isEnum(arg: unknown): arg is TEnum {
     }
   }
   // Return
-  return true;
-}
-
-/**
- * Do a validator callback function for each object key/value pair.
- */
-export function checkObjEntries(
-  val: unknown,
-  cb: (key: string, val: unknown) => boolean,
-): val is NonNullable<object> {
-  if (isObj(val)) {
-    for (const entry of Object.entries(val)) {
-      if (!cb(entry[0], entry[1])) {
-        return false;
-      }
-    }
-  }
   return true;
 }
 

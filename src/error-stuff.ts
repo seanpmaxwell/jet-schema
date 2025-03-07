@@ -6,8 +6,8 @@ import { isObj, isStr } from './util';
 export const ERROR_MESSAGES = {
   Init: '"init:" option must be "true" if schema is not optional.',
   DefaultVal: 'Default value did not pass validation.',
-  Validator: 'Validator must be a function, enum, nested-schema, or ' + 
-    'Date() constructor.',
+  Validator: 'Validator must be a function, enum, nested-schema, or one of ' + 
+    'the following constructors String, Number, Boolean, or Date.',
   PropValidation: 'Validator function failed.',
   UndefButNotOpt: 'Argument was undefined but not optional.',
   NullButNotNullable: 'Argument was null but not nullable',
