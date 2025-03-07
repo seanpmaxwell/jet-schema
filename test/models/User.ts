@@ -1,15 +1,14 @@
 /* eslint-disable no-console */
 
-import schema, { IErrorItem, IValidatorObj } from '../../src';
-
 import {
-  RelationalKey,
-  isOptionalString,
-  isOptionalBoolean,
   isNumber,
-  NumberArray,
+  isOptionalBoolean,
+  isOptionalString,
   isString,
-} from '../validators';
+} from 'jet-validators';
+
+import schema, { IErrorItem, TValidatorObj } from '../../src';
+import { RelationalKey, NumberArray } from '../validators';
 
 
 /******************************************************************************
@@ -28,13 +27,13 @@ enum AdminStatusAlt {
   High,
 }
 
-const Base64Str: IValidatorObj<string> = {
-  vf: isString,
+const Base64StrVldr: TValidatorObj<string> = {
+  vldr: isString,
   default: 'base64:str;',
 } as const;
 
-const Email: IValidatorObj<TEmail> = {
-  vf(arg): arg is TEmail {
+const EmailVldr: TValidatorObj<TEmail> = {
+  vldr(arg): arg is TEmail {
     return (
       isString(arg) && 
       (arg.length <= 254) && 
@@ -71,8 +70,8 @@ export interface IUser {
   address: IAddress;
   adminStatus: AdminStatus;
   adminStatusAlt: AdminStatusAlt;
-  pastIds: number[],
-  single?: boolean,
+  pastIds: number[];
+  single?: boolean;
 }
 
 interface IAvatar {
@@ -100,14 +99,14 @@ interface IAddress {
 const User = schema<IUser>({
   id: RelationalKey,
   name: String,
-  email: Email,
-  age: { vf: isNumber, transform: Number, default: 0 },
+  email: EmailVldr,
+  age: { vldr: isNumber, transform: Number, default: 0 },
   created: Date,
   lastLogin: Date,
   phone: isOptionalString,
   avatar: schema({
     fileName: String,
-    data: Base64Str,
+    data: Base64StrVldr,
     url: isOptionalString,
   }, { optional: true, nullable: true }),
   address: schema({
@@ -121,33 +120,33 @@ const User = schema<IUser>({
   }),
   avatar2: schema({
     fileName: String,
-    data: Base64Str,
+    data: Base64StrVldr,
     url: isOptionalString,
   }, { nullable: true }),
   avatar3: schema({
     fileName: String,
-    data: Base64Str,
+    data: Base64StrVldr,
     url: isOptionalString,
   }, { optional: true, nullable: true, init: false }),
   avatar4: schema({
     fileName: String,
-    data: Base64Str,
+    data: Base64StrVldr,
     url: isOptionalString,
   }, { optional: true, nullable: true, init: null }),
   avatar5: schema({
     fileName: String,
-    data: Base64Str,
+    data: Base64StrVldr,
     url: isOptionalString,
   }, { optional: true, init: false }),
   avatar6: schema({
     fileName: String,
-    data: Base64Str,
+    data: Base64StrVldr,
     url: isOptionalString,
   }, { nullish: true, init: false }),
   avatar7: schema({
     fileName: String,
     data: String,
-    url: Base64Str,
+    url: Base64StrVldr,
   }, { nullish: true, init: null }),
   avatar8: schema({
     fileName: String,
@@ -155,18 +154,17 @@ const User = schema<IUser>({
     url: isOptionalString,
     // foo: isString
   }, { nullish: true }),
-  adminStatus: AdminStatus,
-  adminStatusAlt: AdminStatusAlt,
+  adminStatus: { enum: AdminStatus },
+  adminStatusAlt: { enum: AdminStatusAlt },
   pastIds: NumberArray,
   single: {
-    vf: isOptionalBoolean,
+    vldr: isOptionalBoolean,
     formatError(error: IErrorItem) {
       console.error(JSON.stringify(error));
       return error;
     },
   },
 }, { id: 'User' });
-
 
 
 // **** Export default **** //

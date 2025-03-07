@@ -1,6 +1,6 @@
 {
   "name": "jet-schema",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Simple, typescript-first schema validation tool",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -49,6 +49,7 @@
     "eslint": "^9.11.1",
     "eslint-plugin-n": "^17.10.3",
     "i": "^0.3.7",
+    "jet-validators": "^1.2.1",
     "jiti": "^2.3.3",
     "npm": "^10.9.0",
     "rollup": "^4.24.3",

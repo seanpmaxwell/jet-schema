@@ -3,6 +3,9 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
 export type TBasicObj = Record<string, unknown>;
+export type TStringEnum = Record<string, string>;
+export type TNumberEnum = Record<string, string | number>;
+export type TEnum = TStringEnum | TNumberEnum;
 
 
 // **** Functions **** //
@@ -42,69 +45,6 @@ export function isNonArrObj(
   arg: unknown,
 ): arg is Record<string, unknown> {
   return typeof arg === 'object' && !Array.isArray(arg);
-}
-
-/**
- * Get the values of an enum object.
- */
-export function getEnumVals(arg: unknown): unknown[] {
-  if (!isEnum(arg)) {
-    throw Error('"getEnumKeys" must receive an enum object.');
-  }
-  // Get keys
-  let vals = Object.keys(arg).reduce((arr: unknown[], key) => {
-    if (!arr.includes(key)) {
-      arr.push(arg[key]);
-    }
-    return arr;
-  }, []);
-  // Check if string or number enum
-  if (isNum(arg[vals[0] as string])) {
-    vals = vals.map(item => arg[item as string]);
-  }
-  // Return
-  return vals;
-}
-
-/**
- * Check if unknown is a valid enum object. NOTE: this does not work for mixed 
- * enums see: eslint@typescript-eslint/no-mixed-enums
- */
-export function isEnum(arg: unknown): arg is Record<string, string | number> {
-  // Check is non-array object
-  if (!isObj(arg) || Array.isArray(arg)) {
-    return false;
-  }
-  // Check if string or number enum
-  const param = (arg as TBasicObj),
-    keys = Object.keys(param),
-    middle = Math.floor(keys.length / 2);
-  // ** String Enum ** //
-  if (!isNum(param[keys[middle]])) {
-    for (const key in param) {
-      if (!isStr(key) || !isStr(param[key])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  // ** Number Enum ** //
-  // Enum key length will always be even
-  if (keys.length % 2 !== 0) {
-    return false;
-  }
-  // Check key/values
-  for (let i = 0; i < middle; i++) {
-    const thisKey = keys[i],
-      thisVal = param[thisKey],
-      thatKey = keys[i + middle],
-      thatVal = param[thatKey];
-    if (!(thisVal === thatKey && thisKey === String(thatVal))) {
-      return false;
-    }
-  }
-  // Return
-  return true;
 }
 
 /**
@@ -154,4 +94,73 @@ export function defaultCloneFn(arg: unknown): unknown {
   } else {
     return arg;
   }
+}
+
+
+// **** Enum Stuff **** //
+
+/**
+ * Get the keys of an enum object. NOTE: this does not work for mixed 
+ * enums see: eslint@typescript-eslint/no-mixed-enums
+ */
+export function getEnumVals<T>(arg: T): (keyof T)[] {
+  // Check is enum
+  if (!isEnum(arg)) {
+    throw Error('"getEnumKeys" must receive an enum object.');
+  }
+  // Get keys
+  let vals = Object.keys(arg).reduce((arr: unknown[], key) => {
+    if (!arr.includes(key)) {
+      arr.push(arg[key]);
+    }
+    return arr;
+  }, []);
+  // Check if string or number enum
+  if (isNum(arg[vals[0] as string])) {
+    vals = vals.map(item => arg[item as string]);
+  }
+  // Return
+  return vals as (keyof T)[];
+}
+
+/**
+ * Check if unknown is a valid enum object. NOTE: this does not work for mixed 
+ * enums see: eslint@typescript-eslint/no-mixed-enums
+ */
+export function isEnum(arg: unknown): arg is TEnum {
+  // Check is non-array object
+  if (!isObj(arg) || Array.isArray(arg)) {
+    return false;
+  }
+  // Check if string or number enum
+  const param = (arg as TBasicObj),
+    keys = Object.keys(param),
+    middle = Math.floor(keys.length / 2);
+  // ** String Enum ** //
+  if (!isNum(param[keys[middle]])) {
+    const entries = Object.entries(arg);
+    for (const entry of entries) {
+      if (!(isString(entry[0]) && isString(entry[1]))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  // ** Number Enum ** //
+  // Enum key length will always be even
+  if (keys.length % 2 !== 0) {
+    return false;
+  }
+  // Check key/values
+  for (let i = 0; i < middle; i++) {
+    const thisKey = keys[i],
+      thisVal = param[thisKey],
+      thatKey = keys[i + middle],
+      thatVal = param[thatKey];
+    if (!(thisVal === thatKey && thisKey === String(thatVal))) {
+      return false;
+    }
+  }
+  // Return
+  return true;
 }

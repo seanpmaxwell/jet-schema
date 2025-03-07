@@ -1,9 +1,7 @@
-import schema, { inferType } from '../../src';
+import { isOptionalString } from 'jet-validators';
 
-import {
-  isOptionalString,
-  RelationalKey,
-} from '../validators';
+import schema, { inferType } from '../../src';
+import { RelationalKey } from '../validators';
 
 
 // **** Setup ***** //
@@ -18,10 +16,7 @@ const Post = schema({
   message: String,
   index: Number,
   created: Date,
-  animals: { dog: 'asdf' }, // Hack
-  // These should throw runtime errors
-  // animals2: { dog: 'fido', cat: 1234 } as const,
-  // animals3: { cat: 1234 },
+  animals: { dog: 'asdf' },
   optionalStr: isOptionalString,
   image: schema({
     fileName: String,
@@ -48,7 +43,7 @@ const Post = schema({
     data: String,
     foo: isOptionalString,
   }, { nullish: true }),
-  level: Level,
+  level: { enum: Level },
 }, { id: 'Post' });
 
 export type IPost = inferType<typeof Post>;

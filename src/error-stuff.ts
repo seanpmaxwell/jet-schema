@@ -14,6 +14,7 @@ export const ERROR_MESSAGES = {
   NullButNotNullable: 'Argument was null but not nullable',
   NotAnObj: 'Argument must be an object.',
   StrictMode: 'Extra properties not allowed in strict mode.',
+  Enum: 'Enum option was used but value was not a valid enum.',
 } as const;
 
 

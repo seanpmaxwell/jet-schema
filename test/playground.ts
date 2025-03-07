@@ -1,11 +1,12 @@
 /* eslint-disable max-len */
 /* eslint-disable no-console */
+import { isEnumVal, isOptionalString } from 'jet-validators';
 
 import schema, { inferType, TJetSchema } from '../src';
 
 import User from './models/User';
 import Post, { IPost } from './models/Post';
-import { nonNullable, isOptionalString } from './validators';
+import { nonNullable } from './validators';
 
 
 // **** User Test Stuff (User has an explicit type) **** //
@@ -45,7 +46,7 @@ const customPost: IPost = {
   id: -1,
   message: '123',
   index: 0,
-  animals: 'hhh',
+  // animals: 'hhh',
   // These should throw runtime errors
   // animals2: 'fido',
   // animals3: 1234,
@@ -151,7 +152,7 @@ interface IAnimal {
 
 const Animal = schema<IAnimal>({
   id: Number,
-  types: AnimalTypes2, // Wrong enum passed here, no type or runtime errors though 
+  types: { vf: isEnumVal(AnimalTypes2), default: AnimalTypes2.Cow }, // Wrong enum passed here, no type or runtime errors though 
 }, { id: 'Animal', onError: arg => console.log(arg) });
 
 Animal.parse('asdf');

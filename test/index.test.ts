@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 import { expect, test } from 'vitest';
+import { isString } from 'jet-validators';
 
 import schema, { initSchemaFn } from '../src';
 import User, { IUser } from './models/User';
-import { isString } from './validators';
 // import { isNum, isStr } from '../src/util';
 
 
@@ -161,7 +161,7 @@ test('test User.pick("child schema").schema() function', () => {
 
   const UserAlt = schema<IUserAlt>({
     id: Number,
-    name: { vf: isString, default: () => '--' },
+    name: { vldr: isString, default: () => '--' },
     avatar: User.pick('avatar').schema(),
   });
 
@@ -301,11 +301,11 @@ test.only('different "onError" and "clone" options at different levels', () => {
     onError: arg => (errArg = arg),
   });
   const parse = schemaFn({
-    id: { vf: isString, default: 'asdf' },
+    id: { vldr: isString, default: 'asdf' },
     name: '1234',
   });
   // pick up here
-  expect(() => )
+  // expect(() => )
   expect(errArg).toBe('horse');
 
 

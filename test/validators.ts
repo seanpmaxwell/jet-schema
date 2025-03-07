@@ -1,7 +1,5 @@
-/* eslint-disable max-len */
-// **** Functions **** //
-
-import { IErrorItem, IValidatorObj } from '../src';
+import { isNumber, isString } from 'jet-validators';
+import { IErrorItem, TValidatorObj } from '../src';
 
 
 /******************************************************************************
@@ -9,68 +7,19 @@ import { IErrorItem, IValidatorObj } from '../src';
 ******************************************************************************/
 
 /**
- * Check if a param is undefined.
- */
-export function isUndefined(param: unknown): param is undefined {
-  return param === undefined;
-}
-
-/**
- * Is a valid number in string form.
- */
-export function isNumberString(param: unknown): param is string {
-  return typeof param === 'string' && !isNaN(Number(param));
-}
-
-/**
- * Is a valid string
- */
-export function isOptionalString(param: unknown): param is string | undefined {
-  return isUndefined(param) || typeof param === 'string';
-}
-
-/**
- * Is a valid boolean
- */
-export function isOptionalBoolean(param: unknown): param is boolean | undefined {
-  return typeof param === 'boolean' || param === undefined;
-}
-
-/**
- * Is a number
- */
-export function isNumber(param: unknown): param is number {
-  return typeof param === 'number';
-}
-
-/**
- * Is a valid string
- */
-export function isString(param: unknown): param is string {
-  return typeof param === 'string';
-}
-
-/**
- * Is a valid boolean.
- */
-export function isBoolean(param: unknown): param is boolean {
-  return typeof param === 'boolean';
-}
-
-/**
  * Is the item a relational key. 'undefined' not allowd so we need to set a 
  * default value.
  */
-export const RelationalKey: IValidatorObj<number> = {
-  vf: (arg: unknown): arg is number => isNumber(arg) && arg >= -1,
+export const RelationalKey: TValidatorObj<number> = {
+  vldr: (arg: unknown): arg is number => isNumber(arg) && arg >= -1,
   default: -1,
 } as const;
 
 /**
  * Accept a "number[]" or a stringified "number[]"". 
  */
-export const NumberArray: IValidatorObj<number[]> = {
-  vf(val: unknown): val is number[] {
+export const NumberArray: TValidatorObj<number[]> = {
+  vldr(val: unknown): val is number[] {
     return Array.isArray(val) && val.every(item => isNumber(item));
   },
   default: [],

@@ -4,7 +4,7 @@ import initSchemaFunction from './initSchemaFn';
 export type {
   TSchemaFnObjArg as TJetSchema,
   PublicInferType as inferType,
-  IValidatorObj,
+  TValidatorObj,
 } from './initSchemaFn';
 
 export {
