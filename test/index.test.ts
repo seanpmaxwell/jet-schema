@@ -301,13 +301,11 @@ test.only('different "onError" and "clone" options at different levels', () => {
     onError: arg => (errArg = arg),
   });
   const parse = schemaFn({
-    id: { vff: 'asdf' },
+    id: { vf: isString, default: 'asdf' },
     name: '1234',
   });
-
-
-  console.log(errArg)
   // pick up here
+  expect(() => )
   expect(errArg).toBe('horse');
 
 
