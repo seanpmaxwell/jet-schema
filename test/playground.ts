@@ -67,6 +67,7 @@ const customPost: IPost = {
   imageReq: { data: '', fileName: '' },
   // imageNullish: { data: '', fileName: '' }
   // optionalStr: 'asdf'
+  // pick up here
   level: Post.Level.high,
 };
 
@@ -75,7 +76,7 @@ console.log('foo', customPost.imageNullish?.foo);
 const other = schema({
   fileName: String,
   data: String,
-  foo: { vf: isOptionalString, default: '' },
+  foo: { vldr: isOptionalString, default: '' },
 }, { nullish: true, init: true });
 
 type Tother = inferType<typeof other>;
@@ -152,7 +153,8 @@ interface IAnimal {
 
 const Animal = schema<IAnimal>({
   id: Number,
-  types: { vf: isEnumVal(AnimalTypes2), default: AnimalTypes2.Cow }, // Wrong enum passed here, no type or runtime errors though 
+  types: { vldr: isEnumVal(AnimalTypes), default: AnimalTypes.Cat },
+  // types: { enum: AnimalTypes2 },
 }, { id: 'Animal', onError: arg => console.log(arg) });
 
 Animal.parse('asdf');

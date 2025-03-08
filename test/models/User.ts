@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
 import {
+  isEnumVal,
   isNumber,
   isOptionalBoolean,
   isOptionalString,
@@ -21,10 +22,22 @@ enum AdminStatus {
   High = 'high',
 }
 
+enum AdminStatus2 {
+  Basic2 = 'basic2',
+  Mid2 = 'mid2',
+  High2 = 'high2',
+}
+
 enum AdminStatusAlt {
   Basic,
   Mid,
   High,
+}
+
+enum AdminStatusAlt2 {
+  Basic2,
+  Mid2,
+  High2,
 }
 
 const Base64StrVldr: TValidatorObj<string> = {
@@ -69,6 +82,7 @@ export interface IUser {
   avatar8?: IAvatar | null;
   address: IAddress;
   adminStatus: AdminStatus;
+  adminStatus2: AdminStatus2;
   adminStatusAlt: AdminStatusAlt;
   pastIds: number[];
   single?: boolean;
@@ -100,7 +114,7 @@ const User = schema<IUser>({
   id: RelationalKey,
   name: String,
   email: EmailVldr,
-  age: { vldr: isNumber, transform: Number, default: 0 },
+  age: { vldr: isNumber, default: 0 },
   created: Date,
   lastLogin: Date,
   phone: isOptionalString,
@@ -155,6 +169,9 @@ const User = schema<IUser>({
     // foo: isString
   }, { nullish: true }),
   adminStatus: { enum: AdminStatus },
+  // pick up here, validator object checks the correct enum but not "enum:" prop
+  adminStatus2: { enum: AdminStatus2 },
+  // adminStatus2: { vldr: isEnumVal(AdminStatus), default: AdminStatus2.Basic },
   adminStatusAlt: { enum: AdminStatusAlt },
   pastIds: NumberArray,
   single: {
@@ -171,6 +188,7 @@ const User = schema<IUser>({
 
 export default {
   AdminStatus,
+  AdminStatus2,
   AdminStatusAlt,
   ...User,
 };

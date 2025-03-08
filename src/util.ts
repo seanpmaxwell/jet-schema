@@ -3,8 +3,8 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
 export type TBasicObj = Record<string, unknown>;
-export type TStringEnum = Record<string, string>;
-export type TNumberEnum = Record<string, string | number>;
+type TStringEnum = Record<string, string>;
+type TNumberEnum = Record<string, string | number>;
 export type TEnum = TStringEnum | TNumberEnum;
 
 

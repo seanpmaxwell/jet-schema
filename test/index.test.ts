@@ -40,6 +40,7 @@ test('User all default values', () => {
     avatar7: null,
     avatar8: { fileName: '', data: '' },
     adminStatus: User.AdminStatus.Basic,
+    adminStatus2: User.AdminStatus2.Basic2,
     adminStatusAlt: User.AdminStatusAlt.Basic,
     pastIds: [],
   };
@@ -98,6 +99,7 @@ test('User override each default value', () => {
       },
     },
     adminStatus: User.AdminStatus.High,
+    adminStatus2: User.AdminStatus2.Basic2,
     adminStatusAlt: User.AdminStatusAlt.Mid,
     avatar6: { fileName: 'nullish', data: '' },
     avatar7: null,
@@ -301,8 +303,9 @@ test.only('different "onError" and "clone" options at different levels', () => {
     onError: arg => (errArg = arg),
   });
   const parse = schemaFn({
-    id: { vldr: isString, default: 'asdf' },
-    name: '1234',
+    // pick up here, "defaultt" shouldn't be allowed
+    id: { vldr: isString, defaultt: 'asdf' },
+    // name: '1234',
   });
   // pick up here
   // expect(() => )

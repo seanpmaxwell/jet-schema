@@ -11,8 +11,6 @@ import {
   isBoolean,
   isEnum,
   getEnumVals,
-  TNumberEnum,
-  TStringEnum,
 } from './util';
 
 import {
@@ -56,20 +54,34 @@ type AddNullables<T, isU, isN> = (
 
 type TValidatorFn<T> = (arg: unknown) => arg is T;
 
-export type TValidatorObj<T, U = T> = ({
+interface TVldrObjBase<T> {
   default?: (T | (() => T)),
   transform?: (arg: unknown) => T,
   formatError?: TFormatError;
-}) & (
-  // I created the "U" variable cause the conditional  
-  // expressions were screwing up the value of "T"
-  T extends number 
-  ? ({ vldr: TValidatorFn<U>, enum?: never } | { enum: TNumberEnum })
-  : T extends string 
-  ? ({ vldr: TValidatorFn<U>, enum?: never } | { enum: TStringEnum })
-  : { vldr: TValidatorFn<U> }
-);
+}
 
+interface TVldrObjFull<T> extends TVldrObjBase<T> {
+  vldr: TValidatorFn<T>;
+  enum?: never;
+}
+
+interface TVldrStrEnum<T> extends TVldrObjBase<T> {
+  vldr?: never;
+  enum: Record<string, T>;
+}
+
+interface TVldrNumEnum<T> extends TVldrObjBase<T> {
+  vldr?: never;
+  enum: Record<string, T | string>;
+}
+
+export type TValidatorObj<T, U = T> = (
+  T extends number 
+  ? (TVldrObjFull<U> | TVldrNumEnum<U>)
+  : T extends string 
+  ? (TVldrObjFull<U> | TVldrStrEnum<U>)
+  : TVldrObjFull<U>
+);
 
 type TAllVldtrsObj = Record<string, {
   vldr: TValidatorFn<unknown>,
@@ -114,9 +126,18 @@ export interface ISchema<T = unknown> {
   };
 }
 
-export type TSchemaFnObjArg<T> = Required<{
-  [K in keyof T]: (
-    T[K] extends number
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TSchemaFnObjArg<TU, T = (unknown extends TU ? Record<string, any> : TU)> = Required<{
+  [K in keyof T]: 
+    T[K] extends unknown
+    ? (NumberConstructor | 
+      StringConstructor | 
+      BooleanConstructor | 
+      DateConstructor | 
+      TValidatorFn<T[K]> | 
+      TValidatorObj<T[K]> |
+      ISchema<T[K]>)
+    : T[K] extends number
     ? (TValidatorFn<T[K]> | TValidatorObj<T[K]> | NumberConstructor)
     : T[K] extends string
     ? (TValidatorFn<T[K]> | TValidatorObj<T[K]> | StringConstructor)
@@ -127,7 +148,6 @@ export type TSchemaFnObjArg<T> = Required<{
     : IsStaticObj<T[K]> extends true
     ? ISchema<T[K]>
     : (TValidatorFn<T[K]> | TValidatorObj<T[K]>)
-  );
 }>;
 
 interface IJetOptions {
@@ -136,7 +156,7 @@ interface IJetOptions {
 }
 
 // Need to restrict parameters based on if "T" is null or undefined.
-type TSchemaOptions<T = unknown> = (
+type TSchemaOptions<T> = (
   unknown extends T 
   ? (IOptNul | IOptNotNul | INotOptButNul | INotOptOrNul | INullish) 
   : (undefined extends T 
@@ -182,7 +202,7 @@ export interface INullish extends ISchemaOptionsBase {
   init?: null | boolean;
 }
 
-// If not optional or nullable, make this an optional parameter
+// If "T" is not optional or nullable, make "options" an optional parameter
 type TSchemaOptionsHelper<T, R> = (
   unknown extends T 
   ? ([] | [R]) 
@@ -225,6 +245,8 @@ type InferTypesHelper<U> = {
     ? boolean
     : U[K] extends TValidatorFn<infer X>
     ? X
+    : U[K] extends ({ enum: infer X })
+    ? X[keyof X]
     : U[K] extends TValidatorObj<infer X>
     ? X
     : U[K] extends ISchema<infer X>
@@ -567,7 +589,7 @@ function _setupParseFn(
 /**
  * Setup options based on object passed by the user.
  */
-function _processOptions(options?: TSchemaOptions): IFullOptions {
+function _processOptions(options?: TSchemaOptions<unknown>): IFullOptions {
   const retVal: IFullOptions = {
     optional: false,
     nullable: false,

@@ -16,7 +16,7 @@ const Post = schema({
   message: String,
   index: Number,
   created: Date,
-  animals: { dog: 'asdf' },
+  // animals: { dog: 'asdf' },
   optionalStr: isOptionalString,
   image: schema({
     fileName: String,
