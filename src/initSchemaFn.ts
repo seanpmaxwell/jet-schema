@@ -6,9 +6,9 @@ import {
   isUndef,
   TFunc,
   defaultCloneFn,
-  isString,
-  isNumber,
-  isBoolean,
+  isStr,
+  isNum,
+  isBool,
   isEnum,
   getEnumVals,
 } from './util';
@@ -54,34 +54,31 @@ type AddNullables<T, isU, isN> = (
 
 type TValidatorFn<T> = (arg: unknown) => arg is T;
 
-interface TVldrObjBase<T> {
-  default?: (T | (() => T)),
-  transform?: (arg: unknown) => T,
+interface IVldrObjBase<T> {
+  default?: (T | (() => T));
+  transform?: (arg: unknown) => T;
   formatError?: TFormatError;
 }
 
-interface TVldrObjFull<T> extends TVldrObjBase<T> {
+interface IVldrEnumObj<T, U = T> extends IVldrObjBase<T> {
+  enum: (
+    unknown extends T 
+      ? Record<string, number | string> 
+      : T extends number 
+      ? Record<string, U | string> 
+      : T extends string 
+      ? Record<string, U>
+      : never
+    );
+  vldr?: never;
+}
+
+interface IVldrFnObj<T> extends IVldrObjBase<T> {
   vldr: TValidatorFn<T>;
   enum?: never;
 }
 
-interface TVldrStrEnum<T> extends TVldrObjBase<T> {
-  vldr?: never;
-  enum: Record<string, T>;
-}
-
-interface TVldrNumEnum<T> extends TVldrObjBase<T> {
-  vldr?: never;
-  enum: Record<string, T | string>;
-}
-
-export type TValidatorObj<T, U = T> = (
-  T extends number 
-  ? (TVldrObjFull<U> | TVldrNumEnum<U>)
-  : T extends string 
-  ? (TVldrObjFull<U> | TVldrStrEnum<U>)
-  : TVldrObjFull<U>
-);
+export type TValidatorObj<T> = IVldrFnObj<T> | IVldrEnumObj<T>;
 
 type TAllVldtrsObj = Record<string, {
   vldr: TValidatorFn<unknown>,
@@ -112,7 +109,7 @@ type TPickRetVal<T, NnT = NonNullable<T>> = {
 } : unknown);
 
 // Value returned by the "schema" function
-export interface ISchema<T = unknown> {
+export interface ISchema<T> {
   new: (arg?: Partial<NonNullable<T>>) => NonNullable<T>;
   test: (arg: unknown) => arg is T;
   pick: <K extends keyof T>(prop: K) => TPickRetVal<T[K]>;
@@ -126,17 +123,17 @@ export interface ISchema<T = unknown> {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TSchemaFnObjArg<TU, T = (unknown extends TU ? Record<string, any> : TU)> = Required<{
+export type TSchemaFnObjArg<TU, T = (unknown extends TU ? Record<string, unknown> : TU)> = Required<{
   [K in keyof T]: 
-    T[K] extends unknown
+  unknown extends TU 
     ? (NumberConstructor | 
       StringConstructor | 
       BooleanConstructor | 
       DateConstructor | 
-      TValidatorFn<T[K]> | 
-      TValidatorObj<T[K]> |
-      ISchema<T[K]>)
+      TValidatorFn<T[K]> |
+      TValidatorObj<T[K]> // |
+      // ISchema<any>
+    )
     : T[K] extends number
     ? (TValidatorFn<T[K]> | TValidatorObj<T[K]> | NumberConstructor)
     : T[K] extends string
@@ -268,7 +265,7 @@ function initSchemaFn(options?: IJetOptions) {
     T,
     U extends TSchemaFnObjArg<T> = TSchemaFnObjArg<T>,
     R extends TSchemaOptions<T> = TSchemaOptions<T>,
-  >(schemaFnObjArg: U, ...options: TSchemaOptionsHelper<T, R>) => {
+  >(schemaObj: U, ...options: TSchemaOptionsHelper<T, R>) => {
     // Setup options
     const [ schemaOptions ] = options,
       optionsF = _processOptions(schemaOptions);
@@ -283,7 +280,7 @@ function initSchemaFn(options?: IJetOptions) {
       onError = schemaOptions.onError;
     }
     // Setup main functions
-    const ret = _setupAllVldtrsHolder(schemaFnObjArg, cloneFn, onError, optionsF.schemaId),
+    const ret = _setupAllVldtrsHolder(schemaObj, cloneFn, onError, optionsF.schemaId),
       newFn = _setupNewFn(ret.allVldtrsHolder, cloneFn, onError, optionsF.schemaId),
       testFn = _setupTestFn(ret.allVldtrsHolder, optionsF, onError),
       parseFn = _setupParseFn(ret.allVldtrsHolder, optionsF, onError);
@@ -292,7 +289,7 @@ function initSchemaFn(options?: IJetOptions) {
       new: newFn,
       test: testFn,
       pick: <K extends keyof U>(p: K) => {
-        const prop = schemaFnObjArg[p],
+        const prop = schemaObj[p],
           key = p as string,
           vldrObj = ret.allVldtrsHolder[key],
           transformFn = vldrObj.transform;
@@ -354,15 +351,15 @@ function _setupAllVldtrsHolder<T>(
       vldrHolderObj.default = () => new Date();
     // String constructor
     } else if (schemaArgProp === String) {
-      vldrHolderObj.vldr = isString;
+      vldrHolderObj.vldr = isStr;
       vldrHolderObj.default = () => '';
     // Number constructor
     } else if (schemaArgProp === Number) {
-      vldrHolderObj.vldr = isNumber;
+      vldrHolderObj.vldr = isNum;
       vldrHolderObj.default = () => 0;
     // Boolean constructor
     } else if (schemaArgProp === Boolean) {
-      vldrHolderObj.vldr = isBoolean;
+      vldrHolderObj.vldr = isBool;
       vldrHolderObj.default = () => false;
     // Is a validator-object
     } else if (_isValidatorObj(schemaArgProp)) {
@@ -400,23 +397,24 @@ function _setupAllVldtrsHolder<T>(
       vldrHolderObj.vldr = childSchema.test;
     // Enum
     } else if ('enum' in schemaArgProp) {
-      if (isEnum(schemaArgProp.enum)) {
+      if (!isEnum(schemaArgProp.enum)) {
         isSchemaPropValid = false;
         const errItem = setupErrItem(ERROR_MESSAGES.Enum, '_setupAllVldtrsHolder', 
           schemaId, key);
         errors.push(errItem);
-      }
-      const vals = getEnumVals(schemaArgProp);
-      if ('default' in schemaArgProp) {
-        if (typeof schemaArgProp.default === 'function') {
-          vldrHolderObj.default = schemaArgProp.default as TFunc;
-        } else {
-          vldrHolderObj.default = () => schemaArgProp.default;
-        }
       } else {
-        vldrHolderObj.default = () => vals[0];
+        const vals = getEnumVals(schemaArgProp.enum);
+        if ('default' in schemaArgProp) {
+          if (typeof schemaArgProp.default === 'function') {
+            vldrHolderObj.default = schemaArgProp.default as TFunc;
+          } else {
+            vldrHolderObj.default = () => schemaArgProp.default;
+          }
+        } else {
+          vldrHolderObj.default = () => vals[0];
+        }
+        vldrHolderObj.vldr = (arg: unknown): arg is typeof vals[number] => vals.some(val => val === arg);
       }
-      vldrHolderObj.vldr = (arg: unknown): arg is typeof vals[number] => vals.some(val => val === arg);
     // Error
     } else {
       const errItem = setupErrItem(ERROR_MESSAGES.Validator, '_setupAllVldtrsHolder', 
@@ -450,14 +448,14 @@ function _setupAllVldtrsHolder<T>(
 /**
  * See if value is a schema object.
  */
-function _isSchemaObj(arg: unknown): arg is ISchema {
+function _isSchemaObj(arg: unknown): arg is ISchema<unknown> {
   return (isObj(arg) && '_schemaOptions' in arg);
 }
 
 /**
  * Is a validator object
  */
-function _isValidatorObj(arg: unknown): arg is TValidatorObj<unknown> {
+function _isValidatorObj(arg: unknown): arg is IVldrFnObj<unknown> {
   return (isObj(arg) && ('vldr' in arg) && typeof arg.vldr === 'function');
 }
 

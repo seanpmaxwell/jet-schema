@@ -2,10 +2,15 @@
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TFunc = (...args: any[]) => any;
-export type TBasicObj = Record<string, unknown>;
-type TStringEnum = Record<string, string>;
-type TNumberEnum = Record<string, string | number>;
-export type TEnum = TStringEnum | TNumberEnum;
+export type TRecord = Record<string, unknown>;
+
+export type TEnum<T> = (
+  T extends number
+  ? Record<string, T | string>
+  : T extends string 
+  ? Record<string, T>
+  : never
+);
 
 
 // **** Functions **** //
@@ -32,6 +37,13 @@ export function isStr(param: unknown): param is string {
 }
 
 /**
+ * Is a valid boolean
+ */
+export function isBool(param: unknown): param is boolean {
+  return typeof param === 'boolean';
+}
+
+/**
  * Is an object exluding null
  */
 export function isObj(val: unknown): val is NonNullable<object> {
@@ -50,7 +62,7 @@ export function isNonArrObj(
 /**
  * Check if non-array object.
  */
-export function isBasicObj(arg: unknown): arg is TBasicObj {
+export function isRecord(arg: unknown): arg is TRecord {
   return isObj(arg) && !Object.keys(arg).some(key => !isStr(key));
 }
 
@@ -59,27 +71,6 @@ export function isBasicObj(arg: unknown): arg is TBasicObj {
  */
 export function isDate(val: unknown): val is Date {
   return (val instanceof Date) && !isNaN(new Date(val).getTime());
-}
-
-/**
- * Make sure is string
- */
-export function isString(val: unknown): val is string  {
-  return typeof val === 'string';
-}
-
-/**
- * Make sure is number
- */
-export function isNumber(val: unknown): val is number  {
-  return typeof val === 'number';
-}
-
-/**
- * Make sure is boolean
- */
-export function isBoolean(val: unknown): val is boolean  {
-  return typeof val === 'boolean';
 }
 
 /**
@@ -127,20 +118,20 @@ export function getEnumVals<T>(arg: T): (keyof T)[] {
  * Check if unknown is a valid enum object. NOTE: this does not work for mixed 
  * enums see: eslint@typescript-eslint/no-mixed-enums
  */
-export function isEnum(arg: unknown): arg is TEnum {
+export function isEnum(arg: unknown): arg is TEnum<string | number> {
   // Check is non-array object
   if (!isObj(arg) || Array.isArray(arg)) {
     return false;
   }
   // Check if string or number enum
-  const param = (arg as TBasicObj),
+  const param = (arg as TRecord),
     keys = Object.keys(param),
     middle = Math.floor(keys.length / 2);
   // ** String Enum ** //
   if (!isNum(param[keys[middle]])) {
     const entries = Object.entries(arg);
     for (const entry of entries) {
-      if (!(isString(entry[0]) && isString(entry[1]))) {
+      if (!(isStr(entry[0]) && isStr(entry[1]))) {
         return false;
       }
     }

@@ -1,8 +1,8 @@
 /* eslint-disable max-len */
 /* eslint-disable no-console */
-import { isEnumVal, isOptionalString } from 'jet-validators';
+import { isEnumVal, isOptionalString, isString } from 'jet-validators';
 
-import schema, { inferType, TJetSchema } from '../src';
+import schema, { inferType, TJetSchema, initSchemaFn } from '../src';
 
 import User from './models/User';
 import Post, { IPost } from './models/Post';
@@ -149,12 +149,35 @@ enum AnimalTypes2 {
 interface IAnimal {
   id: number;
   types: AnimalTypes;
+  types2: AnimalTypes2;
 }
 
 const Animal = schema<IAnimal>({
   id: Number,
   types: { vldr: isEnumVal(AnimalTypes), default: AnimalTypes.Cat },
-  // types: { enum: AnimalTypes2 },
+  types2: { enum: AnimalTypes2 },
 }, { id: 'Animal', onError: arg => console.log(arg) });
 
 Animal.parse('asdf');
+
+
+// **** Test Custom Schema Function **** //
+
+let errArg; 
+const customSchemaFn = initSchemaFn({
+  onError: arg => (errArg = arg),
+});
+
+const standardParse = schema({
+  // pick up here, "defaultt" shouldn't be allowed
+  id: { vldr: isString, defaultt: 'asdf' },
+  // name: '1234',
+});
+
+const customParse = customSchemaFn({
+  // pick up here, "defaultt" shouldn't be allowed
+  id: { vldr: isString, defaultt: 'asdf' },
+  // name: '1234',
+});
+// pick up here
+// expect(() => )

@@ -10,7 +10,7 @@ import { IErrorItem, TValidatorObj } from '../src';
  * Is the item a relational key. 'undefined' not allowd so we need to set a 
  * default value.
  */
-export const RelationalKey: TValidatorObj<number> = {
+export const VRelationalKey: TValidatorObj<number> = {
   vldr: (arg: unknown): arg is number => isNumber(arg) && arg >= -1,
   default: -1,
 } as const;
@@ -18,7 +18,7 @@ export const RelationalKey: TValidatorObj<number> = {
 /**
  * Accept a "number[]" or a stringified "number[]"". 
  */
-export const NumberArray: TValidatorObj<number[]> = {
+export const VNumberArray: TValidatorObj<number[]> = {
   vldr(val: unknown): val is number[] {
     return Array.isArray(val) && val.every(item => isNumber(item));
   },

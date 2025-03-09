@@ -1,7 +1,7 @@
-import { isOptionalString } from 'jet-validators';
+import { isOptionalString, isString } from 'jet-validators';
 
 import schema, { inferType } from '../../src';
-import { RelationalKey } from '../validators';
+import { VRelationalKey } from '../validators';
 
 
 // **** Setup ***** //
@@ -12,37 +12,37 @@ enum Level {
 }
 
 const Post = schema({
-  id: RelationalKey,
+  id: VRelationalKey,
   message: String,
   index: Number,
   created: Date,
-  // animals: { dog: 'asdf' },
+  animals: { vldr: isString, default: 1234 },
   optionalStr: isOptionalString,
-  image: schema({
-    fileName: String,
-    data: String,
-  }),
-  imageOpt: schema({
-    fileName: String,
-    data: String,
-  }, { optional: true }),
-  imageOptNull: schema({
-    fileName: String,
-    data: String,
-  }, { optional: true, nullable: true }),
-  imageNull: schema({
-    fileName: String,
-    data: String,
-  }, { optional: false, nullable: true }),
-  imageReq: schema({
-    fileName: String,
-    data: String,
-  }, { optional: false, nullable: false }),
-  imageNullish: schema({
-    fileName: String,
-    data: String,
-    foo: isOptionalString,
-  }, { nullish: true }),
+  // image: schema({
+  //   fileName: String,
+  //   data: String,
+  // }),
+  // imageOpt: schema({
+  //   fileName: String,
+  //   data: String,
+  // }, { optional: true }),
+  // imageOptNull: schema({
+  //   fileName: String,
+  //   data: String,
+  // }, { optional: true, nullable: true }),
+  // imageNull: schema({
+  //   fileName: String,
+  //   data: String,
+  // }, { optional: false, nullable: true }),
+  // imageReq: schema({
+  //   fileName: String,
+  //   data: String,
+  // }, { optional: false, nullable: false }),
+  // imageNullish: schema({
+  //   fileName: String,
+  //   data: String,
+  //   foo: isOptionalString,
+  // }, { nullish: true }),
   level: { enum: Level },
 }, { id: 'Post' });
 

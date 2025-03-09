@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 
 import {
-  isEnumVal,
   isNumber,
   isOptionalBoolean,
   isOptionalString,
@@ -9,7 +8,7 @@ import {
 } from 'jet-validators';
 
 import schema, { IErrorItem, TValidatorObj } from '../../src';
-import { RelationalKey, NumberArray } from '../validators';
+import { VRelationalKey, VNumberArray } from '../validators';
 
 
 /******************************************************************************
@@ -111,10 +110,10 @@ interface IAddress {
 ******************************************************************************/
 
 const User = schema<IUser>({
-  id: RelationalKey,
-  name: String,
+  id: VRelationalKey,
+  name: { vldr: isString, default: '' },
   email: EmailVldr,
-  age: { vldr: isNumber, default: 0 },
+  age: { enum: AdminStatus },
   created: Date,
   lastLogin: Date,
   phone: isOptionalString,
@@ -169,11 +168,9 @@ const User = schema<IUser>({
     // foo: isString
   }, { nullish: true }),
   adminStatus: { enum: AdminStatus },
-  // pick up here, validator object checks the correct enum but not "enum:" prop
   adminStatus2: { enum: AdminStatus2 },
-  // adminStatus2: { vldr: isEnumVal(AdminStatus), default: AdminStatus2.Basic },
   adminStatusAlt: { enum: AdminStatusAlt },
-  pastIds: NumberArray,
+  pastIds: VNumberArray,
   single: {
     vldr: isOptionalBoolean,
     formatError(error: IErrorItem) {
