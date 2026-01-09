@@ -1,6 +1,16 @@
 # Jet-Schema ✈️
 > Simple, zero-dependency, typescript-first schema validation tool, with zero-overhead when it comes to custom validation.
 
+---
+
+🚨 **DEPRECATED PACKAGE** 🚨
+
+This package has been **deprecated** in favor of  
+➡️ **[jet-validators](https://github.com/seanpmaxwell/jet-validators)**
+
+Please migrate as soon as possible.
+
+---
 
 ## Table of contents
 - [Introduction](#introduction)
