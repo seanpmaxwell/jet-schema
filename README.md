@@ -8,8 +8,6 @@
 This package has been **deprecated** in favor of  
 ➡️ **[jet-validators](https://github.com/seanpmaxwell/jet-validators)**
 
-Please migrate as soon as possible.
-
 ---
 
 ## Table of contents
