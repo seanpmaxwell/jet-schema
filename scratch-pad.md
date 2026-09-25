@@ -1,6 +1,6 @@
 // have a separate import for types
 ```ts
-import { str, num, bool, uint, int, undef, nil, sym, Primitive, NonEmptyString, ISOString } = 'jet-schema/types';
+import { str, num, bool, uint, int, undef, nil, sym, func, obj, Primitive, NonEmptyString, ISOString } = 'jet-schema/types';
 ```
 
 // see if there's a way to do an eslint run so only primitives from the import above can be used
