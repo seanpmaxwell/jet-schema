@@ -1,10 +1,26 @@
-// have a separate import for types
+## Import types
+- have a separate import for types
 ```ts
-import { str, num, bool, uint, int, undef, nil, sym, func, obj, Primitive, NonEmptyString, ISOString } = 'jet-schema/types';
+import { str, num, bool, uint, int, undef, nul, sym, func, obj, PlainObject, Primitive, NonEmptyString, ISOString } = 'jet-schema/types';
 ```
 
-// see if there's a way to do an eslint run so only primitives from the import above can be used
+## .to
+- `.to` will be the parsing function
+```ts
+schema.to.int(6); // .int(6.5), int('6');
+```
 
+## .shape
+```ts
+schema.is.shape({
+  id: [schema.to.uint, schema.is.uint],
+})
+```
+
+> see if there's a way to do an eslint run so only primitives from the import above can be used
+
+## Branded types
+```ts
 
 // ---------- Non-empty string ----------
 
@@ -71,3 +87,4 @@ function assertISOString(value: string): asserts value is ISOString {
     throw new Error(`Expected an ISO 8601 date-time string, got ${JSON.stringify(value)}`);
   }
 }
+```
